@@ -1,3 +1,4 @@
+#!/bin/sh
 rm -f ~/.adom.data/.HISCORE
 rm -f ~/.adom.data/.adom.prc
 rm -rf ~/.adom.data/tmpdat/*

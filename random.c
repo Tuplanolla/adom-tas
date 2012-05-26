@@ -1,5 +1,5 @@
 /**
-This file contains random code that may become useful at some point.
+This file contains random code snippets that may become useful at some point.
 Hopefully this will make approaching the project a bit easier.
 **/
 
@@ -97,7 +97,7 @@ void load_dynamic_libraries() {
 	/*
 	Imports functions from libc.
 	*/
-	handle = (void*) dlopen(libc_path, 1);
+	handle = (void *)dlopen(libc_path, RTLD_LAZY);//requires either RTLD_LAZY or RTLD_NOW
 	if (handle == NULL) {
 		printf("<error message>\n");
 		exit(1);//<error code>
@@ -109,7 +109,7 @@ void load_dynamic_libraries() {
 	/*
 	Imports functions from libncurses.
 	*/
-	handle = (void *)dlopen(curses_path, RTLD_LAZY);//requires either RTLD_LAZY or RTLD_NOW
+	handle = (void *)dlopen(curses_path, RTLD_LAZY);
 	if (handle == NULL) {
 		printf("<error message>\n");
 		exit(1);//<error code>
