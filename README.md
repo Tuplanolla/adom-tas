@@ -11,6 +11,8 @@ Checklist
 	[X] Linux
 	[X] GCC
 [ ] Implement emulation tools
+	[X] Find the random number generator's seed function
+	[X] Redirect the seed function to the recorder and back again
 	[ ] Implement save state selector
 	[ ] Implement fast save (memory-memory)
 	[ ] Implement fast load (memory-memory)
@@ -26,7 +28,7 @@ Checklist
 	[ ] Implement playing back a recording
 	[ ] Implement dumping an avi
 [ ] Implement analysis tools
-	[ ] Find the turn count variable
+	[X] Find the turn count variable
 	[ ] Create an overlay bigger than 80x25
 	[ ] Add a status bar (char* string)
 	[ ] Include in the status bar
