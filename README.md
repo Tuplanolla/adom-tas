@@ -40,3 +40,58 @@ Checklist
 		[ ] Inputs per turn
 	[ ] Implement cheats that disable the recording
 </pre>
+
+Progression
+-----------
+
+<pre>
+Start playing:
+----[ ]
+Save the first state:
+----[1]
+Keep playing:
+----(1)
+     `----[ ]
+Save the second state:
+----(1)
+     `----[2]
+Keep playing:
+----(1)
+     `----(2)
+           `----[ ]
+Save the first state again:
+----.
+     `----(2)
+           `----[1]
+Keep playing:
+----.
+     `----(2)
+           `----(1)
+                 `----[ ]
+Load the first state:
+----.
+     `----(2)
+           `----[1]
+Keep playing:
+----.
+     `----(2)    .----[ ]
+           `----(1)
+Load the second state:
+----.
+     `----[2]
+           `----(1)
+Keep playing:
+----.      .----[ ]
+     `----(2)
+           `----(1)
+Repeat:
+----.      .----(3)
+     `----(2)    `----(4)
+           |           `----.
+           `----(1)          `----(5)
+                 |----(6)
+                 |     `----.
+                 |           `----[ ]
+                 `----(7)
+                       `----(8)
+</pre>

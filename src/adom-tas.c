@@ -213,7 +213,7 @@ void save(const int state) {
 }
 
 /**
-Saves the game from memory.
+Loads the game from memory.
 **/
 void load(const int state) {
 	printf("DEBUG: child(%i).kill(); ", (int )getpid()); fflush(stdout);
