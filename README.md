@@ -14,10 +14,11 @@ Checklist
 	[X] Find the random number generator's seed function
 	[X] Redirect the seed function to the recorder and back again
 	[ ] Implement save state selector
-	[ ] Implement fast save (memory-memory)
-	[ ] Implement fast load (memory-memory)
+	[X] Implement fast save (memory-memory)
+	[X] Implement fast load (memory-memory)
 	[ ] Implement slow save (memory-file)
 	[ ] Implement slow load (file-memory)
+	[ ] Refine sloppy implementations
 [ ] Implement recording tools
 	[ ] Find the input handler
 	[ ] Redirect the input handler to the recorder and back again
@@ -29,6 +30,7 @@ Checklist
 	[ ] Implement dumping an avi
 [ ] Implement analysis tools
 	[X] Find the turn count variable
+	[ ] Find a way to overload functions called by macros
 	[ ] Create an overlay bigger than 80x25
 	[ ] Add a status bar (char* string)
 	[ ] Include in the status bar

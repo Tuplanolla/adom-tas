@@ -16,6 +16,7 @@ Half of these are unnecessary.
 #include <libgen.h>
 #include <getopt.h>
 #include <dlfcn.h>
+#include <signal.h>
 
 /**
 Lists boolean types.
@@ -112,7 +113,7 @@ typedef int (*SPRINTF)(char *str, const char *format, ...);
 typedef int (*VSPRINTF)(char *str, const char *format, va_list ap);
 typedef int (*UNLINK)(const char *pathname);
 typedef time_t (*TIME)(time_t *timer);
-//typedef void (*GETMAXYX)(WINDOW *win, int y, int x);
+//GETMAXYX would be here if it wasn't a filthy macro peasant
 
 INIT_PAIR real_init_pair;
 WCLEAR real_wclear;
@@ -127,12 +128,14 @@ SPRINTF real_sprintf;
 VSPRINTF real_vsprintf;
 UNLINK real_unlink;
 TIME real_time;
-//GETMAXYX real_getmaxyx;
 
 /**
 Loads functions from dynamically linked libraries (libc and libncurses).
 **/
 void load_dynamic_libraries() {
+	FILE *_handle = fopen(log_file, "w");//I don't belong here.
+	fclose(_handle);
+
 	char *libc_path;
 	char *curses_path;
 
@@ -170,7 +173,6 @@ void load_dynamic_libraries() {
 	real_winch = (WINCH )dlsym(handle, "winch");
 	real_wgetch = (WGETCH )dlsym(handle, "wgetch");
 	real_wgetnstr = (WGETNSTR )dlsym(handle, "wgetnstr");
-	//real_getmaxyx = (GETMAXYX )dlsym(handle, "getmaxyx");
 
 	/*
 	Prevents reloading libraries for child processes.
@@ -189,12 +191,47 @@ void initialize() {
 	load_dynamic_libraries();
 }
 
+/*
+Debug messages pop up on the screen at random locations.
+It's a feature, not a bug.
+*/
+
+/**
+Saves the game to memory.
+**/
+void save(const int state) {
+	printf("fork(); "); fflush(stdout);
+	pid_t pid = fork();
+	if (pid != NULL) {//parent
+		printf("DEBUG: parent(%i); ", (int )getpid()); fflush(stdout);
+		printf("DEBUG: parent(%i).stop(); ", (int )getpid()); fflush(stdout);
+		wait(NULL);
+	}
+	else {//child
+		printf("DEBUG: child(%i); ", (int )getpid()); fflush(stdout);
+	}
+}
+
+/**
+Saves the game from memory.
+**/
+void load(const int state) {
+	printf("DEBUG: child(%i).kill(); ", (int )getpid()); fflush(stdout);
+	printf("DEBUG: parent(%i).continue(); ", (int )getppid()); fflush(stdout);
+	kill(getpid(), SIGKILL);
+}
+
 /**
 Overloads wgetch with a simple log wrapper.
 **/
 int OVERLOAD(wgetch)(WINDOW *win) {
 	printl("Called wgetch.\n");
-	return real_wgetch(win);
+	int gey = NULL, key = real_wgetch(win);
+	if (key == 'j') save(0);
+	else if (key == 'J') load(0);
+	else gey = key;
+	//fprintf(stdout, "\033[%d;%dHLRI: %c(%i)", 25, 68, key, key);//corrupts the cursor
+	return gey;
 }
 
 /**
@@ -206,8 +243,17 @@ time_t OVERLOAD(time)(time_t *timer) {
 	return (time_t )0;
 }
 
+/**
+Overloads whatever with a simple log wrapper.
+**/
+int OVERLOAD(whatever)(WINDOW *win) {
+	printl("Called whatever.\n");
+	//real_whatever(win, 25, 80);
+}
+
 #define HAND_PICKED_WIZARDRY "/home/tuplanolla/adom-tas/adom"
 #define HAND_PICKED_SORCERY "/home/tuplanolla/adom-tas/src/adom-tas.so"
+#define HAND_PICKED_BLASPHEMY "/home/tuplanolla/.adom.data/.adom.ver"
 
 /**
 Tests the class.
@@ -240,7 +286,20 @@ const int main(const int argc, const char **argv) {
 	/*
 	Uses file system heuristics to identify the executable.
 	*/
-	if (FALSE) return propagate(WRONG_VERSION_ERROR);//TODO if ver file in ADOM_DATA exists it contains 01 01 01 00
+	FILE *_fhandle = fopen(HAND_PICKED_BLASPHEMY, "r");
+	if (_fhandle != NULL) {
+		unsigned char desired_version[4];
+		desired_version[0] = 1;
+		desired_version[1] = 1;
+		desired_version[2] = 1;
+		desired_version[3] = 0;
+		unsigned char version[4];
+		fread(version, sizeof (unsigned char), sizeof version, _fhandle);
+		fclose(_fhandle);
+		if (version != NULL) {
+			if (memcmp(version, desired_version, 4) != 0) return propagate(WRONG_VERSION_ERROR);
+		}
+	}
 	if (file.st_size != 2452608) return propagate(WRONG_SIZE_ERROR);
 
 	/*
@@ -252,4 +311,3 @@ const int main(const int argc, const char **argv) {
 
 	return 0;
 }
-
