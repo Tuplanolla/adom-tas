@@ -287,13 +287,24 @@ struct mvaddnstr_s {
 };
 typedef struct mvaddnstr_s mvaddnstr_t;
 mvaddnstr_t *draw_queue;
-char last_in[80];
+char status_in[80], status_time[80];
+
+int frame = 0, now = 0, not_now = 0;
 int OVERLOAD(wgetch)(WINDOW *win) {
 	printl("Called wgetch.\n");
-	int gey = NULL, key = real_wgetch(win);
-	if (key == 'j') save(0);
-	else if (key == 'J') load(0);
-	else gey = key;
+	int key = real_wgetch(win);
+	if (key == 'j') {
+		save(0);
+		return NULL;
+	}
+	else if (key == 'J') {
+		load(0);
+		return NULL;//redundant
+	}
+	else if (key == 'b') {
+		now++;
+		return NULL;
+	}
 	if (!was_meta && !was_colon && key == 0x3a) was_colon = TRUE;
 	else if (!was_meta && key == 0x1b) was_meta = TRUE;
 	else {
@@ -311,12 +322,12 @@ int OVERLOAD(wgetch)(WINDOW *win) {
 		was_meta = FALSE;
 		key_code(code, key);
 		strcat(codeins, code);
-		char line[80], line_[80];
-		sprintf(line, "In: %s", codeins);
-		sprintf(line_, "%-80s", line);
-		strcpy(last_in, line_);//called in wrefresh to avoid overwriting
+		char line[17], line_[17];
+		snprintf(line, 17, "In: %s", codeins);
+		snprintf(status_in, 17, "%-16s", line);//TODO turn this into a macro
+		frame++;
 	}
-	return gey;
+	return key;
 }
 
 /**
@@ -324,7 +335,9 @@ Overloads time with a simple log wrapper.
 **/
 time_t OVERLOAD(time)(time_t *timer) {
 	printl("Called time.\n");
-	return (time_t )0;
+	char line[17];
+	not_now = now;
+	return (time_t )not_now;
 }
 
 /**
@@ -334,24 +347,43 @@ int OVERLOAD(wrefresh)(WINDOW *win) {
 	printl("Called wrefresh.\n");
 	int x, y;
 	getyx(win, y, x);
-	init_pair(1, COLOR_BLACK, COLOR_GREEN);
-	wattron(win, COLOR_PAIR(1));
-	mvaddnstr(25, 0, last_in, 80);
-	wattroff(win, COLOR_PAIR(1));
+	init_pair(64, COLOR_BLACK, COLOR_GREEN);//TODO find out what pairs are already in use
+	init_pair(65, COLOR_BLACK, COLOR_YELLOW);
+	init_pair(66, COLOR_BLACK, COLOR_RED);
+	init_pair(67, COLOR_BLACK, COLOR_MAGENTA);
+	wattron(win, COLOR_PAIR(64));
+	mvaddnstr(24, 0, status_in, 80);
+	wattroff(win, COLOR_PAIR(64));
+	wattron(win, COLOR_PAIR(65));
+	char line[17], liner[17];
+	snprintf(line, 17, "Fr: %i", frame);
+	snprintf(liner, 17, "%-16s", line);
+	mvaddnstr(24, 17, liner, 80-17);//TODO macros
+	wattroff(win, COLOR_PAIR(65));
+	wattron(win, COLOR_PAIR(66));
+	snprintf(line, 17, "Time: 0x%08x", now);
+	snprintf(status_time, 17, "%-16s", line);
+	mvaddnstr(24, 34, status_time, 80-34);
+	wattroff(win, COLOR_PAIR(66));
+	wattron(win, COLOR_PAIR(67));
+	snprintf(line, 17, "Random: %s", not_now == now ? "Injected" : "Waiting");
+	snprintf(status_time, 17, "%-16s", line);
+	mvaddnstr(24, 51, status_time, 80-51);
+	wattroff(win, COLOR_PAIR(67));
 	wmove(win, y, x);
 	int result = real_wrefresh(win);
 	return result;
 }
 
 /**
-Tell sweet lies about the terminal size.
+Tells sweet lies about the terminal size.
 **/
 WINDOW *OVERLOAD(initscr)() {
 	printl("Called something.\n");
 	initialize();//TODO don't assume this is called first even though it is
-	WINDOW *win = real_initscr();
-	win->_maxy = 25;
-	win->_maxx = 80;
+	WINDOW *win = real_initscr();//TODO actually do something
+	/*win->_maxy = 25;
+	win->_maxx = 80;*/
 	return win;
 }
 

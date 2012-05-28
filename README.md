@@ -37,7 +37,7 @@ Checklist
 	[ ] Include in the status bar
 		[ ] Current save state
 		[X] Last used inputs
-		[ ] Last used time manipulations
+		[X] Last used time manipulations
 		[ ] Inputs per turn
 	[ ] Implement cheats that disable the recording
 	[ ] Refine sloppy implementations
