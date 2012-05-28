@@ -113,7 +113,9 @@ typedef int (*SPRINTF)(char *str, const char *format, ...);
 typedef int (*VSPRINTF)(char *str, const char *format, va_list ap);
 typedef int (*UNLINK)(const char *pathname);
 typedef time_t (*TIME)(time_t *timer);
+typedef WINDOW *(*INITSCR)();
 //GETMAXYX would be here if it wasn't a filthy macro peasant
+//(y = ((win) ? (win)->_cury : (-1)), x = ((win) ? (win)->_curx : (-1)))
 
 INIT_PAIR real_init_pair;
 WCLEAR real_wclear;
@@ -128,40 +130,39 @@ SPRINTF real_sprintf;
 VSPRINTF real_vsprintf;
 UNLINK real_unlink;
 TIME real_time;
+INITSCR real_initscr;
 
 /*
-I'm lost.
+Returns the key code of a key number.
+@param code The key code to return. Requires five bytes of memory at most.
+@param key The key number.
 */
-const char *key_code (int ch) {
-	static char cmdstring[8];
-	//keys recognized by the executable
-	if (ch == KEY_UP) strcpy(cmdstring, "\\U");
-	else if (ch == KEY_DOWN) strcpy(cmdstring, "\\D");
-	else if (ch == KEY_LEFT) strcpy(cmdstring, "\\L");
-	else if (ch == KEY_RIGHT) strcpy(cmdstring, "\\R");
-	else if (ch == ' ') strcpy(cmdstring, "\\S");
-	else if (ch == '\\') strcpy(cmdstring, "\\B");
-	else if (ch == 27) strcpy(cmdstring, "\\M");//Meta
-	//keys not recognized by the executable
-	else if (ch == KEY_A1) strcpy(cmdstring, "\\H");//Home
-	else if (ch == KEY_A3) strcpy(cmdstring, "\\+");//PageUp
-	else if (ch == KEY_B2) strcpy(cmdstring, "\\.");//Neutral
-	else if (ch == KEY_C1) strcpy(cmdstring, "\\E");//End
-	else if (ch == KEY_C3) strcpy(cmdstring, "\\-");//PageDown
-	else {//other
-		if (ch < 27) {//control keys
-			strcpy(cmdstring, "\\Cx");
-			cmdstring[2] = (char )ch-1+'a';
-		}
-		else if (ch >= KEY_F0 && ch <= KEY_F(64)) {//function keys
-			real_sprintf(cmdstring, "\\%i", ch-KEY_F0);
-		}
-		else {//normal keys
-			cmdstring[0] = (char )ch;
-			cmdstring[1] = '\0';
-		}
+#define STRCPY_RETURN(variable) {\
+		strcpy(code, variable);\
+		return code;\
 	}
-	return cmdstring;
+#define SPRINTF_RETURN(format, variable) {\
+		real_sprintf(code, format, variable);\
+		return code;\
+	}
+void *key_code(const char *code, const int key) {
+	if (key == '\\') STRCPY_RETURN("\\\\");//backslash
+	if (key == KEY_UP) STRCPY_RETURN("\\U");//Up
+	if (key == KEY_DOWN) STRCPY_RETURN("\\D");//Down
+	if (key == KEY_LEFT) STRCPY_RETURN("\\L");//Left
+	if (key == KEY_RIGHT) STRCPY_RETURN("\\R");//Right
+	if (key == ' ') STRCPY_RETURN("\\S");//Space
+	if (key == 0x1b) STRCPY_RETURN("\\M");//Meta (Alt or Esc)
+	if (key == 0x7f) STRCPY_RETURN("\\C_");//Delete
+	if (key == KEY_A1) STRCPY_RETURN("\\H");//keypad Home
+	if (key == KEY_A3) STRCPY_RETURN("\\+");//keypad PageUp
+	if (key == KEY_B2) STRCPY_RETURN("\\.");//keypad center
+	if (key == KEY_C1) STRCPY_RETURN("\\E");//keypad End
+	if (key == KEY_C3) STRCPY_RETURN("\\-");//keypad PageDown
+	if (key >= 0x00 && key < 0x1f) SPRINTF_RETURN("\\C%c", (char )(0x60+key));//control keys
+	if (key >= KEY_F(1) && key <= KEY_F(64)) SPRINTF_RETURN("\\%i", key-KEY_F(0));//function keys
+	if (key > 0x20 && key < 0x80) SPRINTF_RETURN("%c", (char )key);//printable keys
+	SPRINTF_RETURN("\\x%02x", key);//nonprintable keys
 }
 
 /**
@@ -208,6 +209,7 @@ void load_dynamic_libraries() {
 	real_winch = (WINCH )dlsym(handle, "winch");
 	real_wgetch = (WGETCH )dlsym(handle, "wgetch");
 	real_wgetnstr = (WGETNSTR )dlsym(handle, "wgetnstr");
+	real_initscr = (INITSCR )dlsym(handle, "initscr");
 
 	/*
 	Prevents reloading libraries for child processes.
@@ -256,6 +258,10 @@ void load(const int state) {
 	kill(getpid(), SIGKILL);
 }
 
+/*
+This is the part where good practice is thrown out of the window.
+Luckily it'll be picked up again later.
+*/
 #define BYTE_TO_BINARY_PATTERN "%d%d%d%d%d%d%d%d"
 #define BYTE_TO_BINARY(x) \
 	(x&0b10000000 ? 1 : 0),\
@@ -270,18 +276,46 @@ void load(const int state) {
 /**
 Overloads wgetch with a simple log wrapper.
 **/
-bool there_was_meta = FALSE;//the worst idea
+bool was_meta = FALSE;//not good
+bool was_colon = FALSE;
+struct mvaddnstr_s {
+	const int y;
+	const int x;
+	const char *string;
+	const int n;
+	struct mvaddnstr_s *next;
+};
+typedef struct mvaddnstr_s mvaddnstr_t;
+mvaddnstr_t *draw_queue;
+char last_in[80];
 int OVERLOAD(wgetch)(WINDOW *win) {
 	printl("Called wgetch.\n");
 	int gey = NULL, key = real_wgetch(win);
 	if (key == 'j') save(0);
 	else if (key == 'J') load(0);
 	else gey = key;
-	//a quick hack to munch on key combinations and corrupt cursor alignment on the fly
-	//fprintf(stdout, "\033[%d;%dHLRI: %s%s(%i)", 25, 60, there_was_meta ? "\\M" : "", key_code(key), key);
-	//fprintf(stdout, "\033[%d;%dHLRI: "BYTETOBINARYPATTERN" "BYTETOBINARYPATTERN, 25, 20, BYTETOBINARY(key>>32), BYTETOBINARY(key>>16), BYTETOBINARY(key>>8), BYTETOBINARY(key));//corrupts the cursor
-	if (key == 27) there_was_meta = TRUE;
-	else there_was_meta = FALSE;
+	if (!was_meta && !was_colon && key == 0x3a) was_colon = TRUE;
+	else if (!was_meta && key == 0x1b) was_meta = TRUE;
+	else {
+		const char code[5], codeins[13];
+		strcpy(codeins, "");
+		if (was_colon) {
+			key_code(code, 0x3a);
+			strcat(codeins, code);
+		}
+		if (was_meta) {
+			key_code(code, 0x1b);
+			strcat(codeins, code);
+		}
+		was_colon = FALSE;
+		was_meta = FALSE;
+		key_code(code, key);
+		strcat(codeins, code);
+		char line[80], line_[80];
+		sprintf(line, "In: %s", codeins);
+		sprintf(line_, "%-80s", line);
+		strcpy(last_in, line_);//called in wrefresh to avoid overwriting
+	}
 	return gey;
 }
 
@@ -289,17 +323,36 @@ int OVERLOAD(wgetch)(WINDOW *win) {
 Overloads time with a simple log wrapper.
 **/
 time_t OVERLOAD(time)(time_t *timer) {
-	initialize();
 	printl("Called time.\n");
 	return (time_t )0;
 }
 
 /**
-Overloads whatever with a simple log wrapper.
+Overloads wrefresh with a simple log wrapper.
 **/
-int OVERLOAD(whatever)(WINDOW *win) {
-	printl("Called whatever.\n");
-	//real_whatever(win, 25, 80);
+int OVERLOAD(wrefresh)(WINDOW *win) {
+	printl("Called wrefresh.\n");
+	int x, y;
+	getyx(win, y, x);
+	init_pair(1, COLOR_BLACK, COLOR_GREEN);
+	wattron(win, COLOR_PAIR(1));
+	mvaddnstr(25, 0, last_in, 80);
+	wattroff(win, COLOR_PAIR(1));
+	wmove(win, y, x);
+	int result = real_wrefresh(win);
+	return result;
+}
+
+/**
+Tell sweet lies about the terminal size.
+**/
+WINDOW *OVERLOAD(initscr)() {
+	printl("Called something.\n");
+	initialize();//TODO don't assume this is called first even though it is
+	WINDOW *win = real_initscr();
+	win->_maxy = 25;
+	win->_maxx = 80;
+	return win;
 }
 
 #define HAND_PICKED_WIZARDRY "/home/tuplanolla/adom-tas/adom"

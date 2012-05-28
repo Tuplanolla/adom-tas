@@ -31,15 +31,16 @@ Checklist
 	[ ] Refine sloppy implementations
 [ ] Implement analysis tools
 	[X] Find the turn count variable
-	[ ] Find a way to overload functions called by macros
-	[ ] Create an overlay bigger than 80x25
-	[ ] Add a status bar (char* string)
+	[X] Find a way to get around overloading macros
+	[X] Create an overlay bigger than 80x25
+	[X] Add a status bar (char* string)
 	[ ] Include in the status bar
 		[ ] Current save state
-		[ ] Last used inputs
+		[X] Last used inputs
 		[ ] Last used time manipulations
 		[ ] Inputs per turn
 	[ ] Implement cheats that disable the recording
+	[ ] Refine sloppy implementations
 </pre>
 
 Progression
