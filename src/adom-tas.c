@@ -78,7 +78,7 @@ Logs a message.
 char *log_file = "/home/tuplanolla/adom-tas.log";
 const bool printl(const char *message) {
 	if (log_file == NULL) fprintf(stderr, "LOG: %s\n", message);//TODO add a file_exists check
-	else {//TODO write to a file
+	else {//TODO write to a file properly
 		FILE *handle = fopen(log_file, "a");
 		fwrite(message, 1, strlen(message), handle);
 		fclose(handle);
@@ -128,6 +128,41 @@ SPRINTF real_sprintf;
 VSPRINTF real_vsprintf;
 UNLINK real_unlink;
 TIME real_time;
+
+/*
+I'm lost.
+*/
+const char *key_code (int ch) {
+	static char cmdstring[8];
+	//keys recognized by the executable
+	if (ch == KEY_UP) strcpy(cmdstring, "\\U");
+	else if (ch == KEY_DOWN) strcpy(cmdstring, "\\D");
+	else if (ch == KEY_LEFT) strcpy(cmdstring, "\\L");
+	else if (ch == KEY_RIGHT) strcpy(cmdstring, "\\R");
+	else if (ch == ' ') strcpy(cmdstring, "\\S");
+	else if (ch == '\\') strcpy(cmdstring, "\\B");
+	else if (ch == 27) strcpy(cmdstring, "\\M");//Meta
+	//keys not recognized by the executable
+	else if (ch == KEY_A1) strcpy(cmdstring, "\\H");//Home
+	else if (ch == KEY_A3) strcpy(cmdstring, "\\+");//PageUp
+	else if (ch == KEY_B2) strcpy(cmdstring, "\\.");//Neutral
+	else if (ch == KEY_C1) strcpy(cmdstring, "\\E");//End
+	else if (ch == KEY_C3) strcpy(cmdstring, "\\-");//PageDown
+	else {//other
+		if (ch < 27) {//control keys
+			strcpy(cmdstring, "\\Cx");
+			cmdstring[2] = (char )ch-1+'a';
+		}
+		else if (ch >= KEY_F0 && ch <= KEY_F(64)) {//function keys
+			real_sprintf(cmdstring, "\\%i", ch-KEY_F0);
+		}
+		else {//normal keys
+			cmdstring[0] = (char )ch;
+			cmdstring[1] = '\0';
+		}
+	}
+	return cmdstring;
+}
 
 /**
 Loads functions from dynamically linked libraries (libc and libncurses).
@@ -221,16 +256,32 @@ void load(const int state) {
 	kill(getpid(), SIGKILL);
 }
 
+#define BYTE_TO_BINARY_PATTERN "%d%d%d%d%d%d%d%d"
+#define BYTE_TO_BINARY(x) \
+	(x&0b10000000 ? 1 : 0),\
+	(x&0b01000000 ? 1 : 0),\
+	(x&0b00100000 ? 1 : 0),\
+	(x&0b00010000 ? 1 : 0),\
+	(x&0b00001000 ? 1 : 0),\
+	(x&0b00000100 ? 1 : 0),\
+	(x&0b00000010 ? 1 : 0),\
+	(x&0b00000001 ? 1 : 0)
+
 /**
 Overloads wgetch with a simple log wrapper.
 **/
+bool there_was_meta = FALSE;//the worst idea
 int OVERLOAD(wgetch)(WINDOW *win) {
 	printl("Called wgetch.\n");
 	int gey = NULL, key = real_wgetch(win);
 	if (key == 'j') save(0);
 	else if (key == 'J') load(0);
 	else gey = key;
-	//fprintf(stdout, "\033[%d;%dHLRI: %c(%i)", 25, 68, key, key);//corrupts the cursor
+	//a quick hack to munch on key combinations and corrupt cursor alignment on the fly
+	//fprintf(stdout, "\033[%d;%dHLRI: %s%s(%i)", 25, 60, there_was_meta ? "\\M" : "", key_code(key), key);
+	//fprintf(stdout, "\033[%d;%dHLRI: "BYTETOBINARYPATTERN" "BYTETOBINARYPATTERN, 25, 20, BYTETOBINARY(key>>32), BYTETOBINARY(key>>16), BYTETOBINARY(key>>8), BYTETOBINARY(key));//corrupts the cursor
+	if (key == 27) there_was_meta = TRUE;
+	else there_was_meta = FALSE;
 	return gey;
 }
 

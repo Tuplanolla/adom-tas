@@ -20,14 +20,15 @@ Checklist
 	[ ] Implement slow load (file-memory)
 	[ ] Refine sloppy implementations
 [ ] Implement recording tools
-	[ ] Find the input handler
+	[X] Find the input handler
 	[ ] Redirect the input handler to the recorder and back again
 	[ ] Implement saving to a file
 		[ ] Inputs (char** string)
 		[ ] Time manipulations (uint32 seconds)
 		[ ] Frame durations for playback (uint8 multiplier)
 	[ ] Implement playing back a recording
-	[ ] Implement dumping an avi
+	[X] Implement dumping an avi
+	[ ] Refine sloppy implementations
 [ ] Implement analysis tools
 	[X] Find the turn count variable
 	[ ] Find a way to overload functions called by macros
