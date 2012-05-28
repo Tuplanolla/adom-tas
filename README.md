@@ -21,7 +21,7 @@ Checklist
 	[ ] Refine sloppy implementations
 [ ] Implement recording tools
 	[X] Find the input handler
-	[ ] Redirect the input handler to the recorder and back again
+	[X] Redirect the input handler to the recorder and back again
 	[ ] Implement saving to a file
 		[ ] Inputs (char** string)
 		[ ] Time manipulations (uint32 seconds)
