@@ -12,6 +12,7 @@ Half of these are unnecessary.
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 #include <curses.h>
 #include <libgen.h>
 #include <getopt.h>
@@ -94,7 +95,7 @@ Serves as an annotation for overloads.
 /**
 Defines the default locations of dynamically linked libraries.
 **/
-#define LIBC "/lib/i686/cmov/libc.so.6"
+#define LIBC "/lib/libc.so.6"
 #define LIBNCURSES "/lib/libncurses.so.5"
 
 /**
@@ -113,7 +114,7 @@ typedef int (*SPRINTF)(char *str, const char *format, ...);
 typedef int (*VSPRINTF)(char *str, const char *format, va_list ap);
 typedef int (*UNLINK)(const char *pathname);
 typedef time_t (*TIME)(time_t *timer);
-typedef WINDOW *(*INITSCR)();
+typedef int (*IOCTL)(int d, unsigned long request, ...);
 //GETMAXYX would be here if it wasn't a filthy macro peasant
 //(y = ((win) ? (win)->_cury : (-1)), x = ((win) ? (win)->_curx : (-1)))
 
@@ -130,7 +131,7 @@ SPRINTF real_sprintf;
 VSPRINTF real_vsprintf;
 UNLINK real_unlink;
 TIME real_time;
-INITSCR real_initscr;
+IOCTL real_ioctl;
 
 /*
 Returns the key code of a key number.
@@ -194,6 +195,7 @@ void load_dynamic_libraries() {
 	real_vsprintf = (VSPRINTF )dlsym(handle, "vsprintf");
 	real_unlink = (UNLINK )dlsym(handle, "unlink");
 	real_time = (TIME )dlsym(handle, "time");
+	real_ioctl = (TIME )dlsym(handle, "ioctl");
 
 	/*
 	Imports functions from libncurses.
@@ -209,7 +211,6 @@ void load_dynamic_libraries() {
 	real_winch = (WINCH )dlsym(handle, "winch");
 	real_wgetch = (WGETCH )dlsym(handle, "wgetch");
 	real_wgetnstr = (WGETNSTR )dlsym(handle, "wgetnstr");
-	real_initscr = (INITSCR )dlsym(handle, "initscr");
 
 	/*
 	Prevents reloading libraries for child processes.
@@ -237,15 +238,15 @@ It's a feature, not a bug.
 Saves the game to memory.
 **/
 void save(const int state) {
-	printf("fork(); "); fflush(stdout);
+	printf("DEBUG: fork(); "); fflush(stdout);
 	pid_t pid = fork();
 	if (pid != NULL) {//parent
-		printf("DEBUG: parent(%i); ", (int )getpid()); fflush(stdout);
-		printf("DEBUG: parent(%i).stop(); ", (int )getpid()); fflush(stdout);
+		//printf("DEBUG: parent(%i); ", (int )getpid()); fflush(stdout);
+		//printf("DEBUG: parent(%i).stop(); ", (int )getpid()); fflush(stdout);
 		wait(NULL);
 	}
 	else {//child
-		printf("DEBUG: child(%i); ", (int )getpid()); fflush(stdout);
+		//printf("DEBUG: child(%i); ", (int )getpid()); fflush(stdout);
 	}
 }
 
@@ -277,7 +278,7 @@ Luckily it'll be picked up again later.
 Overloads wgetch with a simple log wrapper.
 **/
 bool was_meta = FALSE;//not good
-bool was_colon = FALSE;
+int was_colon = FALSE;//worse
 struct mvaddnstr_s {
 	const int y;
 	const int x;
@@ -289,7 +290,7 @@ typedef struct mvaddnstr_s mvaddnstr_t;
 mvaddnstr_t *draw_queue;
 char status_in[80], status_time[80];
 
-int frame = 0, now = 0, not_now = 0;
+int frame = 0, now = 0;
 int OVERLOAD(wgetch)(WINDOW *win) {
 	printl("Called wgetch.\n");
 	int key = real_wgetch(win);
@@ -305,13 +306,13 @@ int OVERLOAD(wgetch)(WINDOW *win) {
 		now++;
 		return NULL;
 	}
-	if (!was_meta && !was_colon && key == 0x3a) was_colon = TRUE;
+	if (!was_meta && !was_colon && (key == 0x3a || key == 'w')) was_colon = key == 0x3a ? 1 : 2;//booleans are fun like that
 	else if (!was_meta && key == 0x1b) was_meta = TRUE;
 	else {
 		const char code[5], codeins[13];
 		strcpy(codeins, "");
 		if (was_colon) {
-			key_code(code, 0x3a);
+			key_code(code, was_colon == 1 ? 0x3a : 'w');
 			strcat(codeins, code);
 		}
 		if (was_meta) {
@@ -335,41 +336,43 @@ Overloads time with a simple log wrapper.
 **/
 time_t OVERLOAD(time)(time_t *timer) {
 	printl("Called time.\n");
-	char line[17];
-	not_now = now;
-	return (time_t )not_now;
+	return (time_t )now;
 }
 
 /**
 Overloads wrefresh with a simple log wrapper.
 **/
+#define TURN (*((unsigned int *)0x082b16e0))
+#define ARC4_S (*((unsigned char **)0x082ada40))
+#define ARC4_I (*((unsigned char *)0x082adb40))
+#define ARC4_J (*((unsigned char *)0x082adb41))
 int OVERLOAD(wrefresh)(WINDOW *win) {
 	printl("Called wrefresh.\n");
 	int x, y;
 	getyx(win, y, x);
-	init_pair(64, COLOR_BLACK, COLOR_GREEN);//TODO find out what pairs are already in use
-	init_pair(65, COLOR_BLACK, COLOR_YELLOW);
-	init_pair(66, COLOR_BLACK, COLOR_RED);
-	init_pair(67, COLOR_BLACK, COLOR_MAGENTA);
-	wattron(win, COLOR_PAIR(64));
+	init_pair(16, COLOR_BLACK, COLOR_GREEN);//TODO find out what pairs are already in use
+	init_pair(17, COLOR_BLACK, COLOR_YELLOW);
+	init_pair(18, COLOR_BLACK, COLOR_RED);
+	init_pair(19, COLOR_BLACK, COLOR_MAGENTA);
+	wattron(win, COLOR_PAIR(16));
 	mvaddnstr(24, 0, status_in, 80);
-	wattroff(win, COLOR_PAIR(64));
-	wattron(win, COLOR_PAIR(65));
+	wattroff(win, COLOR_PAIR(16));
+	wattron(win, COLOR_PAIR(17));
 	char line[17], liner[17];
-	snprintf(line, 17, "Fr: %i", frame);
+	snprintf(line, 17, "Fr: %i(%i)", frame, TURN);
 	snprintf(liner, 17, "%-16s", line);
 	mvaddnstr(24, 17, liner, 80-17);//TODO macros
-	wattroff(win, COLOR_PAIR(65));
-	wattron(win, COLOR_PAIR(66));
+	wattroff(win, COLOR_PAIR(17));
+	wattron(win, COLOR_PAIR(18));
 	snprintf(line, 17, "Time: 0x%08x", now);
 	snprintf(status_time, 17, "%-16s", line);
 	mvaddnstr(24, 34, status_time, 80-34);
-	wattroff(win, COLOR_PAIR(66));
-	wattron(win, COLOR_PAIR(67));
-	snprintf(line, 17, "Random: %s", not_now == now ? "Injected" : "Waiting");
+	wattroff(win, COLOR_PAIR(18));
+	wattron(win, COLOR_PAIR(19));
+	snprintf(line, 17, "Random: 0x%x%x", ARC4_I, ARC4_J);
 	snprintf(status_time, 17, "%-16s", line);
 	mvaddnstr(24, 51, status_time, 80-51);
-	wattroff(win, COLOR_PAIR(67));
+	wattroff(win, COLOR_PAIR(19));
 	wmove(win, y, x);
 	int result = real_wrefresh(win);
 	return result;
@@ -378,13 +381,24 @@ int OVERLOAD(wrefresh)(WINDOW *win) {
 /**
 Tells sweet lies about the terminal size.
 **/
-WINDOW *OVERLOAD(initscr)() {
+int OVERLOAD(ioctl)(int d, unsigned long request, ...) {
 	printl("Called something.\n");
 	initialize();//TODO don't assume this is called first even though it is
-	WINDOW *win = real_initscr();//TODO actually do something
-	/*win->_maxy = 25;
-	win->_maxx = 80;*/
-	return win;
+	va_list	ap;
+	va_start(ap, request);
+	void *arg = va_arg(ap, void *);
+	int result;
+	if (request == TIOCGWINSZ) {
+		result = real_ioctl(d, request, arg);
+		struct winsize *size;
+		size = (struct winsize *)arg;
+		printf("ioctl@%dx%d\n", size->ws_row, size->ws_col);
+		size->ws_row = 25;
+		size->ws_col = 80;
+	}
+	else result = real_ioctl(d, request, arg);
+	va_end(ap);
+	return result;
 }
 
 #define HAND_PICKED_WIZARDRY "/home/tuplanolla/adom-tas/adom"
