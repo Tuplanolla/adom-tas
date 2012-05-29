@@ -105,8 +105,8 @@ The user interface deserves a mention here since it's so intuitive.
 
 The status bar looks like
 <pre>
-<span style="color: red;">I: \M\Cf  </span> <span style="color: yellow;">F: 32        </span> <span style="color: green;">G: 16        </span> <span style="color: cyan;">R: 0x08dc</span> <span style="color: blue;">T: 0x7fe86be0</span>
+<span style="background-color: #d58080; color: #000000;">I: \M\Cf  </span> <span style="background-color: #d5d580; color: #000000;">F: 21        </span> <span style="background-color: #80d580; color: #000000;">G: 7         </span> <span style="background-color: #8080d5; color: #000000;">R: 0xfc69</span> <span style="background-color: #80d5d5; color: #000000;">T: 0x7fe81780</span>
 </pre>
-and contains the last input I, the number of the last recorded frame F, the number of the last played turn G, the current index pair of the random number generator R and the current system time T.
+and contains the last input (Alt Ctrl F), the number of the last recorded frame (#21), the number of the last played turn (#7), the current index pair of the random number generator (252 and 105) and the current system time (2038-01-01 00:00:00).
 
 The keys to save, load and control the statusbar are currently undefined.
