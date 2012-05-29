@@ -102,7 +102,7 @@ Defines the default locations of dynamically linked libraries.
 Declares the original dynamically linked library functions.
 **/
 typedef int (*INIT_PAIR)(short pair, short f, short b);
-typedef int (*WCLEAR)(WINDOW *win);
+typedef int (*WCLEAR)(WINDOW *win);//I really want to overload all these?
 typedef int (*WREFRESH)(WINDOW *win);
 typedef int (*WMOVE)(WINDOW *win, int y, int x);
 typedef int (*WADDCH)(WINDOW *win, chtype ch);
@@ -163,7 +163,7 @@ void *key_code(const char *code, const int key) {
 	if (key >= 0x00 && key < 0x1f) SPRINTF_RETURN("\\C%c", (char )(0x60+key));//control keys
 	if (key >= KEY_F(1) && key <= KEY_F(64)) SPRINTF_RETURN("\\%i", key-KEY_F(0));//function keys
 	if (key > 0x20 && key < 0x80) SPRINTF_RETURN("%c", (char )key);//printable keys
-	SPRINTF_RETURN("\\x%02x", key);//nonprintable keys
+	SPRINTF_RETURN("\\x%02x", key&0xff);//nonprintable keys
 }
 
 /**
@@ -238,7 +238,7 @@ It's a feature, not a bug.
 Saves the game to memory.
 **/
 void save(const int state) {
-	printf("DEBUG: fork(); "); fflush(stdout);
+	printf("*"); fflush(stdout);//a graceful puff of smoke
 	pid_t pid = fork();
 	if (pid != NULL) {//parent
 		//printf("DEBUG: parent(%i); ", (int )getpid()); fflush(stdout);
@@ -254,8 +254,9 @@ void save(const int state) {
 Loads the game from memory.
 **/
 void load(const int state) {
-	printf("DEBUG: child(%i).kill(); ", (int )getpid()); fflush(stdout);
-	printf("DEBUG: parent(%i).continue(); ", (int )getppid()); fflush(stdout);
+	//printf("DEBUG: child(%i).kill(); ", (int )getpid()); fflush(stdout);
+	//printf("DEBUG: parent(%i).continue(); ", (int )getppid()); fflush(stdout);
+	printf("*"); fflush(stdout);//a graceful puff of smoke
 	kill(getpid(), SIGKILL);
 }
 
@@ -288,8 +289,8 @@ struct mvaddnstr_s {
 };
 typedef struct mvaddnstr_s mvaddnstr_t;
 mvaddnstr_t *draw_queue;
-char status_in[80], status_time[80];
 
+char codeins[17];
 int frame = 0, now = 0;
 int OVERLOAD(wgetch)(WINDOW *win) {
 	printl("Called wgetch.\n");
@@ -302,14 +303,10 @@ int OVERLOAD(wgetch)(WINDOW *win) {
 		load(0);
 		return NULL;//redundant
 	}
-	else if (key == 'b') {
-		now++;
-		return NULL;
-	}
 	if (!was_meta && !was_colon && (key == 0x3a || key == 'w')) was_colon = key == 0x3a ? 1 : 2;//booleans are fun like that
 	else if (!was_meta && key == 0x1b) was_meta = TRUE;
 	else {
-		const char code[5], codeins[13];
+		const char code[5];
 		strcpy(codeins, "");
 		if (was_colon) {
 			key_code(code, was_colon == 1 ? 0x3a : 'w');
@@ -322,12 +319,10 @@ int OVERLOAD(wgetch)(WINDOW *win) {
 		was_colon = FALSE;
 		was_meta = FALSE;
 		key_code(code, key);
-		strcat(codeins, code);
-		char line[17], line_[17];
-		snprintf(line, 17, "In: %s", codeins);
-		snprintf(status_in, 17, "%-16s", line);//TODO turn this into a macro
+		strcat(codeins, code);//TODO turn this into a macro
 		frame++;
 	}
+	//wrefresh(win);
 	return key;
 }
 
@@ -350,29 +345,44 @@ int OVERLOAD(wrefresh)(WINDOW *win) {
 	printl("Called wrefresh.\n");
 	int x, y;
 	getyx(win, y, x);
-	init_pair(16, COLOR_BLACK, COLOR_GREEN);//TODO find out what pairs are already in use
+	init_pair(16, COLOR_BLACK, COLOR_RED);//TODO find out what pairs are already in use
 	init_pair(17, COLOR_BLACK, COLOR_YELLOW);
-	init_pair(18, COLOR_BLACK, COLOR_RED);
-	init_pair(19, COLOR_BLACK, COLOR_MAGENTA);
-	wattron(win, COLOR_PAIR(16));
-	mvaddnstr(24, 0, status_in, 80);
-	wattroff(win, COLOR_PAIR(16));
-	wattron(win, COLOR_PAIR(17));
+	init_pair(18, COLOR_BLACK, COLOR_GREEN);
+	init_pair(19, COLOR_BLACK, COLOR_CYAN);
+	init_pair(20, COLOR_BLACK, COLOR_BLUE);
+	init_pair(21, COLOR_BLACK, COLOR_MAGENTA);
 	char line[17], liner[17];
-	snprintf(line, 17, "Fr: %i(%i)", frame, TURN);
-	snprintf(liner, 17, "%-16s", line);
-	mvaddnstr(24, 17, liner, 80-17);//TODO macros
-	wattroff(win, COLOR_PAIR(17));
-	wattron(win, COLOR_PAIR(18));
-	snprintf(line, 17, "Time: 0x%08x", now);
-	snprintf(status_time, 17, "%-16s", line);
-	mvaddnstr(24, 34, status_time, 80-34);
-	wattroff(win, COLOR_PAIR(18));
-	wattron(win, COLOR_PAIR(19));
-	snprintf(line, 17, "Random: 0x%x%x", ARC4_I, ARC4_J);
-	snprintf(status_time, 17, "%-16s", line);
-	mvaddnstr(24, 51, status_time, 80-51);
-	wattroff(win, COLOR_PAIR(19));
+	attr_t attrs;
+	short pair;
+	
+	int X = 80, Y = 24;//TODO macros
+	wattr_get(win, &attrs, &pair, NULL);
+	wattrset(win, COLOR_PAIR(20));
+	sprintf(line, "T: 0x%08x", now);
+	snprintf(liner, 17, "%-13s", line);
+	X -= strlen(liner);
+	mvaddnstr(Y, X, liner, 80-X);
+	wattrset(win, COLOR_PAIR(19));
+	sprintf(line, "R: 0x%02x%02x", ARC4_I, ARC4_J);
+	snprintf(liner, 17, "%-9s", line);
+	X -= strlen(liner)+1;
+	mvaddnstr(Y, X, liner, 80-X);
+	wattrset(win, COLOR_PAIR(18));
+	sprintf(line, "G: %i", TURN);
+	snprintf(liner, 17, "%-13s", line);
+	X -= strlen(liner)+1;
+	mvaddnstr(Y, X, liner, 80-X);
+	wattrset(win, COLOR_PAIR(17));
+	sprintf(line, "F: %i", frame);
+	snprintf(liner, 17, "%-13s", line);
+	X -= strlen(liner)+1;
+	mvaddnstr(Y, X, liner, 80-X);
+	wattrset(win, COLOR_PAIR(16));
+	sprintf(line, "I: %s", codeins);
+	snprintf(liner, 17, "%-10s", line);
+	X -= strlen(liner)+1;
+	mvaddnstr(Y, X, liner, 80-X);
+	wattr_set(win, attrs, pair, NULL);
 	wmove(win, y, x);
 	int result = real_wrefresh(win);
 	return result;
@@ -392,7 +402,6 @@ int OVERLOAD(ioctl)(int d, unsigned long request, ...) {
 		result = real_ioctl(d, request, arg);
 		struct winsize *size;
 		size = (struct winsize *)arg;
-		printf("ioctl@%dx%d\n", size->ws_row, size->ws_col);
 		size->ws_row = 25;
 		size->ws_col = 80;
 	}

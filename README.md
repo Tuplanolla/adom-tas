@@ -97,3 +97,16 @@ Repeat:
                  `----(7)
                        `----(8)
 </pre>
+
+User Interface
+--------------
+
+The user interface deserves a mention here since it's so intuitive.
+
+The status bar looks like
+<pre>
+<span style="color: red;">I: \M\Cf  </span> <span style="color: yellow;">F: 32        </span> <span style="color: green;">G: 16        </span> <span style="color: cyan;">R: 0x08dc</span> <span style="color: blue;">T: 0x7fe86be0</span>
+</pre>
+and contains the last input I, the number of the last recorded frame F, the number of the last played turn G, the current index pair of the random number generator R and the current system time T.
+
+The keys to save, load and control the statusbar are currently undefined.
