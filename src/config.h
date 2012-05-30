@@ -8,7 +8,7 @@ Provides.
 Sets the default locations of (all kinds of things).
 **/
 #define HOME "/home/tuplanolla"//TODO automate
-#define EXECUTABLE_PATH HOME"/adom-tas/adom"
+#define EXECUTABLE_PATH HOME"/adom/adom"
 #define LIBRARY_PATH HOME"/adom-tas/src/adom-tas.so"
 #define LOG_PATH HOME"/adom-tas/adom-tas.log"
 #define DATA_PATH HOME"/.adom.data"
