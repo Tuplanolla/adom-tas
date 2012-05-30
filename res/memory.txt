@@ -1,0 +1,1850 @@
+description address type range name lock
+
+"Inventory" 43e7f0 struct
+	"#1" [[[?+0]+0]+0]
+	"#2" [[[[?+0]+0]+4]+0]
+	"#3" [[[[[?+0]+0]+4]+4]+0]
+	"#..." [[...[[[?+0]+0]+4]...+4]+0]
+		"Type" ?+0 int32 0...2b8 items =37
+		"Identified" ?+4 int32 0...1 bit =1
+		"Status Known" ?+8 int32 0...1 bit =1
+		"Preservation Known" ?+c int32 0...1 bit =1
+		"Cooked" ?+10 int32 0...1 bit =1
+		"Appraised Level" ?+14 int32 -80000000...7fffffff =0
+		"Appraised" ?+18 int32 0...1 bit =1
+		"Status" ?+1c int32 0...2 status =2
+		"Name" ?+20 int8* 0...20 ="\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0"
+		"Prefix" ?+40 int32 -1...3e prefix =-1
+		"Suffix" ?+44 int32 -1...2a suffix =-1
+		"Protection Modifier" ?+48 int32 -80000000...7fffffff =32768
+		"Defensive Modifier" ?+4c int32 -80000000...7fffffff =32768
+		"Melee Accuracy Modifier" ?+50 int32 -80000000...7fffffff =32768
+		"Melee Modifier 1" ?+54 int32 -80000000...7fffffff =32768
+		"Melee Modifier 2" ?+58 int32 -80000000...7fffffff =32768
+		"Melee Modifier 3/2 Ratio" ?+5c int32 -80000000...7fffffff =1073741824
+		"Missile Accuracy Modifier" ?+60 int32 -80000000...7fffffff =32768
+		"Missile Modifier 1" ?+64 int32 -80000000...7fffffff =32768
+		"Missile Modifier 2" ?+68 int32 -80000000...7fffffff =32768
+		"Missile Modifier 3/2 Ratio" ?+6c int32 -80000000...7fffffff =1073741824
+		"Charges" ?+70 int32 0...7fffffff =2147483647
+		"Turns/Attribute Selector/Spellbook/Corpse" ?+74 int32 0...7fffffff/0...8/0...2e/0...1a1 attributes/spellbooks/corpses =8
+		"Reads/Attribute Modifier" ?+78 int32 0...7fffffff/0...7fffffff =2147483647
+		"Amount" ?+7c int32 0...7fffffff =1
+		"Rusty" ?+80 int32 0...1 bit =0
+		"Broken" ?+84 int32 0...1 bit =0
+		"Unpaid" ?+88 int32 0...1 bit =0
+		"Lit" ?+8c int32 0...1 bit =1
+		"Poison" ?+90 int32 0...7fffffff =2147483647
+		"Previous Check" ?+94 int32 0...7fffffff =0
+		"Properties" ?+98 int32 0...ff properties =ff
+		"Serial Number" ?+9c int32 0...0 =0
+"Spellbook Frequency" 504dc0 int32 7d0...4e20 =200000
+"Equipment" 5edac0 struct
+	"#1 (Head)" [?+0]
+	"#2 (Neck)" [?+4]
+	"#3 (Body)" [?+8]
+	"#4 (Girdle)" [?+c]
+	"#5 (Cloak)" [?+10]
+	"#6 (Right Hand)" [?+14]
+	"#7 (Left Hand)" [?+18]
+	"#8 (Right Ring)" [?+1c]
+	"#9 (Left Ring)" [?+20]
+	"#10 (Bracers)" [?+24]
+	"#11 (Gauntlets)" [?+28]
+	"#12 (Boots)" [?+2c]
+	"#13 (Missile Weapon)" [?+30]
+	"#14 (Missiles)" [?+34]
+	"#15 (Tool)" [?+38]
+		...
+"Skills" 5faec0 struct
+	"#1" ?+0
+	"#2" ?+14
+	"#3" ?+28
+	"#..." ?+...
+ 	"#41" ?+320
+		"Type" ?+0 int32 0...28 skills =0
+		"Learned" ?+4 int32 0...1 bit =1
+		"Primary Maximum" ?+8 int32 0...64 =100
+		"Secondary Maximum" ?+c int32 0...64 =100
+		"Amount" ?+10 int8 0...64 =100
+		"Modifier" ?+11 int8 -80...7f =7f
+		"Quick-Mark" ?+12 int8 -1...9 =-1
+"Spell Castings" 5fb388 int32 0...7530 =30000
+	"#1 (Magic Missile/Minor Punishment)" ?+0
+	"#2 (Lightning Bolt/Divine Wrath)" ?+4
+	"#3 (Identify/Enlightement)" ?+8
+	"#..." ?+...
+	"#47 (Acid Ball/Rain of Sorrow)" ?+b8
+"Spell Powers" 5fb444 int32 0...7530 =30000
+	"#1" ?+0
+	"#2" ?+4
+	"#3" ?+8
+	"#..." ?+...
+	"#47" ?+b8
+"Weapon Skills" 5fbf00 int32 1...f
+	"#1 (Unarmed Fighting)" ?+0
+	"#2 (Daggers and Knives)" ?+48
+	"#3 (Clubs and Hammers)" ?+90
+	"#4 (Maces and Flails)" ?+d8
+	"#5 (Swords)" ?+120
+	"#6 (Axes)" ?+168
+	"#7 (Whips)" ?+1b0
+	"#8 (Pole Arms)" ?+1f8
+	"#9 (Twohanded Weapons)" ?+240
+	"#10 (Staves)" ?+288
+	"#11 (Slings)" ?+2d0
+	"#12 (Bows)" ?+318
+	"#13 (Crossbows)" ?+360
+	"#14 (Thrown Axes and Hammers)" ?+3a8
+	"#15 (Thrown Daggers and Knives)" ?+3f0
+	"#16 (Thrown Rocks and Clubs and Hammers)" ?+438
+	"#17 (Thrown Spears)" ?+480
+	"#18 (Boomerangs and Scurgari)" ?+4c8
+	"#19 (Shields)" ?+510
+		"Level" ?+0
+		"Marks" ?+4
+"Identified Items" 5ee714 int32 0...1 bit =1
+	"#1" ?+0
+	"#2" ?+4
+	"#3" ?+8
+	"#..." ?+...
+	"#696" ?+ae0
+"Identified Spellbooks" 5fb560 int32 0...1 bit =1
+	"#1" ?+0
+	"#2" ?+4
+	"#3" ?+8
+	"#..." ?+...
+	"#46" ?+b4
+"Name" 5fc500 int8* 0...c ="\0\0\0\0\0\0\0\0\0\0\0\0"
+"Race" 5fc510 int16 0...9 race =0
+"Class" 5fc514 int16 0...13 profession =8
+"Gender" 5fc518 int16 0...1 gender =0
+"Location Parameter 1" 5fc51c int16 0...32 location_p1 =2
+"Location Parameter 2" 5fc520 int16 0...32 location_p2 =11
+"Location Parameter 3" 604a1c int16 0...32 location_p0 =-1
+"Health" 5ffe8c int32 0...178956970 =89478485
+"Maximum Health" 5ffe90 int32 0...178956970 =89478485
+"Regeneration" 5ffecc int32 1...7fffffff =1
+	"#1 (Health)" ?+0
+	"#2 (Power)" ?+4
+"Experience" 5fff00 int32 0...3b9ac9ff =0
+"History" 5fff18 int32 0...???
+	"#1 (Parents)" history_parents ?+0
+	"#2 (Childhood)" history_childhood ?+4
+	"#3 (Youth)" history_youth ?+8
+	"#4 (Adulthood)" history_adulthood ?+c
+"Attributes" 5fff28 int32 0...63
+	"#1 (Strength)" ?+0
+	"#2 (Learning)" ?+4
+	"#3 (Willpower)" ?+8
+	"#4 (Dexterity)" ?+c
+	"#5 (Toughness)" ?+10
+	"#6 (Charisma)" ?+14
+	"#7 (Appearance)" ?+18
+	"#8 (Mana)" ?+1c
+	"#9 (Perception)" ?+20
+"Maximum Attributes" 5fff4c int32 0...63
+	...
+"Blind" 5fffdc int32 0...7fffffff =0
+"Stunned" 5fffe0 int32 0...7fffffff =0
+"Confused" 5fffe4 int32 0...7fffffff =0
+"Slowed" 5fffe8 int32 0...7fffffff =0
+"Paralyzed" 5fffec int32 0...7fffffff =0
+"Sick" 5ffff0 int32 0...7fffffff =0
+"Deaf" 5ffff4 int32 0...7fffffff =0
+"Mute" 5ffff8 int32 0...7fffffff =0
+"Sleep" 5ffffc int32 0...7fffffff =0
+"Bless" 600000 int32 0...7fffffff =1073741824
+"Invisible" 600004 int32 0...7fffffff =1073741824
+"Experience Levels" 600028 int32 0...3b9ac9ff =1
+	"#1 (Level 2)" ?+0
+	"#2 (Level 3)" ?+4
+	"#3 (Level 4)" ?+8
+	"#..." ?+...
+	"#49 (Level 50)" ?+c0
+"Power" 604714 int32 0...7fffffff =1073741824
+"Maximum Power" 60474c int32 0...7fffffff =1073741824
+"Alcohol" 604750 int32 -80000000...7fffffff =0
+"Satiation" 604760 int32 -80000000...7fffffff =5dc
+"Intrinsics" 604764 int32 -80000000...7fffffff intrinsics =33553855
+"Age" 604778 int32 -80000000...7fffffff
+	"#1 (Minimum)" ?+0 =0
+	"#2 (Modifier)" ?+4 =0
+	"#3 (Maximum)" ?+8 =1073741824
+"Eye Color" 604788 int32 0...14 color =5
+"Hair Color" 60478c int32 0...14 color =5
+"Complexion Color" 604790 int32 0...14 color =5
+"Height" 604794 int32 0...147ae14 =21474836
+"Weight" 604798 int32 0...7fffffff =21474836
+"Alignment" 6047ac int32 -2710...1770 =0
+"Piety" 6047b0 int32 -80000000...7fffffff =1073741824
+	"#1 (Chaotic)" ?+0
+	"#2 (Neutral)" ?+4
+	"#3 (Lawful)" ?+8
+"Saves" 604940 int32 0...7fffffff =0
+"Corruption" 60495c int32 0...7fffffff =0
+"Strength of Atlas" 6049e8 int32 0...7fffffff =1073741824
+"Farsight" 6049ec int32 0...7fffffff =1073741824
+"Birthday" 6049f0 int32 0...7fffffff =0
+"Speed" 604a30 int32 -80000000...7fffffff =1000
+"Speed Modifier" 604a38 int32 -80000000...7fffffff =0
+"Serial Number" 604c00 int32 0...7fffffff =100
+
+name
+	description offset
+
+items
+	"dagger" 0
+	"club" 1
+	"short sword" 2
+	"hand axe" 3
+	"long sword" 4
+	"battle axe" 5
+	"quarterstaff" 6
+	"mace" 7
+	"robe" 8
+	"clothes" 9
+	"leather armor" a
+	"scale mail" b
+	"chain mail" c
+	"plate mail" d
+	"bracers of defense"/"silver bracers" e
+	"bracers of protection"/"copper bracers" f
+	"small shield" 10
+	"medium shield" 11
+	"large shield" 12
+	"tower shield" 13
+	"broadsword" 14
+	"iron ration" 15
+	"piece of raw meat" 16
+	"thieves picks" 17
+	"heavy club" 18
+	"thick furs" 19
+	"horned helmet" 1a
+	"heavy boots" 1b
+	"leather cap" 1c
+	"light furs" 1d
+	"light boots" 1e
+	"gauntlets" 1f
+	"gloves" 20
+	"hand crossbow" 21
+	"dark elven quarrel"/"tiny quarrel" 22
+	"elven chain mail" 23
+	"scimitar" 24
+	"gold piece" 25
+	"leather cloak" 26
+	"light cloak" 27
+	"leather boots" 28
+	"gnomish boots" 29
+	"warhammer" 2a
+	"studded leather armor" 2b
+	"ring of protection"/"silver ring" 2c
+	"ring of defense"/"golden ring" 2d
+	"ring of fire resistance"/"wooden ring" 2e
+	"ring of luck"/"copper ring" 2f
+	"ring of searching"/"bronze ring" 30
+	"potion of extra healing"/"blue potion" 31
+	"short bow" 32
+	"arrow" 33
+	"sling" 34
+	"rock" 35
+	"metal cap" 36
+	"apple" 37
+	"loaf of elven bread" 38
+	"spider bread" 39
+	"iron boots" 3a
+	"everburning torch"/"torch" 3b
+	"spear" 3c
+	"potion of healing"/"swirly potion" 3d
+	"scalpel" 3e
+	"potion of poison"/"oily potion" 3f
+	"potion of booze"/"black potion" 40
+	"stethoscope" 41
+	"thick gauntlets" 42
+	"light crossbow" 43
+	"quarrel" 44
+	"drakish scurgar" 45
+	"large hammer" 46
+	"leather apron" 47
+	"anvil" 48
+	"iron ingot"/"metal ingot" 49
+	"mithril ingot"/"metal ingot" 4a
+	"hooded cloak" 4b
+	"long bow" 4c
+	"heavy crossbow" 4d
+	"throwing club" 4e
+	"hood" 4f
+	"sandals" 50
+	"lute" 51
+	"harp" 52
+	"tamborine" 53
+	"mandoline" 54
+	"fiddle" 55
+	"flute" 56
+	"glockenspiel" 57
+	"spellbook"/"tome" 58
+	"scroll of identify"/"scroll labeled \"KLATHA DATHA NY'ARYATHA\"" 59
+	"wand of digging"/"oak wand" 5a
+	"holy symbol" 5b
+	"flail" 5c
+	"scroll of amnesia"/"scroll labeled \"ECNETOPINMO\"" 5d
+	"scroll of magic mapping"/"scroll labeled \"IDNUM AIROLG TISNART CIS\"" 5e
+	"scroll of power"/"scroll labeled \"Carpe Diem\"" 5f
+	"potion of water"/"watery potion" 60
+	"hat" 61
+	"potion of carrot juice"/"orange potion" 62
+	"wand of knocking"/"pine wand" 63
+	"wand of magic missiles"/"tin wand" 64
+	"wand of lightning"/"brass wand" 65
+	"potion of invisibility"/"clear potion" 66
+	"corpse" 67
+	"potion of balance"/"gray potion" 68
+	"potion of exchange"/"golden potion" 69
+	"potion of gain attributes"/"glowing potion" 6a
+	"boomerang"/"strange stick" 6b
+	"girdle of carrying"/"thick girdle" 6c
+	"metal girdle" 6d
+	"girdle of giant strength"/"bulky girdle" 6e
+	"girdle of weight"/"strange metal girdle" 6f
+	"leather girdle" 70
+	"mithril dagger"/"dagger" 71
+	"mithril long sword"/"long sword" 72
+	"mithril battle axe"/"battle axe" 73
+	"mithril mace"/"mace" 74
+	"mithril scale mail"/"scale mail" 75
+	"mithril chain mail"/"chain mail" 76
+	"mithril plate mail"/"plate mail" 77
+	"small mithril shield"/"small shield" 78
+	"medium mithril shield"/"medium shield" 79
+	"large mithril shield"/"large shield" 7a
+	"tower mithril shield"/"tower shield" 7b
+	"mithril broadsword"/"broadsword" 7c
+	"mithril scimitar"/"scimitar" 7d
+	"mithril warhammer"/"warhammer" 7e
+	"mithril cap"/"metal cap" 7f
+	"mithril boots"/"metal boots" 80
+	"mithril spear"/"spear" 81
+	"mithril quarrel"/"quarrel" 82
+	"large mithril hammer"/"large hammer" 83
+	"mithril flail"/"flail" 84
+	"mithril girdle"/"metal girdle" 85
+	"adamantium dagger"/"dagger" 86
+	"adamantium long sword"/"long sword" 87
+	"adamantium battle axe"/"battle axe" 88
+	"adamantium mace"/"mace" 89
+	"adamantium scale mail"/"scale mail" 8a
+	"adamantium chain mail"/"chain mail" 8b
+	"adamantium plate mail"/"plate mail" 8c
+	"small adamantium shield"/"small shield" 8d
+	"medium adamantium shield"/"medium shield" 8e
+	"large adamantium shield"/"large shield" 8f
+	"tower adamantium shield"/"tower shield" 90
+	"adamantium broadsword"/"broadsword" 91
+	"adamantium scimitar"/"scimitar" 92
+	"adamantium warhammer"/"warhammer" 93
+	"adamantium cap"/"metal cap" 94
+	"adamantium boots"/"metal boots" 95
+	"adamantium spear"/"spear" 96
+	"adamantium quarrel"/"quarrel" 97
+	"large adamantium hammer"/"large hammer" 98
+	"adamantium flail"/"flail" 99
+	"adamantium girdle"/"metal girdle" 9a
+	"sword of sharpness"/"long sword" 9b
+	"adamantium ingot"/"metal ingot" 9c
+	"wand of trap creation"/"ivory wand" 9d
+	"wand of monster creation"/"ironwood wand" 9e
+	"si"/"strange item" 9f
+	"lump of bee wax" a0
+	"lump of gelee royal" a1
+	"ring of djinni summoning"/"ordinary ring" a2
+	"wedding ring"/"nograin ring" a3
+	"brass ring" a4
+	"scroll of familiar summoning"/"scroll labeled \"mead ni najap\"" a5
+	"amulet of greed"/"platinum amulet" a6
+	"amulet of protection"/"silver amulet" a7
+	"amulet of defense"/"iron amulet" a8
+	"wand of wonder"/"teak wand" a9
+	"amulet of life saving"/"steel amulet" aa
+	"wand of teleportation"/"iron wand" ab
+	"wand of light"/"steel wand" ac
+	"necklace of rapid healing"/"coral necklace" ad
+	"amulet of protection from undead"/"bone amulet" ae
+	"amulet of protection from constructs"/"onyx amulet" af
+	"girdle of greed"/"copper-hewn girdle" b0
+	"stomafillia herb"/"strange herb" b1
+	"burb root"/"strange herb" b2
+	"curaria mancox herb"/"strange herb" b3
+	"stomacemptia herb"/"strange herb" b4
+	"devil's rose"/"strange herb" b5
+	"pepper petal"/"strange herb" b6
+	"alraunia antidote"/"strange herb" b7
+	"demon daisy"/"strange herb" b8
+	"scroll of monster detection"/"scroll labeled \"KTTdLwrgt\"" b9
+	"scroll of gold detection"/"scroll labeled \"MKMNFST\"" ba
+	"scroll of item detection"/"scroll labeled \"ABABILA\"" bb
+	"scroll of monster aggravation"/"scroll labeled \"RambaZamba\"" bc
+	"great axe" bd
+	"two-handed sword" be
+	"fortune cookie" bf
+	"spenseweed"/"strange herb" c0
+	"moss of mareilon"/"strange herb" c1
+	"morgia root"/"strange herb" c2
+	"pick axe" c3
+	"dwarven rune axe" c4
+	"necklace of rabies resistance"/"pearl necklace" c5
+	"scroll of balance"/"scroll labeled \"SutsI\"" c6
+	"scythe of corruption"/"ancient scythe" c7
+	"IBM guild manual"/"scroll labeled \"irk gleknow mizk\"" c8
+	"fluff ball" c9
+	"amulet of chaos"/"obsidian amulet" ca
+	"amulet of order"/"marble amulet" cb
+	"ring of the master cat"/"cats eye ring" cc
+	"scroll of uncursing"/"scroll labeled \"ACME\"" cd
+	"amulet of teleport control"/"copper amulet" ce
+	"ring of damage"/"onyx ring" cf
+	"eternium dagger"/"dagger" d0
+	"eternium long sword"/"long sword" d1
+	"eternium battle axe"/"battle axe" d2
+	"eternium mace"/"mace" d3
+	"eternium scale mail"/"scale mail" d4
+	"eternium chain mail"/"chain mail" d5
+	"eternium plate mail"/"plate mail" d6
+	"small eternium shield"/"small shield" d7
+	"medium eternium shield"/"medium shield" d8
+	"large eternium shield"/"large shield" d9
+	"tower eternium shield"/"tower shield" da
+	"eternium broadsword"/"broadsword" db
+	"eternium scimitar"/"scimitar" dc
+	"eternium warhammer"/"warhammer" dd
+	"eternium cap"/"metal cap" de
+	"eternium boots"/"metal boots" df
+	"eternium spear"/"spear" e0
+	"eternium quarrel"/"quarrel" e1
+	"large eternium hammer"/"large hammer" e2
+	"eternium flail"/"flail" e3
+	"eternium girdle"/"metal girdle" e4
+	"wand of stunning"/"willow wand" e5
+	"wand of paralyzation"/"bone wand" e6
+	"wand of death"/"copper wand" e7
+	"wand of poison"/"obsidian wand" e8
+	"ring of fire"/"adamantium ring" e9
+	"ring of ice"/"mithril ring" ea
+	"necklace of the eye"/"splendid necklace" eb
+	"wand of webbing"/"softwood wand" ec
+	"potion of literacy"/"sulphuric potion" ed
+	"dwarven sausage" ee
+	"hurthling cake" ef
+	"loaf of hurthling bread" f0
+	"loaf of bread" f1
+	"potion of strength"/"bubbly potion" f2
+	"potion of learning"/"misty potion" f3
+	"potion of willpower"/"pink potion" f4
+	"potion of dexterity"/"muddy potion" f5
+	"potion of toughness"/"sandy potion" f6
+	"potion of charisma"/"murky potion" f7
+	"potion of beauty"/"silvery potion" f8
+	"potion of mana"/"blazing potion" f9
+	"amulet of health"/"leather amulet" fa
+	"wand of fireballs"/"marble wand" fb
+	"golden gladius" fc
+	"dwarven shield"/"ancient dwarven shield" fd
+	"fried bat" fe
+	"cooked lizard" ff
+	"fat worm" 100
+	"rat tail" 101
+	"cooked roach" 102
+	"potion of youth"/"milky potion" 103
+	"potion of longevity"/"purple potion" 104
+	"elven long bow" 105
+	"ancient claymore" 106
+	"Aylas Holy Scarf"/"silk scarf" 107
+	"arrow of undead slaying"/"arrow" 108
+	"arrow of construct slaying"/"arrow" 109
+	"arrow of giant slaying"/"arrow" 10a
+	"arrow of dragon slaying"/"arrow" 10b
+	"arrow of humanoid slaying"/"arrow" 10c
+	"quarrel of undead slaying"/"quarrel" 10d
+	"quarrel of construct slaying"/"quarrel" 10e
+	"quarrel of giant slaying"/"quarrel" 10f
+	"quarrel of dragon slaying"/"quarrel" 110
+	"quarrel of humanoid slaying"/"quarrel" 111
+	"lead sling bullet"/"sling bullet" 112
+	"mithril sling bullet"/"sling bullet" 113
+	"adamantium sling bullet"/"sling bullet" 114
+	"eternium sling bullet"/"sling bullet" 115
+	"sling bullet of crashing"/"sling bullet" 116
+	"mace of disruption" 117
+	"heavy mace" 118
+	"black long sword" 119
+	"silvery two-handed sword" 11a
+	"torch" 11b
+	"box with flint and steel" 11c
+	"tinderbox" 11d
+	"arrow of demon slaying"/"arrow" 11e
+	"quarrel of demon slaying"/"quarrel" 11f
+	"sling bullet of demon slaying"/"sling bullet" 120
+	"holy avenger"/"long sword" 121
+	"Iron Crown of Havlor"/"iron crown" 122
+	"iron crown" 123
+	"wand of earthquakes"/"stone wand" 124
+	"pendant of beauty"/"ruby amulet" 125
+	"bracers of resistance"/"iron bracers" 126
+	"ring of gain attribute"/"ruby ring" 127
+	"knife" 128
+	"rabbit knife"/"knife" 129
+	"thin dagger" 12a
+	"boots of sneakiness"/"leather boots" 12b
+	"girdle of strength"/"hard girdle" 12c
+	"pendant of mana"/"amber amulet" 12d
+	"Chaos Orb of Elemental Water" 12e
+	"Chaos Orb of Elemental Air" 12f
+	"Chaos Orb of Elemental Fire" 130
+	"Chaos Orb of Elemental Earth" 131
+	"potion of ultra healing"/"rainbow-hued potion" 132
+	"potion of blindness"/"amber potion" 133
+	"potion of deafness"/"red potion" 134
+	"potion of confusion"/"green potion" 135
+	"heavy crossbow" 136
+	"ring of slaying"/"opal ring" 137
+	"silvery arrow" 138
+	"obsidian quarrel" 139
+	"cloak of adornment"/"multi-colored cloak" 13a
+	"amulet of free action"/"golden amulet" 13b
+	"staff of the Wanderer"/"quarterstaff" 13c
+	"eternium ingot"/"metal ingot" 13d
+	"wand of wishing"/"glowing wand" 13e
+	"ring of invisibility"/"jade ring" 13f
+	"blue dragon scale mail" 140
+	"black dragon scale mail" 141
+	"white dragon scale mail" 142
+	"red dragon scale mail" 143
+	"cudgel" 144
+	"heavy cudgel" 145
+	"ebony spear" 146
+	"ring of see invisible"/"amber ring" 147
+	"ring of regeneration"/"coral ring" 148
+	"bracers of regeneration"/"steel bracers" 149
+	"crown of regeneration"/"brass crown" 14a
+	"cloak of protection"/"cheap cloak" 14b
+	"cloak of defense"/"warm cloak" 14c
+	"gloves of dexterity"/"light gloves" 14d
+	"diadem of beauty"/"silver diadem" 14e
+	"gauntlets of strength"/"iron-shod gauntlets" 14f
+	"necklace of the silver tongue"/"shining necklace" 150
+	"cloak of invisibility"/"fine cloak" 151
+	"scroll of dark predictions"/"scroll labeled \"Odiv\"" 152
+	"scroll of chaos resistance"/"scroll labeled \"Yik Mech'Shegoth\"" 153
+	"ring of cold resistance"/"marble ring" 154
+	"ring of stun resistance"/"electrum ring" 155
+	"ring of acid resistance"/"iron ring" 156
+	"potion of uselessness"/"violet potion" 157
+	"rune-covered long sword" 158
+	"halberd" 159
+	"amulet of perseverance"/"electrum amulet" 15a
+	"bracers of toughness"/"bone bracers" 15b
+	"lead-filled mace" 15c
+	"amulet of light"/"glass amulet" 15d
+	"hexagonal key" 15e
+	"small key" 15f
+	"tiny key" 160
+	"square key" 161
+	"round key" 162
+	"triangular key" 163
+	"silver key" 164
+	"piece of iron ore"/"rock with metal veins" 165
+	"piece of mithril ore"/"rock with metal veins" 166
+	"piece of adamantium ore"/"rock with metal veins" 167
+	"piece of eternium ore"/"rock with metal veins" 168
+	"wand of door creation"/"glass wand" 169
+	"oil of rust removal"/"white potion" 16a
+	"statue" 16b
+	"wand of acid"/"wooden wand" 16c
+	"wand of cold"/"silver wand" 16d
+	"wand of fire"/"golden wand" 16e
+	"orcish knife"/"crude knife" 16f
+	"orcish spear"/"crude spear" 170
+	"potion of cure poison"/"cyan potion" 171
+	"scroll of great identify"/"scroll labeled \"DOGO FUTSF\"" 172
+	"gauntlets of peace"/"gauntlets" 173
+	"red dragon-hide gauntlets"/"red gauntlets" 174
+	"black dragon-hide gauntlets"/"black gauntlets" 175
+	"blue dragon-hide gauntlets"/"blue gauntlets" 176
+	"white dragon-hide gauntlets"/"white gauntlets" 177
+	"red leather gauntlets"/"red gauntlets" 178
+	"black leather gauntlets"/"black gauntlets" 179
+	"blue leather gauntlets"/"blue gauntlets" 17a
+	"white leather gauntlets"/"white gauntlets" 17b
+	"helm of teleportation"/"metal helmet" 17c
+	"amulet of death ray resistance"/"stone amulet" 17d
+	"amulet of petrification resistance"/"opal amulet" 17e
+	"bone" 17f
+	"potion of insight"/"magenta potion" 180
+	"scroll of light"/"scroll labeled \"FROTZ\"" 181
+	"scroll of darkness"/"scroll labeled \"ZTORF\"" 182
+	"potion of wonder"/"shimmering potion" 183
+	"berzio potion"/"brown potion" 184
+	"scroll of teleportation"/"scroll labeled \"YTTOCS PU EM MAEB\"" 185
+	"scorched spear" 186
+	"scroll of satiation"/"scroll labeled \"FPMAM\"" 187
+	"ruby"/"red gem" 188
+	"sapphire"/"blue gem" 189
+	"emerald"/"green gem" 18a
+	"turquoise"/"blue gem" 18b
+	"turquoise"/"green gem" 18c
+	"aquamarine"/"blue gem" 18d
+	"aquamarine"/"green gem" 18e
+	"amber"/"brown gem" 18f
+	"topaz"/"brown gem" 190
+	"opal"/"white gem" 191
+	"worthless piece of white glass"/"white gem" 192
+	"worthless piece of red glass"/"red gem" 193
+	"worthless piece of blue glass"/"blue gem" 194
+	"worthless piece of green glass"/"green gem" 195
+	"worthless piece of brown glass"/"brown gem" 196
+	"Brannalbin's Cloak of Defense"/"gray cloak" 197
+	"ring of minor elemental mastery"/"topaz ring" 198
+	"ring of elemental mastery"/"emerald ring" 199
+	"ring of doom"/"black ring" 19a
+	"crystal of knowledge"/"green gem" 19b
+	"crystal of light"/"white gem" 19c
+	"crystal of darkness"/"brown gem" 19d
+	"crystal of power"/"red gem" 19e
+	"dagger of returning"/"thin dagger" 19f
+	"spear of returning"/"short spear" 1a0
+	"short spear" 1a1
+	"wand of trap detection"/"purple wand" 1a2
+	"bit of gnomish candy"/"bit of candy" 1a3
+	"bit of plain candy"/"bit of candy" 1a4
+	"melon" 1a5
+	"crystal of fire"/"red gem" 1a6
+	"crystal of health"/"blue gem" 1a7
+	"gauntlets of eternal peace"/"gauntlets" 1a8
+	"heavy flail" 1a9
+	"morning star" 1aa
+	"mighty morning star"/"morning star" 1ab
+	"girdle of the emperors"/"golden girdle" 1ac
+	"amulet of balance"/"gray amulet" 1ad
+	"amulet of the cold heart"/"bleak amulet" 1ae
+	"orcish helmet"/"black helmet" 1af
+	"helm of leadership"/"silver helmet" 1b0
+	"helm of beauty"/"silver helmet" 1b1
+	"silver helmet" 1b2
+	"wand of destruction"/"cedar wand" 1b3
+	"staff of power"/"quarterstaff" 1b4
+	"staff of the magi"/"quarterstaff" 1b5
+	"brass bracers" 1b6
+	"brass amulet" 1b7
+	"mace of destruction"/"mace" 1b8
+	"staff of smiting"/"quarterstaff" 1b9
+	"dagger of death"/"dagger" 1ba
+	"cloak of Oman"/"dirty cloak" 1bb
+	"large ration" 1bc
+	"amulet of water breathing"/"blue amulet" 1bd
+	"trident" 1be
+	"rune-covered trident"/"trident" 1bf
+	"sword of Nonnak"/"broadsword" 1c0
+	"elemental gauntlets"/"gauntlets" 1c1
+	"manual of bridge building"/"huge manual" 1c2
+	"hatchet" 1c3
+	"log" 1c4
+	"ring of the High Kings"/"platinum ring" 1c5
+	"potion of sickness"/"light magenta potion" 1c6
+	"sickle" 1c7
+	"scythe" 1c8
+	"loaf of dwarvish bread" 1c9
+	"piece of dry meat" 1ca
+	"amulet of luck"/"lead amulet" 1cb
+	"bone helmet" 1cc
+	"throwing knife" 1cd
+	"heavy spear" 1ce
+	"cooking set" 1cf
+	"piece of fresh meat" 1d0
+	"spider shell armor"/"shell armor" 1d1
+	"shell armor" 1d2
+	"wooden stick" 1d3
+	"fletchery set" 1d4
+	"black robe" 1d5
+	"skull dagger" 1d6
+	"skull staff" 1d7
+	"skull club" 1d8
+	"heavy skull club" 1d9
+	"wooden shield" 1da
+	"heavy cudgel" 1db
+	"frog legs" 1dc
+	"golden ball" 1dd
+	"spiked boots" 1de
+	"brass knuckles" 1df
+	"gloves of smiting"/"gloves" 1e0
+	"phase dagger"/"gray dagger" 1e1
+	"potion of boost strength"/"light green potion" 1e2
+	"potion of boost learning"/"mercury potion" 1e3
+	"potion of boost willpower"/"light cyan potion" 1e4
+	"potion of boost dexterity"/"light red potion" 1e5
+	"potion of boost toughness"/"turquoise potion" 1e6
+	"potion of boost charisma"/"light blue potion" 1e7
+	"potion of boost appearance"/"blubbery potion" 1e8
+	"potion of boost perception"/"bright potion" 1e9
+	"potion of boost mana"/"rusty potion" 1ea
+	"scroll of luck"/"scroll labeled \"YIKES\"" 1eb
+	"scroll of ill fate"/"scroll labeled \"IAZNAB\"" 1ec
+	"scroll of treasure creation"/"scroll labeled \"NADSIL SEETRURA\"" 1ed
+	"scroll of item creation"/"scroll labeled \"GNOZAB\"" 1ee
+	"stone spear" 1ef
+	"stone axe" 1f0
+	"stone club" 1f1
+	"crystal scale mail"/"scale mail" 1f2
+	"crystal chain mail"/"chain mail" 1f3
+	"crystal plate mail"/"plate mail" 1f4
+	"small crystal shield"/"small shield" 1f5
+	"medium crystal shield"/"medium shield" 1f6
+	"large crystal shield"/"large shield" 1f7
+	"tower crystal shield"/"tower shield" 1f8
+	"scroll of danger"/"scroll labeled \"REGNAD\"" 1f9
+	"scroll of peace"/"scroll labeled \"GNAY-GNIY\"" 1fa
+	"potion of troll blood"/"blood red potion" 1fb
+	"potion of raw mana"/"sparkling potion" 1fc
+	"potion of oil"/"slimy potion" 1fd
+	"potion of education"/"dull potion" 1fe
+	"potion of training"/"light yellow potion" 1ff
+	"money belt"/"leather girdle" 200
+	"crystal dagger" 201
+	"book titled \"The Collected Works of Confucious\""/"brittle book" 202
+	"scroll of item destruction"/"scroll labeled \"MUNCH MUNCH\"" 203
+	"phial of Caladriel"/"crystal phial" 204
+	"scroll of charging"/"scroll labeled \"KAPOW\"" 205
+	"crown of science"/"steel crown" 206
+	"shield of raw steel"/"steel shield" 207
+	"spear of raw steel"/"steel spear" 208
+	"amulet of raw steel"/"steel amulet" 209
+	"climbing set" 20a
+	"mithril arrow"/"arrow" 20b
+	"adamantium arrow"/"arrow" 20c
+	"eternium arrow"/"arrow" 20d
+	"helm of water breathing"/"blue metal cap" 20e
+	"waterproof blanket"/"blanket" 20f
+	"plain blanket"/"blanket" 210
+	"scroll of information"/"scroll labeled \"ENO OWT EERHT\"" 211
+	"mummy wrapping"/"strange wrapping" 212
+	"ancient mummy wrapping"/"strange wrapping" 213
+	"ankh" 214
+	"papyrus scroll" 215
+	"herb seed"/"seed" 216
+	"plant seed"/"seed" 217
+	"wand of far slaying"/"brittle wand" 218
+	"fireproof blanket"/"blanket" 219
+	"potion of cure corruption"/"mottled potion" 21a
+	"wand of ball lightning"/"curved wand" 21b
+	"boots of the divine messenger"/"fine leather boots" 21c
+	"huge iron hammer" 21d
+	"hammer of the gods"/"huge iron hammer" 21e
+	"Perion's mithril plate mail"/"plate mail" 21f
+	"orcish dagger" 220
+	"orcish dagger"/"bloody dagger" 221
+	"whip" 222
+	"scourge" 223
+	"intricate wooden shield"/"wooden shield" 224
+	"small black shield"/"small shield" 225
+	"scroll of increase melee accuracy"/"scroll labeled \"WoPaK\"" 226
+	"scroll of increase melee damage"/"scroll labeled \"HcUo\"" 227
+	"scroll of defense"/"scroll labeled \"HITME\"" 228
+	"scroll of protection"/"scroll labeled \"CUTME\"" 229
+	"whistle" 22a
+	"ring of speed"/"aquamarine ring" 22b
+	"boots of speed"/"soft boots" 22c
+	"amulet of speed"/"bronze amulet" 22d
+	"seven league boots"/"worn boots" 22e
+	"bracers of speed"/"bronze bracers" 22f
+	"ring of teleport control"/"glowing ring" 230
+	"bandage" 231
+	"orcish battle axe"/"crude battle axe" 232
+	"scroll of repair"/"scroll labeled \"FOO BAR\"" 233
+	"giant boar skull" 234
+	"potion of potential strength"/"viscous potion" 235
+	"potion of potential learning"/"thick potion" 236
+	"potion of potential willpower"/"speckled potion" 237
+	"potion of potential dexterity"/"shiny potion" 238
+	"potion of potential toughness"/"heavy potion" 239
+	"potion of potential charisma"/"translucent potion" 23a
+	"potion of potential beauty"/"clotted potion" 23b
+	"potion of potential mana"/"light potion" 23c
+	"scroll of vermin control"/"scroll labeled \"CHUTZPAH\"" 23d
+	"boots of great speed"/"hide boots" 23e
+	"potion of boost speed"/"thin potion" 23f
+	"Crown of Chaos"/"obsidian crown" 240
+	"Sceptre of Chaos"/"obsidian sceptre" 241
+	"alchemistic gloves"/"gloves" 242
+	"black torc" 243
+	"huge rock" 244
+	"strange message"/"scroll labeled \"Fox Nawagu\"" 245
+	"Medal of Chaos"/"obsidian amulet" 246
+	"helm of mental stability"/"crystal helmet" 247
+	"ring of mental stability"/"agate ring" 248
+	"ring of the clear mind"/"fire opal ring" 249
+	"rune-covered club" 24a
+	"glaive"/"jet-black glaive" 24b
+	"Shirt of the Saints"/"clothes" 24c
+	"scroll of warning"/"scribbled scroll" 24d
+	"heavy throwing club"/"throwing club" 24e
+	"curved throwing club"/"throwing club" 24f
+	"throwing club of death"/"throwing club" 250
+	"mithril drakish scurgar"/"drakish scurgar" 251
+	"adamantium drakish scurgar"/"drakish scurgar" 252
+	"eternium drakish scurgar"/"drakish scurgar" 253
+	"drakish scurgar of returning"/"drakish scurgar" 254
+	"drakish scurgar of death"/"drakish scurgar" 255
+	"mithril two-handed sword"/"two-handed sword" 256
+	"adamantium two-handed sword"/"two-handed sword" 257
+	"eternium two-handed sword"/"two-handed sword" 258
+	"whip of slaughtering"/"whip" 259
+	"whip of the snake"/"whip" 25a
+	"mithril halberd"/"halberd" 25b
+	"adamantium halberd"/"halberd" 25c
+	"eternium halberd"/"halberd" 25d
+	"halberd of defense"/"halberd" 25e
+	"two-handed sword of parrying"/"two-handed sword" 25f
+	"knife of endurance"/"knife" 260
+	"robe of invisibility"/"robe" 261
+	"potion of raw chaos"/"flickering potion" 262
+	"bracers of war"/"shining silver bracers" 263
+	"Chaos Orb of Elemental Mana" 264
+	"black rune-covered dagger"/"dagger" 265
+	"black rune-covered dagger"/"dagger" 266
+	"wand of item detection"/"twisted wand" 267
+	"wand of gold detection"/"bronze wand" 268
+	"wand of monster detection"/"ebony wand" 269
+	"ratling pamphlet"/"tattered scroll" 26a
+	"short bow of accuracy"/"short bow" 26b
+	"long bow of accuracy"/"long bow" 26c
+	"light crossbow of accuracy"/"light crossbow" 26d
+	"heavy crossbow of accuracy"/"heavy crossbow" 26e
+	"sling of accuracy"/"sling" 26f
+	"sling of the long shot"/"sling" 270
+	"crumpled scroll" 271
+	"rune-covered sling" 272
+	"fine leather armor"/"leather armor" 273
+	"jet-black battle axe" 274
+	"robes of resistance" 275
+	"staff of the archmagi"/"quarterstaff" 276
+	"ring of immunity"/"sapphire ring" 277
+	"rune-covered heavy mace"/"heavy mace" 278
+	"medium obsidian shield"/"medium shield" 279
+	"sapphire amulet" 27a
+	"crown of leadership"/"silver crown" 27b
+	"dwarven pick axe"/"pick axe" 27c
+	"crown of fire"/"red crown" 27d
+	"crown of ice"/"blue crown" 27e
+	"crown of lightning"/"yellow crown" 27f
+	"potion of quickling blood"/"opaque potion" 280
+	"potion of visibility"/"smelly potion" 281
+	"iron gauntlets" 282
+	"gloves of carrying"/"gloves" 283
+	"javelin of death"/"black javelin" 284
+	"javelin of doom"/"obsidian javelin" 285
+	"black hurthling quarrel"/"tiny quarrel" 286
+	"long bow of hunting"/"long bow" 287
+	"figurine of wondrous power"/"figurine" 288
+	"black tome of Alsophocus"/"black tome" 289
+	"arrow of jelly slaying"/"arrow" 28a
+	"quarrel of jelly slaying"/"quarrel" 28b
+	"shining long spear"/"long spear" 28c
+	"emerald dagger"/"dagger" 28d
+	"platinum girdle" 28e
+	"iron-shod quarterstaff"/"quarterstaff" 28f
+	"mithril-shod quarterstaff"/"quarterstaff" 290
+	"adamantium-shod quarterstaff"/"quarterstaff" 291
+	"eternium-shod quarterstaff"/"quarterstaff" 292
+	"quicksilver quarterstaff"/"quarterstaff" 293
+	"Trident of the Red Rooster"/"red trident" 294
+	"moloch armor"/"hulking armor" 295
+	"fancy clothes" 296
+	"ugly clothes" 297
+	"blood-stained robe" 298
+	"clean robe" 299
+	"archery gloves"/"gloves" 29a
+	"boxing gloves"/"gloves" 29b
+	"studded gloves"/"gloves" 29c
+	"blank scroll"/"unlabeled scroll" 29d
+	"weird tome" 29e
+	"ring mail" 29f
+	"mithril ring mail"/"ring mail" 2a0
+	"adamantium ring mail"/"ring mail" 2a1
+	"eternium ring mail"/"scale mail" 2a2
+	"splint mail" 2a3
+	"mithril splint mail"/"splint mail" 2a4
+	"adamantium splint mail"/"splint mail" 2a5
+	"eternium splint mail"/"splint mail" 2a6
+	"magical writing set"/"writing set" 2a7
+	"tract of chaos"/"tome" 2a8
+	"tract of balance"/"tome" 2a9
+	"tract of order"/"tome" 2aa
+	"rune-covered halberd"/"halberd" 2ab
+	"axe of the minotaur emperor"/"great axe" 2ac
+	"boots of the slow shuffle"/"greased boots" 2ad
+	"amulet of hunger"/"tarnished amulet" 2ae
+	"ring of weakness"/"plain ring" 2af
+	"ring of the fish"/"vibrating ring" 2b0
+	"scroll of cure blindness"/"scroll labeled \"YNORI ERUP\"" 2b1
+	"potion of stun recovery"/"icky potion" 2b2
+	"scroll of education"/"scroll labeled \"MANNANNANMACLIR\"" 2b3
+	"piece of fish meat" 2b4
+	"scroll of literacy check"/"scroll labeled \"EDEVESH HANAGASH\"" 2b5
+	"marble statue" 2b6
+	"unfinished statue of an unquestionably famous hero" 2b7
+	"ring of karmic absorption"/"scratched ring" 2b8
+bit
+	"no" 0
+	"yes" 1
+status
+	"cursed" 0
+	"uncursed" 1
+	"blessed" 2
+prefix
+	"none" -1
+	weapons
+	"nasty" 0
+	"wicked" 1
+	"brutal" 2
+	"unwieldy" 3
+	"light" 4
+	"heavy" 5
+	"extra-heavy" 6
+	"ultra-heavy" 7
+	"poisonous" 8
+	"corrupting" 9
+	"red" a
+	"white" b
+	"green" c
+	"yellow" d
+	"chaotic" e
+	"lawful" f
+	"unbalanced" 10
+	"hateful" 11
+	"weeping" 12
+	"frozen" 13
+	"flaming" 14
+	"hefty" 15
+	"ashen" 16
+	"fickle" 17
+	"balanced" 18
+	"fragile" 19
+	"barbaric" 1a
+	"murderous" 1b
+	"barbed" 1c
+	"swift" 1d
+	"mild" 1e
+	"masterwork" 1f
+	missiles
+	"griffon-feathered" 20
+	"balanced" 21
+	"penetrating" 22
+	"unerring" 23
+	"unbalanced" 24
+	"winged" 25
+	"weighted" 26
+	"barbed" 27
+	"delicate" 28
+	armor
+	"vile" 29
+	"light" 2a
+	"heavy" 2b
+	"extra-heavy" 2c
+	"ultra-heavy" 2d
+	"beautiful" 2e
+	"shining" 2f
+	"rotting" 30
+	"red" 31
+	"white" 32
+	"green" 33
+	"yellow" 34
+	"gorgeous" 35
+	"charged" 36
+	"anti-magical" 37
+	"auto-locking" 38
+	"vigilant" 39
+	"trapped" 3a
+	"padded" 3b
+	"soft" 3c
+	"empowered" 3d
+	"worm-ridden" 3e
+	suffix+3f
+	category+6a
+suffix
+	"none" -1
+	weapons
+	"of defense" 0
+	"of corruption" 1
+	"of slaughtering" 2
+	"of thunder" 3
+	"of lightning" 4
+	"of the sun" 5
+	"of might" 6
+	"of the void" 7
+	"of damnation" 8
+	"of the eagle" 9
+	"of weakness" a
+	"of surrendering" b
+	"of fumbling" c
+	"of penetration" d
+	"of mayhem" e
+	"of devastation" f
+	"of hunting" 10
+	"of vampirism" 11
+	missiles
+	"of targeting" 12
+	"of slaying" 13
+	"of thunder" 14
+	"of darkness" 15
+	"of hunting" 16
+	armor
+	"of leadership" 17
+	"of hunger" 18
+	"of defense" 19
+	"of protection" 1a
+	"of chaos" 1b
+	"of order" 1c
+	"of balance" 1d
+	"of speed" 1e
+	"of sloth" 1f
+	"of damnation" 20
+	"of rage" 21
+	"of the sea" 22
+	"of resilience" 23
+	"of hate" 24
+	"of power" 25
+	"of life" 26
+	"of health" 27
+	"of anger" 28
+	"of carrying" 29
+	"of travelling" 2a
+	other-3f
+	category+2b
+category
+	"Helmets" 0
+	"Armor" 1
+	"Shields" 2
+	"Gauntlets" 3
+	"Cloaks" 4
+	"Girdles" 5
+	"Boots" 6
+	"Necklaces" 7
+	"Bracers" 8
+	"One-handed weapons" 9
+	"Two-handed weapons" a
+	"Missile weapons" b
+	"Missiles" c
+	"Tools" d
+	"Instruments" e
+	"Rings" f
+	"Wands" 10
+	"Potions" 11
+	"Scrolls" 12
+	"Books" 13
+	"Food" 14
+	"Valuables" 15
+	"Gems" 16
+attributes
+	"Strength" 0
+	"Learning" 1
+	"Willpower" 2
+	"Dexterity" 3
+	"Toughness" 4
+	"Charisma" 5
+	"Appearance" 6
+	"Mana" 7
+	"Perception" 8
+spellbooks
+	"Magic Missile"/"Minor Punishment" 0
+	"Lightning Bolt"/"Divine Wrath" 1
+	"Identify"/"Enlightement" 2
+	"Light" 3
+	"Darkness" 4
+	"Cure Light Wounds" 5
+	"Knock"/"Divine Key" 6
+	"Disarm Trap" 7
+	"Fireball"/"Major Punishment" 8
+	"Bless" 9
+	"Slow Monster" a
+	"Calm Monster" b
+	"Cure Serious Wounds" c
+	"Cure Critical Wounds" d
+	"Heal" e
+	"Cure Disease" f
+	"Neutralize Poison" 10
+	"Invisibility"/"Veil of the Gods" 11
+	"Destroy Undead"/"Dispel Undead" 12
+	"Slow Poison" 13
+	"Teleportation"/"Ethereal Bridge" 14
+	"Remove Curse" 15
+	"Greater Identify"/"Greater Enlightement" 16
+	"Earthquake" 17
+	"Revelation" 18
+	"Know Alignment" 19
+	"Create Item"/"Divine Favour" 1a
+	"Summon Monsters" 1b
+	"Petrification" 1c
+	"Frost Bolt"/"Nether Bolt" 1d
+	"Acid Bolt" 1e
+	"Fire Bolt"/"Hellish Flames" 1f
+	"Strength of Atlas"/"Lordly Might" 20
+	"Magic Lock"/"Seal of the Spheres" 21
+	"Improved Fireball"/"Invoked Devastation" 22
+	"Farsight" 23
+	"Web" 24
+	"Stun Ray"/"Lesser Divine Touch" 25
+	"Death Ray"/"Greater Divine Touch" 26
+	"Magic Map"/"Knowledge of the Ancients" 27
+	"Mystic Shovel"/"Divine Digger" 28
+	"Burning Hands"/"Baptism of Fire" 29
+	"Wish"/"Divine Intervention" 2a
+	"Scare Monster"/"Holy Awe" 2b
+	"Ice Ball"/"Freezing Fury" 2c
+	"Lightning Ball"/"Heavenly Fury" 2d
+	"Acid Ball"/"Rain of Sorrow" 2e
+corpses
+	"goblin" 0
+	"orc" 1
+	"large bat" 2
+	"giant rat" 3
+	"hobgoblin" 4
+	"kobold" 5
+	"rabid dog" 6
+	"wild cat" 7
+	"skeleton" 8
+	"giant frog" 9
+	"giant ant worker" a
+	"giant ant warrior" b
+	"giant ant queen" c
+	"gnoll" d
+	"kobold shaman" e
+	"hobgoblin leader" f
+	"zombie" 10
+	"orc scorcher" 11
+	"giant bat" 12
+	"huge bat" 13
+	"giant bee queen" 14
+	"giant bee warrior" 15
+	"giant bee worker" 16
+	"ogre" 17
+	"bugbear" 18
+	"animated tree" 19
+	"fire beetle" 1a
+	"giant centipede" 1b
+	"lizard man" 1c
+	"large spider" 1d
+	"ghul" 1e
+	"hill giant" 1f
+	"shadow" 20
+	"hydra" 21
+	"troll" 22
+	"cave tiger" 23
+	"stone giant" 24
+	"fire giant" 25
+	"frost giant" 26
+	"ankheg" 27
+	"cave bear" 28
+	"bulette" 29
+	"carrion crawler" 2a
+	"cave fisher" 2b
+	"displacer beast" 2c
+	"doppleganger" 2d
+	"dwarf" 2e
+	"ettin" 2f
+	"gargoyle" 30
+	"margoyle" 31
+	"ghost" 32
+	"cyclops" 33
+	"fomorian giant" 34
+	"flesh golem" 35
+	"clay golem" 36
+	"stone golem" 37
+	"iron golem" 38
+	"royal guardian" 39
+	"banshee" 3a
+	"djinni" 3b
+	"gorgon" 3c
+	"griffon" 3d
+	"least daemon" 3e
+	"lesser daemon" 3f
+	"greater daemon" 40
+	"annis hag" 41
+	"green hag" 42
+	"black hurthling" 43
+	"harpy" 44
+	"hell hound" 45
+	"hippogriff" 46
+	"homunculus" 47
+	"imp" 48
+	"quasit" 49
+	"invisible stalker" 4a
+	"jackal" 4b
+	"pixie" 4c
+	"cave lizard" 4d
+	"giant lizard" 4e
+	"fire lizard" 4f
+	"rat" 50
+	"wererat" 51
+	"jackalwere" 52
+	"minotaur" 53
+	"shopkeeper" 54
+	"thug" 55
+	"silver wolf" 56
+	"cooshoo" 57
+	"fairy dragon" 58
+	"giant raccoon" 59
+	"big dog" 5a
+	"dire wolf" 5b
+	"giant spider" 5c
+	"Dorn Beast" 5d
+	"water elemental" 5e
+	"muscular dwarf" 5f
+	"dwarven guardian" 60
+	"female dwarf" 61
+	"dwarven child" 62
+	"priest" 63
+	"ancient dwarf" 64
+	"dwarven weaponmaster" 65
+	"dwarven mystic" 66
+	"battle bunny" 67
+	"mutated battle bunny" 68
+	"shambling mound" 69
+	"gremlin" 6a
+	"cat lord" 6b
+	"casino guard" 6c
+	"big casino guard" 6d
+	"ki-rin" 6e
+	"leucrotta" 6f
+	"werewolf" 70
+	"wolf" 71
+	"lich" 72
+	"owlbear" 73
+	"holy slayer" 74
+	"solar" 75
+	"large kobold" 76
+	"kobold chieftain" 77
+	"hobgoblin chief" 78
+	"large orc" 79
+	"orc chieftain" 7a
+	"large gnoll" 7b
+	"gnoll chieftain" 7c
+	"ogre magus" 7d
+	"dark sage" 7e
+	"arena master" 7f
+	"ratling trader" 80
+	"ratling rebel" 81
+	"dwarven inn keeper" 82
+	"hyena" 83
+	"tarantula" 84
+	"cave lion" 85
+	"wight" 86
+	"wraith" 87
+	"spectre" 88
+	"vampire" 89
+	"red baby dragon" 8a
+	"blue baby dragon" 8b
+	"black baby dragon" 8c
+	"white baby dragon" 8d
+	"red dragon" 8e
+	"blue dragon" 8f
+	"black dragon" 90
+	"white dragon" 91
+	"ancient red dragon" 92
+	"ancient blue dragon" 93
+	"ancient black dragon" 94
+	"ancient white dragon" 95
+	"great red wyrm" 96
+	"great blue wyrm" 97
+	"great black wyrm" 98
+	"great white wyrm" 99
+	"ogre lord" 9a
+	"white unicorn" 9b
+	"water snake" 9c
+	"chaos servant" 9d
+	"water demon" 9e
+	"water grue" 9f
+	"Snake from Beyond" a0
+	"vapor rat" a1
+	"air demon" a2
+	"air grue" a3
+	"air elemental" a4
+	"Master Summoner" a5
+	"fire drake" a6
+	"fire demon" a7
+	"fire grue" a8
+	"fire elemental" a9
+	"Ancient Chaos Wyrm" aa
+	"stone snake" ab
+	"stone grue" ac
+	"earth elemental" ad
+	"Ancient Stone Beast" ae
+	"dying sage" af
+	"greater chaos servant" b0
+	"chaos mutant" b1
+	"writhing mass of primal chaos" b2
+	"chaos warrior" b3
+	"chaos wizard" b4
+	"greater balor" b5
+	"balor" b6
+	"dwarven chaos knight" b7
+	"moloch" b8
+	"swordsman" b9
+	"master swordsman" ba
+	"gray ooze" bb
+	"mimic" bc
+	"greater mimic" bd
+	"master mimic" be
+	"necromancer" bf
+	"black wizard" c0
+	"revenant" c1
+	"skeletal warrior" c2
+	"gelatinous cube" c3
+	"yellow ooze" c4
+	"chaos rat" c5
+	"gray slayer" c6
+	"black slayer" c7
+	"green slime" c8
+	"blink dog" c9
+	"doppleganger lord" ca
+	"ochre jelly" cb
+	"ghost bat" cc
+	"ghost lord" cd
+	"giant slug" ce
+	"dark elven warrior" cf
+	"dark elven archer" d0
+	"dark elven wizard" d1
+	"dark elven priestess" d2
+	"greater moloch" d3
+	"dark orc" d4
+	"ratling warrior" d5
+	"ratling thief" d6
+	"ratling archer" d7
+	"shadow wyrm" d8
+	"shadow troll" d9
+	"ratling fencer" da
+	"master lich" db
+	"lich king" dc
+	"emperor lich" dd
+	"dark elven lord" de
+	"dark elven princess" df
+	"orc butcher" e0
+	"goblin rockthrower" e1
+	"viper" e2
+	"rattlesnake" e3
+	"large snake" e4
+	"will o'wisp" e5
+	"ogre king" e6
+	"cobra" e7
+	"king cobra" e8
+	"white worm" e9
+	"red worm" ea
+	"green worm" eb
+	"purple worm" ec
+	"brown worm" ed
+	"titan" ee
+	"greater titan" ef
+	"slow shadow" f0
+	"karmic baby dragon" f1
+	"karmic dragon" f2
+	"ancient karmic dragon" f3
+	"great karmic wyrm" f4
+	"karmic lizard" f5
+	"chaos lizard" f6
+	"frost giant jarl" f7
+	"frost giant berserker" f8
+	"fire giant king" f9
+	"hill giant chieftain" fa
+	"stone giant lord" fb
+	"ratling master thief" fc
+	"lightning lizard" fd
+	"ratling warlord" fe
+	"shadow lord" ff
+	"caveman" 100
+	"berserker" 101
+	"berserker lord" 102
+	"berserker prince" 103
+	"berserker king" 104
+	"berserker emperor" 105
+	"pixie archer" 106
+	"chaos warlord" 107
+	"greater fire elemental" 108
+	"greater air elemental" 109
+	"greater earth elemental" 10a
+	"greater water elemental" 10b
+	"black unicorn" 10c
+	"chaos spawn" 10d
+	"chaos plague bearer" 10e
+	"ratling duelist" 10f
+	"rust monster" 110
+	"large rust monster" 111
+	"corruptor" 112
+	"annihilator" 113
+	"mummy" 114
+	"greater mummy" 115
+	"gibbering mouther" 116
+	"corpse fiend" 117
+	"crystal statue" 118
+	"stone statue" 119
+	"farmer" 11a
+	"child" 11b
+	"goodwife" 11c
+	"druid" 11d
+	"great water dragon" 11e
+	"baby water dragon" 11f
+	"giant eel" 120
+	"giant turtle" 121
+	"dragon turtle" 122
+	"giant dragon turtle" 123
+	"shark" 124
+	"giant shark" 125
+	"fool" 126
+	"master necromancer" 127
+	"undead chaos dwarven berserker" 128
+	"village elder" 129
+	"mad carpenter" 12a
+	"large dog" 12b
+	"eternal guardian" 12c
+	"bunny master" 12d
+	"steel golem" 12e
+	"steel horror" 12f
+	"animated armor" 130
+	"steel zombie" 131
+	"dwarven artificer" 132
+	"healer" 133
+	"greater white unicorn" 134
+	"greater black unicorn" 135
+	"bandit" 136
+	"outlaw" 137
+	"beggar" 138
+	"cutpurse" 139
+	"mugger" 13a
+	"assassin" 13b
+	"crime lord" 13c
+	"half-orc bouncer" 13d
+	"master thief" 13e
+	"sheriff" 13f
+	"Mad Minstrel" 140
+	"carpenter" 141
+	"goblin slavemaster" 142
+	"goblin chieftain" 143
+	"goblin berserker" 144
+	"mad doctor" 145
+	"cloaked ratling" 146
+	"jackal demon" 147
+	"mummy lord" 148
+	"large jackal" 149
+	"grizzled gladiator" 14a
+	"dwarven smith" 14b
+	"shadow centipede" 14c
+	"floating eye" 14d
+	"magebane eye" 14e
+	"staring eye" 14f
+	"chaos eye" 150
+	"magedoom eye" 151
+	"ghost librarian" 152
+	"troll berserker" 153
+	"troll chief" 154
+	"troll king" 155
+	"eye of destruction" 156
+	"claw bug" 157
+	"quickling" 158
+	"quickling lord" 159
+	"ratling dealer" 15a
+	"brown bear" 15b
+	"grizzly bear" 15c
+	"hill orc" 15d
+	"hill orc sergeant" 15e
+	"barbarian" 15f
+	"barbarian leader" 160
+	"outlaw leader" 161
+	"chaos brother" 162
+	"chaos sister" 163
+	"dwarven elite guardian" 164
+	"giant boar" 165
+	"chaos knight" 166
+	"demented ratling" 167
+	"quickling king" 168
+	"quickling queen" 169
+	"multi-headed chaos dragon" 16a
+	"old barbarian" 16b
+	"raider lord" 16c
+	"raider" 16d
+	"black druid" 16e
+	"ratling guardian" 16f
+	"oracle" 170
+	"old crone" 171
+	"ogre guardian" 172
+	"burly adventurer" 173
+	"malicious doctor" 174
+	"ElDeR cHaOs GoD" 175
+	"small dwarf" 176
+	"tiny girl" 177
+	"cute dog" 178
+	"ancient blue wyrm" 179
+	"ancient karmic wyrm" 17a
+	"Chaos Archmage" 17b
+	"master assassin" 17c
+	"assassin prince" 17d
+	"quickling bard" 17e
+	"bone golem" 17f
+	"swamp hydra" 180
+	"death ooze" 181
+	"stone ooze" 182
+	"green blob" 183
+	"mimic hivemind" 184
+	"chaos viper" 185
+	"eternium golem" 186
+	"ogre emperor" 187
+	"giant rust monster" 188
+	"ghost king" 189
+	"chaos spider" 18a
+	"werewolf lord" 18b
+	"emperor moloch" 18c
+	"doppleganger king" 18d
+	"fire vortex" 18e
+	"ice vortex" 18f
+	"lightning vortex" 190
+	"acid vortex" 191
+	"ancient sage" 192
+	"living wall" 193
+	"diamond golem" 194
+	"skeletal king" 195
+	"werewolf king" 196
+	"ancient minotaur" 197
+	"minotaur lord" 198
+	"minotaur mazemaster" 199
+	"minotaur mazelord" 19a
+	"minotaur mage" 19b
+	"minotaur king" 19c
+	"minotaur emperor" 19d
+	"wall beast" 19e
+	"pit viper" 19f
+	"greater claw bug" 1a0
+	"killer bug" 1a1
+properties
+	"waterproof" %1
+	"lawful crowning gift" %2
+	"neutral crowning gift" %4???
+	"chaotic crowning gift" %8???
+	"charges known" %16
+	"recharged" %32???
+	"friendly pickup disabled" %64???
+	"hostile pickup disabled" %128???
+	friendlies pick up -> 63, 127
+skills
+	"Alchemy" 0
+	"Alertness" 1
+	"Appraising" 2
+	"Archery" 3
+	"Athletics" 4
+	"Backstabbing" 5
+	"Bridge Building" 6
+	"Climbing" 7
+	"Concentration" 8
+	"Cooking" 9
+	"Courage" a
+	"Detect Item Status" b
+	"Detect Traps" c
+	"Disarm Traps" d
+	"Dodge" e
+	"Find Weakness" f
+	"First Aid" 10
+	"Fletchery" 11
+	"Food Preservation" 12
+	"Gardening" 13
+	"Gemology" 14
+	"Haggling" 15
+	"Healing" 16
+	"Herbalism" 17
+	"Law" 18
+	"Listening" 19
+	"Literacy" 1a
+	"Metallurgy" 1b
+	"Mining" 1c
+	"Music" 1d
+	"Necromancy" 1e
+	"Pick Locks" 1f
+	"Pick Pockets" 20
+	"Smithing" 21
+	"Stealth" 22
+	"Survival" 23
+	"Swimming" 24
+	"Tactics" 25
+	"Two Weapon Combat" 26
+	"Ventriloquism" 27
+	"Woodcraft" 28
+race
+	"Raceless" -1
+	"Human" 0
+	"Troll" 1
+	"High Elf" 2
+	"Gray Elf" 3
+	"Dark Elf" 4
+	"Dwarf" 5
+	"Gnome" 6
+	"Hurthling" 7
+	"Orc" 8
+	"Drakeling" 9
+profession
+	"Unemployed" -1
+	"Fighter" 0
+	"Paladin" 1
+	"Ranger" 2
+	"Thief" 3
+	"Assassin" 4
+	"Wizard" 5
+	"Priest" 6
+	"Bard" 7
+	"Monk" 8
+	"Healer" 9
+	"Weaponsmith" a
+	"Archer" b
+	"Merchant" c
+	"Farmer" d
+	"Mindcrafter" e
+	"Barbarian" f
+	"Druid" 10
+	"Necromancer" 11
+	"Elementalist" 12
+	"Beastfighter" 13
+gender
+	"male" 0
+	"female" 1
+location
+	_p2
+		0 _p1
+			"????" 0
+			"D: 1 (Caverns of Chaos 1)" 1
+			"D: ... (Caverns of Chaos ...)" ...
+		1 _p1
+			"????" 0
+			"S: 1 (Shortcut)" 1
+			"DH: 1 (Dwarven Halls 1)" 2
+			"DH: 2 (Dwarven Halls 2)" 3
+			"DrCh (Overworld)" 4
+			"Vlge (Terinyo)" 5
+			"WDL (Water Dragon's Lair)" 6
+			"GY: 1 (Dwarven Graveyard 1)" 7
+			"GY: 2 (Dwarven Graveyard 2)" 8
+			"VD: 1 (Village Dungeon 1)" 9
+			"VD: 2 (Village Dungeon 2)" a
+			"VD: 3 (Village Dungeon 3)" b
+			"VD: 4 (Village Dungeon 4)" c
+			"VD: 5 (Village Dungeon 5)" d
+			"VD: 6 (Village Dungeon 6)" e
+			"VD: 7 (Village Dungeon 7)" f
+			"UCBT (Tomb of the High Kings' Bottom)" 10
+			"GRD (Gremlin Dungeon)" 11
+			"NDC (Non-Descript Cave)" 12
+			"DFG (Darkforge)" 13
+			"BUG (Greater White Unicorn's Glade)" 14
+			"CGL (Greater Black Unicorn's Glade)" 15
+			"BVL (Lawenilothehl)" 16
+			"TF: 1 (Tower of Eternal Flames 1)" 17
+			"TF: 2 (Tower of Eternal Flames 2)" 18
+			"TF: 3 (Tower of Eternal Flames 3)" 19
+			"TF: 4 (Tower of Eternal Flames 4)" 1a
+			"MML (Mad Minstrel's Clearing)" 1b
+			"SMC (Small Cave)" 1c
+			"CCL (Old Barbarian's Clearing)" 1d
+			"PL1 (Pyramid 1)" 1e
+			"PL2 (Pyramid 2)" 1f
+			"PL3 (Pyramid 3)" 20
+			"OC (Ogre Cave)" 21
+			"RL9 (Rift 9)" 22
+			"RL8 (Rift 8)" 23
+			"RL7 (Rift 7)" 24
+			"RL6 (Rift 6)" 25
+			"RL5 (Rift 5)" 26
+			"RL4 (Rift 4)" 27
+			"RL3 (Rift 3)" 28
+			"RL2 (Rift 2)" 29
+			"RL1 (Rift 1)" 2a
+			"LIB (Sinister Library of Niltrias)" 2b
+			2c _p0
+				"????" 0
+				"I1 (Infinity 1)" 1
+				"I... (Infinity ...)" ...
+			"WE (Wilderness)" 2d
+			"QL (Quickling Tree)" 2e
+			"CDL (Stone Circle)" 2f
+			"SIL (Very Special Part of Infinity)" 30
+			"DDL (Dusty Dungeon)" 31
+			"VDDL (Very Dusty Dungeon)" 32
+		2 _p1
+			"????" 0
+			"DD: 1 (Druid Dungeon 1)" 1
+			"DD: 2 (Druid Dungeon 2)" 2
+			"DD: 3 (Druid Dungeon 3)" 3
+			"DD: 4 (Druid Dungeon 4)" 4
+			"DD: 5 (Druid Dungeon 5)" 5
+			"DD: 6 (Druid Dungeon 6)" 6
+			"DD: 7 (Druid Dungeon 7)" 7
+			"UD: 1 (Unremarkable Dungeon 1)" 8
+			"UD: 2 (Unremarkable Dungeon 2)" 9
+			"UD: 3 (Unremarkable Dungeon 3)" a
+			"UD: 4 (Unremarkable Dungeon 4)" b
+			"UD: 5 (Unremarkable Dungeon 5)" c
+			"UD: 6 (Unremarkable Dungeon 6)" d
+			"UD: 7 (Unremarkable Dungeon 7)" e
+			"UD: 8 (Unremarkable Dungeon 8)" f
+			"HIVI (High Mountain Village)" 10
+			"ChAoS (Chaos Plane)" 11
+			"UC: 1 (Tomb of the High Kings 1)" 12
+			"UC: 2 (Tomb of the High Kings 2)" 13
+			"UC: 3 (Tomb of the High Kings 3)" 14
+			"UC: 4 (Tomb of the High Kings 4)" 15
+			"UC: 5 (Tomb of the High Kings 5)" 16
+			"PC: 1 (Puppy Cave 1)" 17
+			"PC: 2 (Puppy Cave 2)" 18
+			"PC: 3 (Puppy Cave 3)" 19
+			"PC: 4 (Puppy Cave 4)" 1a
+			"PC: 5 (Puppy Cave 5)" 1b
+			"PC: 6 (Puppy Cave 6)" 1c
+			"UL: 1 (Unreal Dungeon 1)" 1d
+			"UL: 2 (Unreal Dungeon 2)" 1e
+			"UL: 3 (Unreal Dungeon 3)" 1f
+			"UL: 4 (Unreal Dungeon 4)" 20
+			"UL: 5 (Unreal Dungeon 5)" 21
+			"UL: 6 (Unreal Dungeon 6)" 22
+			"MT (Mana Temple)" 23
+			"DL: 1 (Blue Dragon's Lair 1)" 24
+			"DL: 2 (Blue Dragon's Lair 2)" 25
+			"DL: 3 (Blue Dragon's Lair 3)" 26
+			"DL: 4 (Blue Dragon's Lair 4)" 27
+			"DL: 5 (Blue Dragon's Lair 5)" 28
+			"???? (Assassins' Guild)" 29
+			"SC: 1 (Scintillating Cave 1)" 2a
+			"SC: 2 (Scintillating Cave 2)" 2b
+			"SC: 3 (Scintillating Cave 3)" 2c
+			"SC: 4 (Scintillating Cave 4)" 2d
+			"SC: 5 (Scintillating Cave 5)" 2e
+			"SC: 6 (Scintillating Cave 6)" 2f
+			"SC: 7 (Scintillating Cave 7)" 30
+			"SC: 8 (Scintillating Cave 8)" 31
+			"SC: 9 (Scintillating Cave 9)" 32
+		3 _p1
+			"????" 0
+			"AR (Ancient Ruins)" 1
+			"ML: 1 (Minotaur Maze 1)" 1
+			...???
+			"ML: 6 (Minotaur Maze 6)" 16
+			"BUGWL (Bug Wilderness)" 17
+			"BUGCAV (Bug Cave)" 18
+history
+	_parents
+		"Your parents were poor people. They loved you and cared for you, although you had to hunger more than once." 0
+		"Your parents belong to the lower class. They were honest hard-working people, who did everything to enable you to live a comfortable and fine life. They were not very successful." 1
+		"Your parents belong to the middle class. They are average people living in average quarters. Your father is a craftsman of mediocre talent." 2
+		"Your parents belong to the nobility. They are rich, respected, wealthy and own more than they can count." 3
+		"Your parents are travelling adventurers. Both are competent, talented and doing very well." 4
+		"Your parents are travelling adventurers. They are doing moderately well but are talented enough to survive." 5
+		"Your father is a guildmaster. Your family generally is rather wealthy and well-known in your home town." 6
+		"Your mother is a mighty enchantress. She is unmarried. Your father is living in the vicinity of your mother's tower. He is a humble shepherd." 7
+		"Your father was an accomplished hunter and warrior. You were well-respected and comparatively wealthy." 8
+		"Your mother was a wise shaman and healer. You didn't know your father and his origins seem to be very mysterious." 9
+	_childhood
+		"As a young child you were often alone. You did not have any friends. You do not like to remember those times. They were very sad." 0
+		"As a child your parents cared a lot for you. Despite all circumstances you enjoyed a happy and fine childhood." 1
+		"During your childhood one of your uncles taught you a lot of things about the history of your people. Your vast knowledge on the legends and the lore of your people made you very popular with your friends because of all the exciting stories you knew." 2
+		"In your childhood you were tortured by your cruel parents. They seemed to thoroughly hate and despise you." 3
+		"As a child you lived through happy days. Your parents tried to ease your life as much as possible and gave you a lot of comfort." 4
+		"As a child you had to survive pretty harsh times since your parents seemed to have run out of luck. Their wealth was ever-declining and times were very hard." 5
+		"In your childhood you were a credit to your family. Your people loved you and enjoyed your presence." 6
+		"In your childhood you were fascinated by your environment and the everchanging wonders of the world. You were a very curious and adventurous child." 7
+		"As a child you were not accepted by the other children of your tribe. Your childhood was sad and lonely." 8
+		"As a child you were very active and imitated the hunters and warriors of your tribe at all opportunities." 9
+	_youth
+		"As a youth you spent a lot of time in the wilds exploring woods and generally enjoying your freedom. You had a lot of fun and learned to value the treasures of nature." 0
+		"In your youth you worked a lot to become rich and famous later. Consequently you rarely had enough time to play with other kids of your age." 1
+		"In your youth you became seriously ill and suffered for many years. When your disease finally was cured you were left weakened, both physically and spiritually, and bereft of the joys of youth." 2
+		"During your youth you had a lot of fun playing with other kids of your age. You always were a natural leader and the center of interest." 3
+		"In your youth you enjoyed competition against others to the fullest. You were a very active kid." 4
+		"During your youth you were very lazy. You slept a lot and didn't care too much for your duties and tasks. Your parents were not very happy with you." 5
+		"As a kid you often watched the adult adventurers preparing for new exciting journeys. They sparked your imagination." 6
+		"During your youth you embarked on many small journeys to nearby towns on behalf of your parents. You learned to know lots of people and made many friends." 7
+		"During your youth you traveled to nearby tribes and traded with them. You met many strangers and learned a lot about the outside world." 8
+		"In your youth you strived very hard to become the best warrior in your tribe. You watched, learned and became very strong and nimble." 9
+	_adulthood
+		"As a young adult you spent a lot of time searching for a deeper meaning and purpose in your life. You pondered and pondered but nothing truly sparked your interest. Finally, after many many hours, you made a decision." 0
+		"Your path was always clearly lying before you. You knew about your destiny since your earliest years and fortunately your grandfather supported your wishes. You managed to find a competent trainer and began your studies." 1
+		"As a young adult you left your home because of trouble with your parents. They opposed your plans for the future without understanding your wishes. Thus you decided to live on your own. You wandered through the country for many years, growing older and wiser and learning many things." 2
+		"Your young adulthood was characterized by hard and long work. You had decided to study under a renowned master. To your great disappointment you had to find out, that he was a hard, unjust and tyrannic man, embittered by his old age. Your apprentice years were quite terrible." 3
+		"Your life as a young adult was characterized by steady determination. Your goal lay clearly ahead of you and you never strayed from your path." 4
+		"As a young adult you were a credit to your family. Your parents supported your plans and were very understanding. They tried to help you along your way with all means at their disposal." 5
+		"As a young adult you had to work a lot to finance your apprenticeship. You were often tired and exhausted but all this was forgotten, when you finally achieved your goal." 6
+		"As a young adult you tried many occupations before finally deciding on one to pursue. This has left you with a very broad base of lore." 7
+		"As a young adult you more and more separated from the more traditional members of your tribe. Your desire to see the outside world became overwhelming." 8
+		"As a young adult your family was killed in a raid. You became embittered and filled with the desire for revenge." 9
+color
+	"black" 0
+	"white" 1
+	"brown" 2
+	"light blue" 3
+	"green" 4
+	"golden" 5
+	"amber" 6
+	"purple" 7
+	"yellow" 8
+	"blonde" 9
+	"gray" 10
+	"bald" 11
+	"red" 12
+	"silver" 13
+	"blue" 14
+	"light green" 15
+	"tanned" 16
+	"ruddy" 17
+	"pale" 18
+	"light" 19
+	"dark" 1a
+intrinsics
+	"fire resistance" %1
+	"poison resistance" %2
+	"" %4
+	"" %8
+	"" %16
+	"" %32
+	"cursed" %64
+	"" %128
+	"" %256
+	"doomed" %512
+	"" %1024
+	"invisibility" %2048
+	"" %4096
+	"" %8192
+	"" %16384
+	"" %32768
+	"" %65535
+	"see invisible" %131072
+	"" %262144
+	"" %524288
+	"" %1048576
+	"" %2097152
+	"" %4194304
+	"" %8388608
+	"" %16777216
+guessed_intrinsics
+	"fire resistance" %1
+	"poison resistance" %2
+	"cold resistance" %4
+	"acid resistance" %8
+	"lucky" %16
+	"fate smiles" %32
+	"doomed" %64
+	"cursed" %128
+	"sleep resistance" %256
+	"petrification resistance" %512
+	"teleportation" %1024
+	"control teleportation" %2048
+	"invisibility" %4096
+	"stun resistance" %8192
+	"paralyzation resistance" %16384
+	"death ray resistance" %32768
+	"shock resistance" %65535
+	"see invisible" %131072
+	"shock immunity" %262144
+	"fire immunity" %524288
+	"acid immunity" %1048576
+	"cold immunity" %2097152
+	"water breathing" %4194304
+	"undead slayer" %8388608
+	"confusion resistance" %16777216

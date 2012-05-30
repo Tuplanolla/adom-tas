@@ -1,8 +1,8 @@
 COMPILER = /usr/bin/gcc
-FLAGS = -std=c99 -w -O3 -ldl #-Wall
+FLAGS = -std=c99 -w -O3 -ldl -lrt# -Wall
 
-SOURCE = adom-tas.c
-OBJECT = adom-tas.o
+SOURCE = adom-tas.c main.c
+OBJECT = adom-tas.o main.o
 SHARED = adom-tas.so
 BINARY = adom-tas
 
@@ -17,6 +17,6 @@ $(BINARY): $(SOURCE)
 $(SHARED): $(OBJECT)
 	$(COMPILER) -fpic -shared $(FLAGS) -o $(SHARED) $(OBJECT)
 
-#%.o: %.c
-$(OBJECT): $(SOURCE)
+#$(OBJECT): $(SOURCE)
+%.o: %.c
 	$(COMPILER) -fpic -c $(FLAGS) -o $@ $<
