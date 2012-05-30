@@ -5,19 +5,73 @@ This is a mess, but works, which is enough for the first build.
 /*
 Half of these are unnecessary.
 */
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
 #include <curses.h>
-#include <libgen.h>
-#include <getopt.h>
 #include <dlfcn.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <getopt.h>
+#include <libgen.h>
 #include <signal.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+#define SHM_FILE "/adom-tas"//in /dev/shm/
+#define STATES 10
+
+/**
+Serves as an annotation for overloads.
+**/
+#define OVERLOAD(x) x
+
+/**
+Defines the default locations of dynamically linked libraries.
+**/
+#define LIBC "/lib/libc.so.6"
+#define LIBNCURSES "/lib/libncurses.so.5"
+
+/*
+This is the part where good practice is thrown out of the window.
+Luckily it'll be picked up again later.
+*/
+#define BYTE_TO_BINARY_PATTERN "%d%d%d%d%d%d%d%d"
+#define BYTE_TO_BINARY(x) \
+	(x&0b10000000 ? 1 : 0),\
+	(x&0b01000000 ? 1 : 0),\
+	(x&0b00100000 ? 1 : 0),\
+	(x&0b00010000 ? 1 : 0),\
+	(x&0b00001000 ? 1 : 0),\
+	(x&0b00000100 ? 1 : 0),\
+	(x&0b00000010 ? 1 : 0),\
+	(x&0b00000001 ? 1 : 0)
+
+/**
+Defines some variables of the executable.
+**/
+#define TURN (*((unsigned int *)0x082b16e0))
+#define ARC4_S (*((unsigned char **)0x082ada40))
+#define ARC4_I (*((unsigned char *)0x082adb40))
+#define ARC4_J (*((unsigned char *)0x082adb41))
+
+/**
+Defines some absolute paths.
+**/
+#define THE_WIZARD_HIMSELF "tuplanolla"
+#define HAND_PICKED_WIZARDRY "/home/"THE_WIZARD_HIMSELF"/adom-tas/adom"
+#define HAND_PICKED_SORCERY "/home/"THE_WIZARD_HIMSELF"/adom-tas/src/adom-tas.so"
+#define HAND_PICKED_BLASPHEMY "/home/"THE_WIZARD_HIMSELF"/.adom.data/.adom.ver"
+#define HAND_PICKED_INSANITY "/home/"THE_WIZARD_HIMSELF"/adom-tas.log"
+
+struct shm_s {
+	int pids[STATES];
+};
+typedef struct shm_s shm_t;
 
 /**
 Lists boolean types.
@@ -76,7 +130,7 @@ Logs a message.
 @param message The message.
 @return TRUE if the message was logged successfully and FALSE otherwise.
 **/
-char *log_file = "/home/tuplanolla/adom-tas.log";
+char *log_file = HAND_PICKED_INSANITY;
 const bool printl(const char *message) {
 	if (log_file == NULL) fprintf(stderr, "LOG: %s\n", message);//TODO add a file_exists check
 	else {//TODO write to a file properly
@@ -88,15 +142,41 @@ const bool printl(const char *message) {
 }
 
 /**
-Serves as an annotation for overloads.
+Shares memory or something.
 **/
-#define OVERLOAD(x) x
+int shm_fd;//some handle
+shm_t *conf;//shared
+void shmup() {
+	bool first = FALSE;
 
-/**
-Defines the default locations of dynamically linked libraries.
-**/
-#define LIBC "/lib/libc.so.6"
-#define LIBNCURSES "/lib/libncurses.so.5"
+	shm_fd = shm_open(SHM_FILE, O_RDWR|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR);
+	if (shm_fd > 0) {
+		first = TRUE;
+	}
+	shm_fd = shm_open(SHM_FILE, O_RDWR|O_CREAT, S_IRUSR|S_IWUSR);
+	if (shm_fd < 0) {
+		printl("Failed to get what is rightfully mine.\n");
+		return;//error here
+	}
+
+	ftruncate(shm_fd, sizeof (shm_t));
+
+	conf = (shm_t *)mmap(NULL, sizeof (shm_t), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
+	if (conf == MAP_FAILED) {
+		printl("Failed to remember.\n");
+		return;//error here
+	}
+
+	printl("Map");
+	if (first) {
+		for (int index = 0; index < STATES; index++) conf->pids[index] = NULL;
+		printl("-reset-");//doesn't work
+	}
+	else {
+		printl("-read-");
+	}
+	printl("ped.\n");
+}
 
 /**
 Declares the original dynamically linked library functions.
@@ -233,6 +313,13 @@ void initialize() {
 Debug messages pop up on the screen at random locations.
 It's a feature, not a bug.
 */
+bool tired = TRUE;
+void continuator(const int signo) {
+	if (signo == SIGCONT) {
+		printl("Caught this.\n");
+		tired = FALSE;
+	}
+}
 
 /**
 Saves the game to memory.
@@ -240,13 +327,21 @@ Saves the game to memory.
 void save(const int state) {
 	printf("*"); fflush(stdout);//a graceful puff of smoke
 	pid_t pid = fork();
+	shmup();
 	if (pid != NULL) {//parent
 		//printf("DEBUG: parent(%i); ", (int )getpid()); fflush(stdout);
 		//printf("DEBUG: parent(%i).stop(); ", (int )getpid()); fflush(stdout);
-		wait(NULL);
+		conf->pids[state] = getpid();
+		if (signal(SIGCONT, continuator) == SIG_ERR) printl("Can't catch this.\n");
+		printf("<%i fell asleep>", (int )getpid()); fflush(stdout);
+		while (tired) nanosleep(1000000000/60);
+		printf("<%i woke up>", (int )getpid()); fflush(stdout);
+		conf->pids[0] = getpid();
 	}
 	else {//child
 		//printf("DEBUG: child(%i); ", (int )getpid()); fflush(stdout);
+		printf("<%i is ready>", (int )getpid()); fflush(stdout);
+		conf->pids[0] = getpid();
 	}
 }
 
@@ -257,23 +352,13 @@ void load(const int state) {
 	//printf("DEBUG: child(%i).kill(); ", (int )getpid()); fflush(stdout);
 	//printf("DEBUG: parent(%i).continue(); ", (int )getppid()); fflush(stdout);
 	printf("*"); fflush(stdout);//a graceful puff of smoke
-	kill(getpid(), SIGKILL);
+	printf("<%i poked %i>", (int )getpid(), (int )conf->pids[state]); fflush(stdout);
+	kill(conf->pids[state], SIGCONT);
+	printf("<%i killed %i>", (int )getpid(), (int )conf->pids[0]); fflush(stdout);
+	const int zorg = conf->pids[0];
+	conf->pids[0] = 0;
+	kill(zorg, SIGKILL);
 }
-
-/*
-This is the part where good practice is thrown out of the window.
-Luckily it'll be picked up again later.
-*/
-#define BYTE_TO_BINARY_PATTERN "%d%d%d%d%d%d%d%d"
-#define BYTE_TO_BINARY(x) \
-	(x&0b10000000 ? 1 : 0),\
-	(x&0b01000000 ? 1 : 0),\
-	(x&0b00100000 ? 1 : 0),\
-	(x&0b00010000 ? 1 : 0),\
-	(x&0b00001000 ? 1 : 0),\
-	(x&0b00000100 ? 1 : 0),\
-	(x&0b00000010 ? 1 : 0),\
-	(x&0b00000001 ? 1 : 0)
 
 /**
 Overloads wgetch with a simple log wrapper.
@@ -291,17 +376,25 @@ typedef struct mvaddnstr_s mvaddnstr_t;
 mvaddnstr_t *draw_queue;
 
 char codeins[17];
-int frame = 0, now = 0;
+int frame = 0, now = 0;//0x7fe81780
 int OVERLOAD(wgetch)(WINDOW *win) {
 	printl("Called wgetch.\n");
 	int key = real_wgetch(win);
 	if (key == 'j') {
-		save(0);
+		save(1);
 		return NULL;
 	}
 	else if (key == 'J') {
-		load(0);
+		load(1);
 		return NULL;//redundant
+	}
+	else if (key == 'b') {
+		save(2);
+		return NULL;
+	}
+	else if (key == 'B') {
+		load(2);
+		return NULL;
 	}
 	if (!was_meta && !was_colon && (key == 0x3a || key == 'w')) was_colon = key == 0x3a ? 1 : 2;//booleans are fun like that
 	else if (!was_meta && key == 0x1b) was_meta = TRUE;
@@ -337,12 +430,8 @@ time_t OVERLOAD(time)(time_t *timer) {
 /**
 Overloads wrefresh with a simple log wrapper.
 **/
-#define TURN (*((unsigned int *)0x082b16e0))
-#define ARC4_S (*((unsigned char **)0x082ada40))
-#define ARC4_I (*((unsigned char *)0x082adb40))
-#define ARC4_J (*((unsigned char *)0x082adb41))
 int OVERLOAD(wrefresh)(WINDOW *win) {
-	printl("Called wrefresh.\n");
+	//printl("Called wrefresh.\n");
 	int x, y;
 	getyx(win, y, x);
 	init_pair(16, COLOR_BLACK, COLOR_RED);//TODO find out what pairs are already in use
@@ -357,6 +446,7 @@ int OVERLOAD(wrefresh)(WINDOW *win) {
 	
 	int X = 80, Y = 24;//TODO macros
 	wattr_get(win, &attrs, &pair, NULL);
+
 	wattrset(win, COLOR_PAIR(20));
 	sprintf(line, "T: 0x%08x", now);
 	snprintf(liner, 17, "%-13s", line);
@@ -382,9 +472,24 @@ int OVERLOAD(wrefresh)(WINDOW *win) {
 	snprintf(liner, 17, "%-10s", line);
 	X -= strlen(liner)+1;
 	mvaddnstr(Y, X, liner, 80-X);
+
+	char some[0x100];//oh look, a hack
+	strcpy(some, "Processes: ");
+	for (int index = 0; index < STATES; index++) {
+		if (conf != NULL && conf->pids != NULL) {
+			char somer[0x50];
+			sprintf(somer, "%s%i:%i", some, index, conf->pids[index]);
+			strcpy(some, somer);
+			strcat(some, ", ");
+		}
+	}
+	strcat(some, "END\n");
+	mvaddnstr(20, 0, some, 80-20);
+
 	wattr_set(win, attrs, pair, NULL);
 	wmove(win, y, x);
 	int result = real_wrefresh(win);
+
 	return result;
 }
 
@@ -392,7 +497,7 @@ int OVERLOAD(wrefresh)(WINDOW *win) {
 Tells sweet lies about the terminal size.
 **/
 int OVERLOAD(ioctl)(int d, unsigned long request, ...) {
-	printl("Called something.\n");
+	printl("Called ioctl.\n");
 	initialize();//TODO don't assume this is called first even though it is
 	va_list	ap;
 	va_start(ap, request);
@@ -409,10 +514,6 @@ int OVERLOAD(ioctl)(int d, unsigned long request, ...) {
 	va_end(ap);
 	return result;
 }
-
-#define HAND_PICKED_WIZARDRY "/home/tuplanolla/adom-tas/adom"
-#define HAND_PICKED_SORCERY "/home/tuplanolla/adom-tas/src/adom-tas.so"
-#define HAND_PICKED_BLASPHEMY "/home/tuplanolla/.adom.data/.adom.ver"
 
 /**
 Tests the class.
@@ -453,7 +554,7 @@ const int main(const int argc, const char **argv) {
 		desired_version[2] = 1;
 		desired_version[3] = 0;
 		unsigned char version[4];
-		fread(version, sizeof (unsigned char), sizeof version, _fhandle);
+		fread(version, sizeof (unsigned char), sizeof (version), _fhandle);
 		fclose(_fhandle);
 		if (version != NULL) {
 			if (memcmp(version, desired_version, 4) != 0) return propagate(WRONG_VERSION_ERROR);
@@ -467,6 +568,8 @@ const int main(const int argc, const char **argv) {
 	const char *adom_argv = argv+1;//TODO explain
 	const int adom_argc = argc-1;
 	execvp(HAND_PICKED_WIZARDRY, adom_argv);//execute with varargs including PATH
+
+	close(shm_fd);
 
 	return 0;
 }
