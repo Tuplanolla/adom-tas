@@ -1,8 +1,20 @@
 /**
-Provides general utility functions.
+Provides general-purpose utilities.
 **/
 #ifndef UTIL_H
 #define UTIL_H
+
+/**
+Lists the boolean values.
+Some other library already does this.
+**/
+/*
+enum bool_e {
+	FALSE,
+	TRUE,
+};
+typedef enum bool_e bool;
+*/
 
 /**
 Returns the bits of a byte.

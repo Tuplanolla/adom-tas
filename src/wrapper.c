@@ -1,11 +1,8 @@
 /**
-Provides.
+Serves as wrapper for the executable.
 **/
 #ifndef MAIN_C
 #define MAIN_C
-/**
-This is a mess, but works, which is enough for the first build.
-**/
 
 /*
 Half of these are unnecessary.
@@ -30,24 +27,42 @@ Half of these are unnecessary.
 #include "config.h"
 #include "util.h"
 #include "adom.h"
-#include "adom-tas.h"
+#include "loader.h"
 
 /**
-Tests the class.
+Prints an error message and returns its error code.
+@param code The error code.
+@return The error code.
+**/
+error_t propagate(const error_t code) {
+	fprintf(stderr, "Error: %s\n", error_message(code));
+	return code;
+}
+
+/**
+Runs the executable.
 @param argc The amount of command line arguments.
 @param argv The command line arguments.
-@return 0 if successful and an error number otherwise.
+@return 0 if successfully and an error number otherwise.
 **/
-const int main(const int argc, const char **argv) {
-	getenv("HOME");
+int main(int argc, char **argv) {
+	/*
+	Manages the environment variable HOME.
+	*/
+	const char *home = getenv("HOME");
+	if (home == NULL) {
+		if (setenv("HOME", HOME, TRUE)) {
+			return propagate(SETENV_HOME_ERROR);
+		}
+	}
 
 	/*
 	Manages the environment variable LD_PRELOAD.
 	*/
-	const char *preload = getenv("LD_PRELOAD");
-	if (preload == NULL) {
+	const char *ld_preload = getenv("LD_PRELOAD");
+	if (ld_preload == NULL) {
 		if (setenv("LD_PRELOAD", LIBRARY_PATH, TRUE)) {
-			return propagate(SETENV_ERROR);
+			return propagate(SETENV_LD_PRELOAD_ERROR);
 		}
 	}
 
@@ -65,6 +80,7 @@ const int main(const int argc, const char **argv) {
 	/*
 	Uses file system heuristics to identify the executable.
 	*/
+	if (file.st_size != 2452608) return propagate(WRONG_SIZE_ERROR);
 	FILE *_fhandle = fopen(VERSION_DATA_PATH, "r");
 	if (_fhandle != NULL) {
 		unsigned char desired_version[4];
@@ -79,16 +95,13 @@ const int main(const int argc, const char **argv) {
 			if (memcmp(version, desired_version, 4) != 0) return propagate(WRONG_VERSION_ERROR);
 		}
 	}
-	if (file.st_size != 2452608) return propagate(WRONG_SIZE_ERROR);
 
 	/*
 	Launches the executable.
 	*/
-	const char *adom_argv = argv+1;//TODO explain
-	const int adom_argc = argc-1;
-	execvp(EXECUTABLE_PATH, adom_argv);//execute with varargs including PATH
-
-	return 0;
+	argc--; argv++;//removes the name of this executable
+	if (execvp(EXECUTABLE_PATH, argv) == 0) return NO_ERROR;//doesn't work
+	return EXECUTION_ERROR;
 }
 
 #endif

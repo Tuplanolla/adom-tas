@@ -1,26 +1,28 @@
 RM = /bin/rm -f
 MKDIR = /bin/mkdir -p
-GCC = /usr/bin/gcc
-FLAGS = -std=c99 -ldl -lrt -O3 -w# -Wall
-SOURCE = src/adom-tas.c src/main.c
-OBJECT = obj/adom-tas.o obj/main.o
-SHARED = bin/adom-tas.so
-BINARY = bin/adom-tas
+GCC = /usr/bin/gcc -std=gnu99 -ldl -lrt -O3 -Wall
+BIN = bin
+OBJ = obj
+SRC = src
+NAME = adom-tas
 
-all: $(SHARED) $(BINARY)
+all: $(BIN)/$(NAME).so $(BIN)/$(NAME)
 
 clean:
-	$(RM) $(OBJECT) $(SHARED) $(BINARY)
+	$(RM) $(OBJ)/* $(BIN)/*
 
-$(BINARY): $(SOURCE)
-	$(MKDIR) bin
-	$(GCC) -lncurses $(FLAGS) -o $(BINARY) $(OBJECT)
+prepare:
+	$(MKDIR) $(OBJ)
+	$(MKDIR) $(BIN)
 
-$(SHARED): $(OBJECT)
-	$(MKDIR) bin
-	$(GCC) -fpic -shared $(FLAGS) -o $(SHARED) $(OBJECT)
+$(OBJ)/%.o: $(SRC)/%.c
+	$(GCC) -fpic -c -o $@ $<
 
-#$(OBJECT): $(SOURCE)
-obj/%.o: src/%.c
-	$(MKDIR) obj
-	$(GCC) -fpic -c $(FLAGS) -o $@ $<
+$(BIN)/$(NAME).so: prepare $(OBJ)/loader.o
+	$(GCC) -fpic -shared -o $(BIN)/$(NAME).so $(OBJ)/loader.o
+
+$(BIN)/$(NAME): prepare $(OBJ)/wrapper.o
+	$(GCC) -lncurses -o $(BIN)/$(NAME) $(OBJ)/wrapper.o
+
+run: all
+	$(BIN)/$(NAME)
