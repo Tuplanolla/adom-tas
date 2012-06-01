@@ -4,9 +4,8 @@ Provides default values for configuration variables.
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#define S_PATH HOME"/adom-tas/s.log"
-#define I_PATH HOME"/adom-tas/i.log"
-#define A_PATH HOME"/adom-tas/a.log"
+#define RANDOM_LOG_PATH HOME"/adom-tas/random.log"
+#define CALL_LOG_PATH HOME"/adom-tas/calls.log"
 
 /**
 Sets the default locations of (all kinds of things).
@@ -32,9 +31,9 @@ Sets the size of the terminal.
 #define TERM_COL 80
 
 /**
-Sets the default location of shared memory.
+Sets the default location of shared memory (in /dev/shm).
 **/
-#define SHM_PATH "/dev/shm/adom-tas"
+#define SHM_PATH "/adom-tas"
 
 /**
 Sets the default locations of dynamically linked libraries.

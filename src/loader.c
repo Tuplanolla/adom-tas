@@ -87,6 +87,18 @@ error_t warning(const error_t code) {
 	return code;
 }
 
+int printrl() {
+	FILE *random_stream = fopen(RANDOM_LOG_PATH, "w");
+	int result = 0;
+	if (random_stream != NULL) {
+		result += fwrite(ARC4_S, sizeof (unsigned char), 0x100, random_stream);
+		result += fwrite(ARC4_I, sizeof (unsigned char), 1, random_stream);
+		result += fwrite(ARC4_J, sizeof (unsigned char), 1, random_stream);
+	}
+	fclose(random_stream);
+	return result;
+}
+
 /**
 Very important temporary variables.
 **/
@@ -96,37 +108,18 @@ int frame = 0, now = 0, globstate = 1;//0x7fe81780
 Simulates the ARC4 of the executable.
 **/
 char arc4_s[0x100];
-void sarc4(unsigned char *seed) {
+void sarc4(const int seed) {
 	unsigned char i = 0x00, j = 0x00;
 	do {
 		arc4_s[i] = i;
 		i++;
 	} while(i != 0x00);
 	do {
-		j = j+arc4_s[i]+seed[i%4];
+		j = j+arc4_s[i]+((unsigned char *)&seed)[i%4];
 		SWAP(arc4_s[i], arc4_s[j]);
 		if (i == 0xff) break;
 		i++;
 	} while(i != 0x00);
-}
-
-int siput() {
-	real_srandom(now);
-	int asshat = real_random();
-	sarc4((unsigned char *)&asshat);
-	//sarc4((unsigned char *)&now);
-	//seed_rng(asshat);
-	//seed_rng_from_time();
-	ARC4_SEED_TIME();
-	FILE *s_stream = fopen(S_PATH, "w");
-	FILE *i_stream = fopen(I_PATH, "w");
-	int result = 0;
-	if (s_stream != NULL) result += fwrite(ARC4_S, 1, 0x100, s_stream);
-	if (i_stream != NULL) result += fwrite(arc4_s, 1, 0x100, i_stream);
-	//((void (*)(FILE *))0x8125f50)(a_stream);
-	fclose(s_stream);
-	fclose(i_stream);
-	return result;
 }
 
 /*
@@ -135,7 +128,7 @@ The key code is from one to three characters long.
 @param code The key code to return.
 @param key The key number.
 */
-void key_code(char *code, const int key) {//TODO restrict
+void key_code(char *code, const int key) {
 	#define key_code_RETURN(str) {\
 			strcpy(code, str);\
 			return;\
@@ -206,6 +199,60 @@ void load_dynamic_libraries() {
 }
 
 /**
+Seeds the ARC4 of the executable.
+
+Seeding can be simulated:
+<pre>
+real_srandom(time(NULL));
+sarc4(real_random());
+</pre>
+**/
+void seed() {
+	SARC4_TIME();
+}
+
+/**
+Shares memory or something.
+**/
+struct shm_s {
+	int pids[SAVE_STATES];
+};
+typedef struct shm_s shm_t;
+int shm_fd;//some handle
+shm_t *conf;//shared
+void shmup() {
+	bool first = TRUE;
+
+	printfl("Time to map!\n");
+	shm_fd = shm_open(SHM_PATH, O_RDWR|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR);
+	if (shm_fd < 0) {
+		printfl("Looks not first because of \"%s\".\n", strerror(errno));
+		first = FALSE;
+	}
+	else printfl("Looks first.\n");
+	shm_fd = shm_open(SHM_PATH, O_RDWR|O_CREAT, S_IRUSR|S_IWUSR);
+	if (shm_fd < 0) {
+		printfl("Looks failed.\n");
+		return;//error here
+	}
+
+	ftruncate(shm_fd, (off_t )sizeof (shm_t));
+
+	conf = (shm_t *)mmap(NULL, sizeof (shm_t), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
+	if (conf == MAP_FAILED) {
+		printfl("Failed to map.\n");
+		return;//error here
+	}
+
+	printfl("Map");
+	if (first) {
+		for (int index = 0; index < SAVE_STATES; index++) conf->pids[index] = 0;
+		printfl("-reset-");//doesn't work
+	}
+	printfl("ped.\n");
+}
+
+/**
 Guarantees the dynamically linked libraries are only loaded once.
 **/
 bool initialized = FALSE;
@@ -221,54 +268,13 @@ void initialize() {
 		warning(LOG_WARNING);
 	}
 
+	real_unlink("/dev/shm/adom-tas");//What is portable code?
+	shmup();
+	conf->pids[0] = getpid();
+
 	printfl("Logging is disabled for: printf, wrefresh, init_pair, wgetch.\n");
 }
 
-/**
-Shares memory or something.
-**/
-struct shm_s {
-	int pids[SAVE_STATES];
-};
-typedef struct shm_s shm_t;
-int shm_fd;//some handle
-shm_t *conf;//shared
-void shmup() {
-	bool first = FALSE;
-
-	shm_fd = shm_open(SHM_PATH, O_RDWR|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR);
-	if (shm_fd > 0) {
-		first = TRUE;
-	}
-	shm_fd = shm_open(SHM_PATH, O_RDWR|O_CREAT, S_IRUSR|S_IWUSR);
-	if (shm_fd < 0) {
-		printfl("Failed to get what is rightfully mine.\n");
-		return;//error here
-	}
-
-	ftruncate(shm_fd, (off_t )sizeof (shm_t));
-
-	conf = (shm_t *)mmap(NULL, sizeof (shm_t), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
-	if (conf == MAP_FAILED) {
-		printfl("Failed to remember.\n");
-		return;//error here
-	}
-
-	printfl("Map");
-	if (first) {
-		for (int index = 0; index < SAVE_STATES; index++) conf->pids[index] = 0;
-		printfl("-reset-");//doesn't work
-	}
-	else {
-		printfl("-read-");
-	}
-	printfl("ped.\n");
-}
-
-/*
-Debug messages pop up on the screen at random locations.
-It's a feature, not a bug.
-*/
 bool tired = TRUE;
 void continuator(const int signo) {
 	if (signo == SIGCONT) {
@@ -276,30 +282,35 @@ void continuator(const int signo) {
 		tired = FALSE;
 	}
 }
+void terminator(const int signo) {
+	if (signo == SIGTERM) {
+		printfl("Caught this.\n");
+		exit(0);
+	}
+}
 
 /**
 Saves the game to memory.
 **/
 void save(const int state) {
-	printf("*"); fflush(stdout);//a graceful puff of smoke
 	pid_t pid = fork();
-	shmup();//refactored to cause a segmentation fault
+	shmup();
 	if (pid != (pid_t )NULL) {//parent
-		//printf("DEBUG: parent(%d); ", (int )getpid()); fflush(stdout);
-		//printf("DEBUG: parent(%d).stop(); ", (int )getpid()); fflush(stdout);
+		if (conf->pids[state] != 0) {//removes an old save
+			kill(conf->pids[state], SIGKILL);//kills the parent of another process and causes weird problems
+		}
 		conf->pids[state] = getpid();
 		if (signal(SIGCONT, continuator) == SIG_ERR) printfl("Can't catch this.\n");
-		printf("<%d fell asleep>", (int )getpid()); fflush(stdout);
+		//printf("<%d fell asleep>", (int )getpid()); fflush(stdout);
 		struct timespec req;
 		req.tv_sec = (time_t )0;
 		req.tv_nsec = (long )1000000000/60;
 		while (tired) nanosleep(&req, NULL);
-		printf("<%d woke up>", (int )getpid()); fflush(stdout);
-		conf->pids[0] = getpid();
+		//printf("<%d woke up>", (int )getpid()); fflush(stdout);
 	}
 	else {//child
-		//printf("DEBUG: child(%d); ", (int )getpid()); fflush(stdout);
-		printf("<%d is ready>", (int )getpid()); fflush(stdout);
+		printf("*"); fflush(stdout);//a graceful puff of smoke
+		//printf("<%d is ready>", (int )getpid()); fflush(stdout);
 		conf->pids[0] = getpid();
 	}
 }
@@ -308,15 +319,16 @@ void save(const int state) {
 Loads the game from memory.
 **/
 void load(const int state) {
-	//printf("DEBUG: child(%d).kill(); ", (int )getpid()); fflush(stdout);
-	//printf("DEBUG: parent(%d).continue(); ", (int )getppid()); fflush(stdout);
-	printf("*"); fflush(stdout);//a graceful puff of smoke
-	printf("<%d poked %d>", (int )getpid(), (int )conf->pids[state]); fflush(stdout);
-	kill(conf->pids[state], SIGCONT);
-	printf("<%d killed %d>", (int )getpid(), (int )conf->pids[0]); fflush(stdout);
-	const int zorg = conf->pids[0];
-	conf->pids[0] = 0;
-	kill(zorg, SIGKILL);
+	//printf("<%d poked %d>", (int )getpid(), (int )conf->pids[state]); fflush(stdout);
+	if (conf->pids[state] != 0) {
+		printf("*"); fflush(stdout);//a graceful puff of smoke
+		kill(conf->pids[state], SIGCONT);
+		//printf("<%d killed %d>", (int )getpid(), (int )conf->pids[0]); fflush(stdout);
+		const int zorg = conf->pids[0];
+		conf->pids[0] = conf->pids[state];
+		conf->pids[state] = 0;
+		kill(zorg, SIGKILL);
+	}
 }
 
 /**
@@ -352,12 +364,15 @@ int wgetch(WINDOW *win) { OVERLOAD
 		return 0;//redundant
 	}
 	else if (key == 0x113) {
-		siput();//TODO remove
 		globstate = globstate%9+1;
 		return 0;
 	}
 	else if (key == 0x114) {
 		now++;
+		return 0;
+	}
+	else if (key == 'S') {//bad
+		seed();//TODO move
 		return 0;
 	}
 	if (!was_meta && !was_colon && (key == 0x3a || key == 'w')) was_colon = key == 0x3a ? 1 : 2;//booleans are fun like that
@@ -468,19 +483,19 @@ int wrefresh(WINDOW *win) { OVERLOAD
 		ws_x--;
 	ws_ADDSTR("S: %d", 4, globstate);
 	ws_ADDSTR("T: 0x%08x", 13, now);
-	ws_ADDSTR("R: 0x%04x", 9, (int )ARC4_I<<8|(int )ARC4_J);
+	ws_ADDSTR("R: 0x%04x", 9, (int )*ARC4_I<<8|(int )*ARC4_J);
 	ws_ADDSTR("G: %d", 13, TURNS);
 	ws_ADDSTR("F: %d", 13, frame);
 	ws_ADDSTR("I: %s", 9, codeins);
 
-	char some[0x100];//a hack
+	char some[TERM_COL];//a hack
 	strcpy(some, "P: ");
 	for (int index = 0; index < SAVE_STATES; index++) {
 		if (conf != NULL && conf->pids != NULL) {
-			char somer[0x50];
-			sprintf(somer, "%s%d:%04x", some, index, conf->pids[index]);
+			char somer[TERM_COL];
+			bool somery = conf->pids[index] != 0;
+			sprintf(somer, "%s %c%d:%d%c", some, somery ? '[' : ' ', index, conf->pids[index], somery ? ']' : ' ');
 			strcpy(some, somer);
-			strcat(some, ", ");
 		}
 	}
 	strcat(some, "END\n");

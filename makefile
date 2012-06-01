@@ -6,9 +6,6 @@ OBJ = obj
 SRC = src
 NAME = adom-tas
 
-nothing:
-	echo "Don't build this."
-
 all: $(BIN)/$(NAME).so $(BIN)/$(NAME)
 
 clean:
