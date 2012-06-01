@@ -13,7 +13,7 @@ Checklist
 [ ] Implement emulation tools
 	[X] Find the random number generator's seed function
 	[X] Redirect the seed function to the recorder and back again
-	[ ] Implement save state selector
+	[X] Implement save state selector
 	[X] Implement fast save (memory-memory)
 	[X] Implement fast load (memory-memory)
 	[ ] Implement slow save (memory-file)
@@ -34,11 +34,12 @@ Checklist
 	[X] Find a way to get around overloading macros
 	[X] Create an overlay bigger than 80x25
 	[X] Add a status bar (char* string)
-	[ ] Include in the status bar
-		[ ] Current save state
+	[X] Include in the status bar
+		[X] Current save state
 		[X] Last used inputs
 		[X] Last used time manipulations
 		[X] Inputs per turn
+		[X] Other things
 	[ ] Implement cheats that disable the recording
 	[ ] Refine sloppy implementations
 </pre>
@@ -101,7 +102,7 @@ Repeat:
 User Interface
 --------------
 
-The user interface deserves a mention here since it's so intuitive.
+The user interface (out of date now) deserves a mention here since it's so intuitive.
 
 The status bar looks like
 <pre>
