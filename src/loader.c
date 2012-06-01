@@ -296,9 +296,9 @@ void save(const int state) {
 	pid_t pid = fork();
 	shmup();
 	if (pid != (pid_t )NULL) {//parent
-		if (conf->pids[state] != 0) {//removes an old save
+		/*if (conf->pids[state] != 0) {//removes an old save
 			kill(conf->pids[state], SIGKILL);//kills the parent of another process and causes weird problems
-		}
+		}*/
 		conf->pids[state] = getpid();
 		if (signal(SIGCONT, continuator) == SIG_ERR) printfl("Can't catch this.\n");
 		//printf("<%d fell asleep>", (int )getpid()); fflush(stdout);
