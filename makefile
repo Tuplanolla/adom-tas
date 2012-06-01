@@ -1,10 +1,13 @@
 RM = /bin/rm -f
 MKDIR = /bin/mkdir -p
-GCC = /usr/bin/gcc -std=gnu99 -ldl -lrt -O3 -Wall
+GCC = /usr/bin/gcc -std=gnu99 -ldl -lrt -O3 -Wall -g
 BIN = bin
 OBJ = obj
 SRC = src
 NAME = adom-tas
+
+nothing:
+	echo "Don't build this."
 
 all: $(BIN)/$(NAME).so $(BIN)/$(NAME)
 

@@ -4,8 +4,8 @@ Provides.
 TODO put close(shm_fd); somewhere
 TODO put close(log_stream); somewhere
 **/
-#ifndef __C
-#define __C
+#ifndef LOADER_C
+#define LOADER_C
 
 #include <curses.h>
 #include <dlfcn.h>
@@ -26,8 +26,26 @@ TODO put close(log_stream); somewhere
 #include <unistd.h>
 
 #include "config.h"
+#include "util.h"
 #include "adom.h"
 #include "loader.h"
+
+INIT_PAIR real_init_pair;
+WCLEAR real_wclear;
+WREFRESH real_wrefresh; 
+WMOVE real_wmove;
+WADDCH real_waddch;
+WADDNSTR real_waddnstr;
+WINCH real_winch;
+WGETCH real_wgetch;
+WGETNSTR real_wgetnstr;
+UNLINK real_unlink;
+TIME real_time;
+RAND real_rand;
+SRAND real_srand;
+RANDOM real_random;
+SRANDOM real_srandom;
+IOCTL real_ioctl;
 
 /**
 Formats and logs a message.
@@ -44,6 +62,7 @@ int printfl(const char *fmt, ...) {
 		result += fprintf(log_stream, "Log: ");
 	}
 	result += vfprintf(log_stream, fmt, ap);
+	fflush(log_stream);
 	va_end(ap);
 	return result;
 }
@@ -66,6 +85,48 @@ Logs a warning message and returns its error code.
 error_t warning(const error_t code) {
 	printfl("Warning: %s\n", error_message(code));
 	return code;
+}
+
+/**
+Very important temporary variables.
+**/
+int frame = 0, now = 0, globstate = 1;//0x7fe81780
+
+/**
+Simulates the ARC4 of the executable.
+**/
+char arc4_s[0x100];
+void sarc4(unsigned char *seed) {
+	unsigned char i = 0x00, j = 0x00;
+	do {
+		arc4_s[i] = i;
+		i++;
+	} while(i != 0x00);
+	do {
+		j = j+arc4_s[i]+seed[i%4];
+		SWAP(arc4_s[i], arc4_s[j]);
+		if (i == 0xff) break;
+		i++;
+	} while(i != 0x00);
+}
+
+int siput() {
+	real_srandom(now);
+	int asshat = real_random();
+	sarc4((unsigned char *)&asshat);
+	//sarc4((unsigned char *)&now);
+	//seed_rng(asshat);
+	//seed_rng_from_time();
+	ARC4_SEED_TIME();
+	FILE *s_stream = fopen(S_PATH, "w");
+	FILE *i_stream = fopen(I_PATH, "w");
+	int result = 0;
+	if (s_stream != NULL) result += fwrite(ARC4_S, 1, 0x100, s_stream);
+	if (i_stream != NULL) result += fwrite(arc4_s, 1, 0x100, i_stream);
+	//((void (*)(FILE *))0x8125f50)(a_stream);
+	fclose(s_stream);
+	fclose(i_stream);
+	return result;
 }
 
 /*
@@ -102,19 +163,6 @@ void key_code(char *code, const int key) {//TODO restrict
 	key_code_RETURN("\\?");//nonprintable keys
 }
 
-INIT_PAIR real_init_pair;
-WCLEAR real_wclear;
-WREFRESH real_wrefresh; 
-WMOVE real_wmove;
-WADDCH real_waddch;
-WADDNSTR real_waddnstr;
-WINCH real_winch;
-WGETCH real_wgetch;
-WGETNSTR real_wgetnstr;
-UNLINK real_unlink;
-TIME real_time;
-IOCTL real_ioctl;
-
 /**
 Loads functions from dynamically linked libraries (libc and libncurses).
 **/
@@ -128,6 +176,10 @@ void load_dynamic_libraries() {
 	if (handle == NULL) exit(error(DLOPEN_LIBC_ERROR));
 	real_unlink = (UNLINK )dlsym(handle, "unlink");
 	real_time = (TIME )dlsym(handle, "time");
+	real_rand = (RAND )dlsym(handle, "rand");
+	real_srand = (SRAND )dlsym(handle, "srand");
+	real_random = (RANDOM )dlsym(handle, "random");
+	real_srandom = (SRANDOM )dlsym(handle, "srandom");
 	real_ioctl = (IOCTL )dlsym(handle, "ioctl");
 
 	/*
@@ -168,6 +220,8 @@ void initialize() {
 		log_stream = stderr;
 		warning(LOG_WARNING);
 	}
+
+	printfl("Logging is disabled for: printf, wrefresh, init_pair, wgetch.\n");
 }
 
 /**
@@ -286,9 +340,8 @@ typedef struct mvaddnstr_s mvaddnstr_t;
 mvaddnstr_t *draw_queue;//never used
 
 char codeins[7];
-int frame = 0, now = 0, globstate = 1;//0x7fe81780
 int wgetch(WINDOW *win) { OVERLOAD
-	printfl("Called wgetch(0x%08x).\n", (unsigned int )win);
+	//printfl("Called wgetch(0x%08x).\n", (unsigned int )win);
 	int key = real_wgetch(win);
 	if (key == 0x111) {
 		save(globstate);
@@ -299,6 +352,7 @@ int wgetch(WINDOW *win) { OVERLOAD
 		return 0;//redundant
 	}
 	else if (key == 0x113) {
+		siput();//TODO remove
 		globstate = globstate%9+1;
 		return 0;
 	}
@@ -330,10 +384,42 @@ int wgetch(WINDOW *win) { OVERLOAD
 }
 
 /**
+Overloads rand with a simple log wrapper.
+**/
+int rand() { OVERLOAD
+	printfl("Called rand().\n");
+	return real_rand();
+}
+
+/**
+Overloads srand with a simple log wrapper.
+**/
+void srand(unsigned int seed) { OVERLOAD
+	printfl("Called srand(%u).\n", seed);
+	real_srand(seed);
+}
+
+/**
+Overloads random with a simple log wrapper.
+**/
+long random() { OVERLOAD
+	printfl("Called random().\n");
+	return real_random();
+}
+
+/**
+Overloads srandom with a simple log wrapper.
+**/
+void srandom(unsigned int seed) { OVERLOAD
+	printfl("Called srandom(%u).\n", seed);
+	real_srandom(seed);
+}
+
+/**
 Overloads init_pair with a simple log wrapper.
 **/
 int init_pair(short pair, short f, short b) { OVERLOAD
-	printfl("Called init_pair(%d, %d, %d).\n", pair, f, b);
+	//printfl("Called init_pair(%d, %d, %d).\n", pair, f, b);
 	return real_init_pair(pair, f, b);
 }
 
@@ -351,7 +437,7 @@ time_t time(time_t *t) { OVERLOAD
 Overloads wrefresh with a "simple log wrapper".
 **/
 int wrefresh(WINDOW *win) { OVERLOAD
-	printfl("Called wrefresh(0x%08x).\n", (unsigned int )win);
+	//printfl("Called wrefresh(0x%08x).\n", (unsigned int )win);
 
 	int x, y;
 	attr_t attrs;
@@ -380,11 +466,9 @@ int wrefresh(WINDOW *win) { OVERLOAD
 		ws_x -= strlen(ws_buf);\
 		mvaddnstr(ws_y, ws_x, ws_buf, TERM_COL-ws_x);\
 		ws_x--;
-
 	ws_ADDSTR("S: %d", 4, globstate);
 	ws_ADDSTR("T: 0x%08x", 13, now);
-	sprintf(ws_buf, "%02x%02x", ARC4_I, ARC4_J);
-	ws_ADDSTR("R: 0x%s", 9, ws_buf);
+	ws_ADDSTR("R: 0x%04x", 9, (int )ARC4_I<<8|(int )ARC4_J);
 	ws_ADDSTR("G: %d", 13, TURNS);
 	ws_ADDSTR("F: %d", 13, frame);
 	ws_ADDSTR("I: %s", 9, codeins);
@@ -400,7 +484,7 @@ int wrefresh(WINDOW *win) { OVERLOAD
 		}
 	}
 	strcat(some, "END\n");
-	mvaddnstr(20, 14, some, TERM_COL-20);
+	mvaddnstr(21, 14, some, TERM_COL-20);
 
 	wattr_set(win, attrs, pair, NULL);
 	wmove(win, y, x);

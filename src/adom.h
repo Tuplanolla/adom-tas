@@ -10,11 +10,13 @@ Points to the turn count of the executable.
 #define TURNS (*((unsigned int *)0x082b16e0))
 
 /**
-Points to the random number generator's variables of the executable.
+Points to the random number generator of the executable.
 **/
-#define ARC4_S (*((unsigned char **)0x082ada40))
+#define ARC4_S ((unsigned char *)0x082ada40)
 #define ARC4_I (*((unsigned char *)0x082adb40))
 #define ARC4_J (*((unsigned char *)0x082adb41))
+#define ARC4_SEED(seed) (((void (*)(int) )0x8125ea0)(seed))
+#define ARC4_SEED_TIME() (((void (*)() )0x8125d10)())
 
 /**
 Points to the amount of initialized pairs.

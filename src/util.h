@@ -17,6 +17,20 @@ typedef enum bool_e bool;
 */
 
 /**
+Swaps two variables.
+
+@param x The first variable.
+@param y The second variable.
+@return An argument list of the bits.
+**/
+#define SWAP(x, y) {\
+		unsigned char SWAP_cache[sizeof (x) == sizeof (y) ? (signed )sizeof (x) : -1];\
+		memcpy(SWAP_cache, &y, sizeof (x));\
+		memcpy(&y, &x, sizeof (x));\
+		memcpy(&x, SWAP_cache, sizeof (x));\
+	}
+
+/**
 Returns the bits of a byte.
 
 @param byte The byte.

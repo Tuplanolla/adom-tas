@@ -4,6 +4,10 @@ Provides default values for configuration variables.
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#define S_PATH HOME"/adom-tas/s.log"
+#define I_PATH HOME"/adom-tas/i.log"
+#define A_PATH HOME"/adom-tas/a.log"
+
 /**
 Sets the default locations of (all kinds of things).
 **/
