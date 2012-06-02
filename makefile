@@ -18,8 +18,8 @@ prepare:
 $(OBJ)/%.o: $(SRC)/%.c
 	$(GCC) -fpic -c -o $@ $<
 
-$(BIN)/$(NAME).so: prepare $(OBJ)/loader.o
-	$(GCC) -fpic -shared -o $(BIN)/$(NAME).so $(OBJ)/loader.o
+$(BIN)/$(NAME).so: prepare $(OBJ)/loader.o $(OBJ)/util.o
+	$(GCC) -fpic -shared -o $(BIN)/$(NAME).so $(OBJ)/loader.o $(OBJ)/util.o
 
 $(BIN)/$(NAME): prepare $(OBJ)/wrapper.o
 	$(GCC) -lncurses -o $(BIN)/$(NAME) $(OBJ)/wrapper.o

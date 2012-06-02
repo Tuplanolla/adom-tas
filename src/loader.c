@@ -87,6 +87,9 @@ error_t warning(const error_t code) {
 	return code;
 }
 
+/**
+Logs the ARC4 status.
+**/
 int printrl() {
 	FILE *random_stream = fopen(RANDOM_LOG_PATH, "w");
 	int result = 0;
@@ -96,6 +99,24 @@ int printrl() {
 		result += fwrite(ARC4_J, sizeof (unsigned char), 1, random_stream);
 	}
 	fclose(random_stream);
+	return result;
+}
+
+/**
+Logs the inputs.
+**/
+int printil() {
+	FILE *input_stream = fopen(INPUT_LOG_PATH, "w");
+	int result = 0;
+	if (input_stream != NULL) {
+		frame_t *this_frame = get_first_frame();
+		while (this_frame != NULL) {
+			result += fwrite(&this_frame->duration, sizeof (int), 1, input_stream);
+			result += fwrite(&this_frame->input, sizeof (int), 1, input_stream);
+			this_frame = this_frame->next;
+		}
+	}
+	fclose(input_stream);
 	return result;
 }
 
@@ -115,7 +136,7 @@ void sarc4(const int seed) {
 		i++;
 	} while(i != 0x00);
 	do {
-		j = j+arc4_s[i]+((unsigned char *)&seed)[i%4];
+		j = j+arc4_s[i]+((unsigned char *)&seed)[i%sizeof (int)];
 		SWAP(arc4_s[i], arc4_s[j]);
 		if (i == 0xff) break;
 		i++;
@@ -262,7 +283,7 @@ void initialize() {
 
 	load_dynamic_libraries();
 
-	log_stream = fopen(LOG_PATH, "w");
+	log_stream = fopen(CALL_LOG_PATH, "w");
 	if (log_stream == NULL) {
 		log_stream = stderr;
 		warning(LOG_WARNING);
@@ -278,14 +299,18 @@ void initialize() {
 bool tired = TRUE;
 void continuator(const int signo) {
 	if (signo == SIGCONT) {
-		printfl("Caught this.\n");
+		printfl("Caught CONT.\n");
 		tired = FALSE;
 	}
 }
 void terminator(const int signo) {
 	if (signo == SIGTERM) {
-		printfl("Caught this.\n");
-		exit(0);
+		printfl("Caught TERM.\n");
+	}
+}
+void interrupter(const int signo) {
+	if (signo == SIGINT) {
+		printfl("Caught INT.\n");
 	}
 }
 
@@ -293,6 +318,8 @@ void terminator(const int signo) {
 Saves the game to memory.
 **/
 void save(const int state) {
+	if (signal(SIGTERM, continuator) == SIG_ERR) printfl("Can't catch TERM.\n");
+	if (signal(SIGINT, continuator) == SIG_ERR) printfl("Can't catch INT.\n");
 	pid_t pid = fork();
 	shmup();
 	if (pid != (pid_t )NULL) {//parent
@@ -300,7 +327,7 @@ void save(const int state) {
 			kill(conf->pids[state], SIGKILL);//kills the parent of another process and causes weird problems
 		}*/
 		conf->pids[state] = getpid();
-		if (signal(SIGCONT, continuator) == SIG_ERR) printfl("Can't catch this.\n");
+		if (signal(SIGCONT, continuator) == SIG_ERR) printfl("Can't catch CONT.\n");
 		//printf("<%d fell asleep>", (int )getpid()); fflush(stdout);
 		struct timespec req;
 		req.tv_sec = (time_t )0;
@@ -332,7 +359,7 @@ void load(const int state) {
 }
 
 /**
-Annotates overloaded functions.
+Annotates (and more) overloaded functions.
 **/
 #define OVERLOAD initialize();
 
@@ -351,28 +378,42 @@ struct mvaddnstr_s {
 typedef struct mvaddnstr_s mvaddnstr_t;
 mvaddnstr_t *draw_queue;//never used
 
+bool condensed = FALSE;
 char codeins[7];
-int wgetch(WINDOW *win) { OVERLOAD
+int wgetch(WINDOW *win) { OVERLOAD//bloat
 	//printfl("Called wgetch(0x%08x).\n", (unsigned int )win);
 	int key = real_wgetch(win);
-	if (key == 0x111) {
+	if (key == 0x110) {
+		condensed = !condensed;
+		wrefresh(win);
+		return 0;
+	}
+	else if (key == 0x111) {
 		save(globstate);
+		wrefresh(win);
 		return 0;
 	}
 	else if (key == 0x112) {
 		load(globstate);
+		wrefresh(win);
 		return 0;//redundant
 	}
 	else if (key == 0x113) {
 		globstate = globstate%9+1;
+		wrefresh(win);
+		printrl();//TODO move
+		printil();//TODO move
 		return 0;
 	}
 	else if (key == 0x114) {
 		now++;
+		wrefresh(win);
 		return 0;
 	}
 	else if (key == 'S') {//bad
-		seed();//TODO move
+		seed();//TODO fix
+		frame_add(TRUE, 0, 0, now);
+		wrefresh(win);
 		return 0;
 	}
 	if (!was_meta && !was_colon && (key == 0x3a || key == 'w')) was_colon = key == 0x3a ? 1 : 2;//booleans are fun like that
@@ -394,6 +435,8 @@ int wgetch(WINDOW *win) { OVERLOAD
 		strcat(codeins, code);//TODO turn this into a macro
 		frame++;
 	}
+	unsigned int duration = 1;
+	frame_add(FALSE, duration, key, 0);//meta, colon and w are undisplayed but still recorded (for now)
 	//wrefresh(win);
 	return key;
 }
@@ -477,29 +520,28 @@ int wrefresh(WINDOW *win) { OVERLOAD
 		ws_pair--;\
 		wattrset(win, COLOR_PAIR(ws_pair));\
 		snprintf(ws_str, (size_t )TERM_COL, format, arg);\
-		snprintf(ws_buf, (size_t )(length+1), "%-*s", length, ws_str);\
-		ws_x -= strlen(ws_buf);\
+		snprintf(ws_buf, (size_t )((condensed ? 1 : length)+1), "%-*s", length, ws_str);\
+		ws_x -= length;\
 		mvaddnstr(ws_y, ws_x, ws_buf, TERM_COL-ws_x);\
 		ws_x--;
 	ws_ADDSTR("S: %d", 4, globstate);
 	ws_ADDSTR("T: 0x%08x", 13, now);
-	ws_ADDSTR("R: 0x%04x", 9, (int )*ARC4_I<<8|(int )*ARC4_J);
+	ws_ADDSTR("R: 0x%08x", 13, *(int *)ARC4_S);
 	ws_ADDSTR("G: %d", 13, TURNS);
 	ws_ADDSTR("F: %d", 13, frame);
 	ws_ADDSTR("I: %s", 9, codeins);
 
 	char some[TERM_COL];//a hack
-	strcpy(some, "P: ");
+	strcpy(some, "P:");
 	for (int index = 0; index < SAVE_STATES; index++) {
-		if (conf != NULL && conf->pids != NULL) {
+		if (conf->pids != NULL) {
 			char somer[TERM_COL];
 			bool somery = conf->pids[index] != 0;
-			sprintf(somer, "%s %c%d:%d%c", some, somery ? '[' : ' ', index, conf->pids[index], somery ? ']' : ' ');
+			sprintf(somer, "%s %c%d%c", some, somery ? '[' : ' ', index, /*conf->pids[index],*/ somery ? ']' : ' ');
 			strcpy(some, somer);
 		}
 	}
-	strcat(some, "END\n");
-	mvaddnstr(21, 14, some, TERM_COL-20);
+	mvaddnstr(21, 10, some, TERM_COL-20);
 
 	wattr_set(win, attrs, pair, NULL);
 	wmove(win, y, x);

@@ -71,5 +71,24 @@ Returns the page size of an object.
 @return The page size of the object.
 **/
 #define PAGE_SIZE(size) ((size_t )((1+(sizeof (no_yes_no)-1)/getpagesize())*getpagesize()))
-	
+
+/*
+Bad things live in header files.
+*/
+struct frame_s {//optimized for minimum size and abstracted away later
+	//bool seed;//the input is actually a reseed and processing ends here
+	//if the input is a reseed then duration is 0
+	int duration;//the duration of the frame (in quarter seconds) if an actual input
+	int input;//the input as an ncurses bitstring if an actual input
+	//if duration is 0 then the time is the input
+	//int time;//the current time if a reseed
+	struct frame_s *next;//the next frame (forming a linked list)
+};
+typedef struct frame_s frame_t;
+
+frame_t *get_first_frame();
+frame_t *get_last_frame();
+void frame_add(bool reseed, unsigned int duration, int input, unsigned int time);
+void frame_remove(frame_t *frame_pointer);
+
 #endif

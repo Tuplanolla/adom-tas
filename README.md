@@ -22,10 +22,10 @@ Checklist
 [ ] Implement recording tools
 	[X] Find the input handler
 	[X] Redirect the input handler to the recorder and back again
-	[ ] Implement saving to a file
-		[ ] Inputs (char** string)
-		[ ] Time manipulations (uint32 seconds)
-		[ ] Frame durations for playback (uint8 multiplier)
+	[X] Implement saving to a file
+		[X] Inputs (char** string)
+		[X] Time manipulations (uint32 seconds)
+		[X] Frame durations for playback (uint8 multiplier)
 	[ ] Implement playing back a recording
 	[X] Implement dumping an avi
 	[ ] Refine sloppy implementations
@@ -41,7 +41,11 @@ Checklist
 		[X] Inputs per turn
 		[X] Other things
 	[ ] Implement cheats that disable the recording
-	[ ] Refine sloppy implementations
+	[X] Refine sloppy implementations
+[ ] Write documentation
+[ ] Refactor
+	[ ] Code
+	[ ] Documentation
 </pre>
 
 Progression

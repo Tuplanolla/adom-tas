@@ -1,8 +1,8 @@
 /**
 Serves as wrapper for the executable.
 **/
-#ifndef MAIN_C
-#define MAIN_C
+#ifndef WRAPPER_C
+#define WRAPPER_C
 
 /*
 Half of these are unnecessary.
@@ -69,6 +69,7 @@ int main(int argc, char **argv) {
 	/*
 	Conjures bacon.
 	*/
+	unlink(WHATEVER_DATA_PATH);
 	int result;
 	struct stat file;
 	result = stat(EXECUTABLE_PATH, &file);

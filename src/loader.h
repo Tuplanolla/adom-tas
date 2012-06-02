@@ -31,12 +31,13 @@ inline char *error_message(const error_t code) {
 	if (code == NO_ERROR) return "Nothing failed.";
 	else if (code == SETENV_LD_PRELOAD_ERROR) return "Setting the environment variable LD_PRELOAD failed.";
 	else if (code == USER_ID_ERROR) return "Linking dynamic libraries failed due to conflicting user identifiers.";
-	else if (code == DLOPEN_LIBC_ERROR) return "Loading dynamically linked libraries failed.";
+	else if (code == DLOPEN_LIBC_ERROR) return "Loading libc failed.";
+	else if (code == DLOPEN_LIBNCURSES_ERROR) return "Loading libncurses failed.";
 	else if (code == STAT_ERROR) return "Reading the executable failed.";
 	else if (code == WRONG_VERSION_ERROR) return "Identifying the executable by its version failed.";
 	else if (code == WRONG_SIZE_ERROR) return "Identifying the executable by its size failed.";
 	else if (code == LOG_WARNING) return "Failed to open the log file. Logging to stderr (standard error stream) instead.";
-	else return NULL;
+	else return "Failed to fail.";
 }
 
 /**
