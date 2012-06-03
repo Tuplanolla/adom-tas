@@ -4,12 +4,7 @@ Provides general-purpose utilities.
 #ifndef UTIL_C
 #define UTIL_C
 
-#include <curses.h>
-#include <dlfcn.h>
-#include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 
 #include "util.h"
 
@@ -52,52 +47,7 @@ void frame_add(bool reseed, unsigned int duration, int input, unsigned int time)
 
 //get an object
 frame_t *frame_get(void) {
-	//Hahaha, no!
-}
-
-//remove an object
-void frame_remove(frame_t *frame_pointer) {
-	//not an object
-	if (frame_pointer == NULL) return;//null error
-
-	//first and last object
-	if (first_frame == last_frame) {
-		first_frame = NULL;
-		last_frame = NULL;
-		free(first_frame);
-		frame_count--;
-		return;
-	}
-
-	//first object
-	if (frame_pointer == first_frame) {
-		first_frame = first_frame->next;
-		free(frame_pointer);
-		frame_count--;
-		return;
-	}
-
-	//previous object
-	frame_t *frame_temporary = first_frame;
-	while (frame_temporary->next != frame_pointer) {
-		frame_temporary = frame_temporary->next;
-		if (frame_temporary == NULL) return;//unexpected end error
-	}
-
-	//last object
-	if (frame_pointer == last_frame) {
-		frame_temporary->next = NULL;
-		last_frame = frame_temporary;
-		free(frame_pointer);
-		frame_count--;
-		return;
-	}
-
-	//other object
-	frame_temporary->next = frame_pointer->next;
-	free(frame_pointer);
-	frame_count--;
-	return;
+	return NULL;//Hahaha, no!
 }
 
 #endif

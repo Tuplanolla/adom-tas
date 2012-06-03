@@ -7,16 +7,13 @@ TODO put close(log_stream); somewhere
 #ifndef LOADER_C
 #define LOADER_C
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <curses.h>
 #include <dlfcn.h>
-#include <errno.h>
 #include <fcntl.h>
-#include <getopt.h>
-#include <libgen.h>
 #include <signal.h>
 #include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
@@ -28,8 +25,12 @@ TODO put close(log_stream); somewhere
 #include "config.h"
 #include "util.h"
 #include "adom.h"
+#include "error.h"
 #include "loader.h"
 
+/**
+Declares the unmodified versions of the functions that are overloaded.
+**/
 INIT_PAIR real_init_pair;
 WCLEAR real_wclear;
 WREFRESH real_wrefresh; 
@@ -52,6 +53,7 @@ Formats and logs a message.
 @param fmt The message format.
 @param ... The parameters to format.
 @return The amount of characters written.
+@deprecated
 **/
 FILE *log_stream = NULL;
 int printfl(const char *fmt, ...) {
@@ -68,23 +70,27 @@ int printfl(const char *fmt, ...) {
 }
 
 /**
-Logs an error message and returns its error code.
-@param code The error code.
-@return The error code.
+Formats and logs a message.
+@param stream The destination stream.
+@param fmt The message format.
+@param ... The parameters to format.
+@return The amount of characters written.
 **/
-error_t error(const error_t code) {
-	printfl("Error: %s\n", error_message(code));
-	return code;
+int vfprintfl(FILE *stream, const char *fmt, va_list ap) {
+	int result = 0;
+	if (stream == stdout || stream == stderr) {
+		result += fprintf(stream, "Log: ");
+	}
+	result += vfprintf(stream, fmt, ap);
+	result += fprintf(stream, "\n");
+	return result;
 }
-
-/**
-Logs a warning message and returns its error code.
-@param code The error code.
-@return The error code.
-**/
-error_t warning(const error_t code) {
-	printfl("Warning: %s\n", error_message(code));
-	return code;
+int fprintfl(FILE *stream, const char *fmt, ...) {
+	va_list	ap;
+	va_start(ap, fmt);
+	const int result = vfprintfl(stream, fmt, ap);
+	va_end(ap);
+	return result;
 }
 
 /**
@@ -121,6 +127,28 @@ int printil() {
 }
 
 /**
+Logs an error message and returns its error code.
+@param code The error code.
+@return The error code.
+**/
+error_t error(const error_t code) {
+	printfl("Error: %s\n", error_message(code));
+	return code;
+}
+
+/**
+Logs a warning message and returns its error code.
+@param code The error code.
+@return The error code.
+**/
+error_t warning(const error_t code) {
+	printfl("Warning: %s\n", error_message(code));
+	return code;
+}
+
+//There are too many logs. This requires some thinking.
+
+/**
 Very important temporary variables.
 **/
 int frame = 0, now = 0, globstate = 1;//0x7fe81780
@@ -129,6 +157,17 @@ int frame = 0, now = 0, globstate = 1;//0x7fe81780
 Simulates the ARC4 of the executable.
 **/
 char arc4_s[0x100];
+int harc4() {
+	const int prime = 0x0000001f;
+	int result = 0x00000001;
+	unsigned char i = 0x00;
+	do {
+		result = prime*result+(int )arc4_s[i];
+		if (i == 0xff) break;
+		i++;
+	} while(i != 0x00);
+	return result;
+}
 void sarc4(const int seed) {
 	unsigned char i = 0x00, j = 0x00;
 	do {
@@ -141,6 +180,18 @@ void sarc4(const int seed) {
 		if (i == 0xff) break;
 		i++;
 	} while(i != 0x00);
+}
+
+int ARC4_H() {//Don't repeat yourself...
+	const int prime = 0x0000001f;
+	int result = 0x00000001;
+	unsigned char i = 0x00;
+	do {
+		result = prime*result+(int )ARC4_S[i];
+		if (i == 0xff) break;
+		i++;
+	} while(i != 0x00);
+	return result;
 }
 
 /*
@@ -236,6 +287,7 @@ void seed() {
 Shares memory or something.
 **/
 struct shm_s {
+	int term;//if needed to fix detaching
 	int pids[SAVE_STATES];
 };
 typedef struct shm_s shm_t;
@@ -244,16 +296,14 @@ shm_t *conf;//shared
 void shmup() {
 	bool first = TRUE;
 
-	printfl("Time to map!\n");
+	printfl("Started to map shared memory.\n");
 	shm_fd = shm_open(SHM_PATH, O_RDWR|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR);
 	if (shm_fd < 0) {
-		printfl("Looks not first because of \"%s\".\n", strerror(errno));
 		first = FALSE;
 	}
-	else printfl("Looks first.\n");
 	shm_fd = shm_open(SHM_PATH, O_RDWR|O_CREAT, S_IRUSR|S_IWUSR);
 	if (shm_fd < 0) {
-		printfl("Looks failed.\n");
+		printfl("Failed to map shared memory.\n");
 		return;//error here
 	}
 
@@ -261,16 +311,15 @@ void shmup() {
 
 	conf = (shm_t *)mmap(NULL, sizeof (shm_t), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
 	if (conf == MAP_FAILED) {
-		printfl("Failed to map.\n");
+		printfl("Failed to map shared memory.\n");
 		return;//error here
 	}
 
-	printfl("Map");
 	if (first) {
 		for (int index = 0; index < SAVE_STATES; index++) conf->pids[index] = 0;
-		printfl("-reset-");//doesn't work
+		printfl("Mapped shared memory.\n");
 	}
-	printfl("ped.\n");
+	else printfl("Remapped shared memory.\n");
 }
 
 /**
@@ -303,40 +352,38 @@ void continuator(const int signo) {
 		tired = FALSE;
 	}
 }
-void terminator(const int signo) {
-	if (signo == SIGTERM) {
-		printfl("Caught TERM.\n");
-	}
-}
-void interrupter(const int signo) {
-	if (signo == SIGINT) {
-		printfl("Caught INT.\n");
-	}
+void dreamcatcher(const int signo) {
+	printfl("Somehow caught \"%s\".\n", strsignal(signo));
 }
 
 /**
 Saves the game to memory.
 **/
 void save(const int state) {
-	if (signal(SIGTERM, continuator) == SIG_ERR) printfl("Can't catch TERM.\n");
-	if (signal(SIGINT, continuator) == SIG_ERR) printfl("Can't catch INT.\n");
-	pid_t pid = fork();
+	pid_t pid = fork();//returns 0 in child, process id of child in parent, -1 on error
 	shmup();
+	if (signal(SIGTERM, dreamcatcher) == SIG_ERR) printfl("Can't catch anything.\n");
+	if (signal(SIGINT, dreamcatcher) == SIG_ERR) printfl("Can't catch anything.\n");
+	if (signal(SIGHUP, dreamcatcher) == SIG_ERR) printfl("Can't catch anything.\n");
+	if (signal(SIGQUIT, dreamcatcher) == SIG_ERR) printfl("Can't catch anything.\n");
+	if (signal(SIGTRAP, dreamcatcher) == SIG_ERR) printfl("Can't catch anything.\n");
+	if (signal(SIGABRT, dreamcatcher) == SIG_ERR) printfl("Can't catch anything.\n");
+	if (signal(SIGSTOP, dreamcatcher) == SIG_ERR) printfl("Can't catch anything.\n");;
+	if (signal(SIGTTOU, dreamcatcher) == SIG_ERR) printfl("Can't catch anything.\n");
 	if (pid != (pid_t )NULL) {//parent
-		/*if (conf->pids[state] != 0) {//removes an old save
+		if (conf->pids[state] != 0) {//removes an old save
 			kill(conf->pids[state], SIGKILL);//kills the parent of another process and causes weird problems
-		}*/
+		}
 		conf->pids[state] = getpid();
 		if (signal(SIGCONT, continuator) == SIG_ERR) printfl("Can't catch CONT.\n");
 		//printf("<%d fell asleep>", (int )getpid()); fflush(stdout);
 		struct timespec req;
 		req.tv_sec = (time_t )0;
-		req.tv_nsec = (long )1000000000/60;
+		req.tv_nsec = 1000000000l/16l;//extern this
 		while (tired) nanosleep(&req, NULL);
 		//printf("<%d woke up>", (int )getpid()); fflush(stdout);
 	}
 	else {//child
-		printf("*"); fflush(stdout);//a graceful puff of smoke
 		//printf("<%d is ready>", (int )getpid()); fflush(stdout);
 		conf->pids[0] = getpid();
 	}
@@ -348,7 +395,6 @@ Loads the game from memory.
 void load(const int state) {
 	//printf("<%d poked %d>", (int )getpid(), (int )conf->pids[state]); fflush(stdout);
 	if (conf->pids[state] != 0) {
-		printf("*"); fflush(stdout);//a graceful puff of smoke
 		kill(conf->pids[state], SIGCONT);
 		//printf("<%d killed %d>", (int )getpid(), (int )conf->pids[0]); fflush(stdout);
 		const int zorg = conf->pids[0];
@@ -526,7 +572,7 @@ int wrefresh(WINDOW *win) { OVERLOAD
 		ws_x--;
 	ws_ADDSTR("S: %d", 4, globstate);
 	ws_ADDSTR("T: 0x%08x", 13, now);
-	ws_ADDSTR("R: 0x%08x", 13, *(int *)ARC4_S);
+	ws_ADDSTR("R: 0x%08x", 13, ARC4_H());
 	ws_ADDSTR("G: %d", 13, TURNS);
 	ws_ADDSTR("F: %d", 13, frame);
 	ws_ADDSTR("I: %s", 9, codeins);

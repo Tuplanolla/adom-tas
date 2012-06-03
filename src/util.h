@@ -6,15 +6,15 @@ Provides general-purpose utilities.
 
 /**
 Lists the boolean values.
-Some other library already does this.
 **/
-/*
+#undef TRUE
+#undef FALSE
+#undef bool
 enum bool_e {
 	FALSE,
 	TRUE,
 };
 typedef enum bool_e bool;
-*/
 
 /**
 Swaps two variables.
@@ -24,10 +24,10 @@ Swaps two variables.
 @return An argument list of the bits.
 **/
 #define SWAP(x, y) {\
-		unsigned char SWAP_cache[sizeof (x) == sizeof (y) ? (signed )sizeof (x) : -1];\
-		memcpy(SWAP_cache, &y, sizeof (x));\
+		unsigned char SWAP_z[sizeof (x) == sizeof (y) ? sizeof (x) : -1];\
+		memcpy(SWAP_z, &y, sizeof (x));\
 		memcpy(&y, &x, sizeof (x));\
-		memcpy(&x, SWAP_cache, sizeof (x));\
+		memcpy(&x, SWAP_z, sizeof (x));\
 	}
 
 /**
@@ -67,7 +67,7 @@ Returns the page boundary of a pointer.
 /**
 Returns the page size of an object.
 
-@param pointer The size of the object.
+@param size The size of the object.
 @return The page size of the object.
 **/
 #define PAGE_SIZE(size) ((size_t )((1+(sizeof (no_yes_no)-1)/getpagesize())*getpagesize()))

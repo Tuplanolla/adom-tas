@@ -5,37 +5,27 @@ Serves as wrapper for the executable.
 #define WRAPPER_C
 
 /*
-Half of these are unnecessary.
+Annotated for later removal.
 */
-#include <curses.h>
-#include <dlfcn.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <getopt.h>
-#include <libgen.h>
-#include <signal.h>
-#include <stdarg.h>
+#include <stdlib.h>//getenv setenv
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include <string.h>//memcmp
+#include <sys/stat.h>//S_*
+#include <unistd.h>//unlink execvp
+#include <curses.h>
 
 #include "config.h"
 #include "util.h"
 #include "adom.h"
-#include "loader.h"
+#include "error.h"
 
 /**
-Prints an error message and returns its error code.
+Prints a problem message and returns its error code.
 @param code The error code.
 @return The error code.
 **/
-error_t propagate(const error_t code) {
-	fprintf(stderr, "Error: %s\n", error_message(code));
+error_t problem(const error_t code) {
+	fprintf(stderr, "Problem: %s\n", error_message(code));
 	return code;
 }
 
@@ -43,7 +33,7 @@ error_t propagate(const error_t code) {
 Runs the executable.
 @param argc The amount of command line arguments.
 @param argv The command line arguments.
-@return 0 if successfully and an error number otherwise.
+@return The return code of the executable if successful and <code>EXECUTION_ERROR</code> otherwise.
 **/
 int main(int argc, char **argv) {
 	/*
@@ -52,7 +42,7 @@ int main(int argc, char **argv) {
 	const char *home = getenv("HOME");
 	if (home == NULL) {
 		if (setenv("HOME", HOME, TRUE)) {
-			return propagate(SETENV_HOME_ERROR);
+			return problem(SETENV_HOME_ERROR);
 		}
 	}
 
@@ -62,7 +52,7 @@ int main(int argc, char **argv) {
 	const char *ld_preload = getenv("LD_PRELOAD");
 	if (ld_preload == NULL) {
 		if (setenv("LD_PRELOAD", LIBRARY_PATH, TRUE)) {
-			return propagate(SETENV_LD_PRELOAD_ERROR);
+			return problem(SETENV_LD_PRELOAD_ERROR);
 		}
 	}
 
@@ -73,15 +63,15 @@ int main(int argc, char **argv) {
 	int result;
 	struct stat file;
 	result = stat(EXECUTABLE_PATH, &file);
-	if (result != 0) return propagate(STAT_ERROR);
+	if (result != 0) return problem(STAT_ERROR);
 	if (file.st_mode & (S_ISUID | S_ISGID)) {
-		return propagate(USER_ID_ERROR);
+		return problem(USER_ID_ERROR);
 	}
 
 	/*
 	Uses file system heuristics to identify the executable.
 	*/
-	if (file.st_size != 2452608) return propagate(WRONG_SIZE_ERROR);
+	if (file.st_size != 2452608) return problem(WRONG_SIZE_ERROR);
 	FILE *_fhandle = fopen(VERSION_DATA_PATH, "r");
 	if (_fhandle != NULL) {
 		unsigned char desired_version[4];
@@ -93,15 +83,15 @@ int main(int argc, char **argv) {
 		fread(version, sizeof (unsigned char), sizeof (version), _fhandle);
 		fclose(_fhandle);
 		if (version != NULL) {
-			if (memcmp(version, desired_version, 4) != 0) return propagate(WRONG_VERSION_ERROR);
+			if (memcmp(version, desired_version, 4) != 0) return problem(WRONG_VERSION_ERROR);
 		}
 	}
 
 	/*
-	Launches the executable.
+	Replaces the wrapper with the executable.
 	*/
-	argc--; argv++;//removes the name of this executable
-	if (execvp(EXECUTABLE_PATH, argv) == 0) return NO_ERROR;//doesn't work
+	argc--; argv++;//removes the name of the wrapper from the arguments
+	if (execvp(EXECUTABLE_PATH, argv) == 0) return NO_ERROR;//never returns
 	return EXECUTION_ERROR;
 }
 
