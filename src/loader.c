@@ -69,9 +69,9 @@ int printfl(const char *fmt, ...) {
 	return result;
 }
 
-void internal() {//Don't move me! My address will change!
+void internal() {//Move me! My address is found automatically!
 	printfl(":)\n");
-}//Don't worry. You can use gdb "print internal" to find me.
+}
 
 /**
 Formats and logs a message.
@@ -368,14 +368,22 @@ void initialize() {
 	shmup();
 	conf->pids[0] = getpid();
 
-	void *f = (void *)((int )&internal-0x08090733);
-	printf("0x%08x", (unsigned int )f);
+	/*
+	This is an attempt to test the system on an x64.
+	*/
+	void *CHEESE_MAGIC = (void *)0x08090733;
+	void *handle = dlopen(LIBRARY_PATH, RTLD_LAZY);//It gets worse by the minute!
+	if (handle == NULL) exit(error(DLOPEN_LIBC_ERROR));
+	void *internal_address = dlsym(handle, "internal");
+	unsigned int f = (unsigned int )internal_address-(unsigned int )CHEESE_MAGIC;
+	printfl("Somehow found 0x%08x-0x%08x = 0x%08x.\n", (unsigned int )&internal, 0x08090733, f);
+	internal();
 	unsigned char instructions[10];//TODO document
 	instructions[0] = 0xe8;//CALL internal() 0x08090733->&internal
-	instructions[1] = (int )f&0xff;
-	instructions[2] = ((int )f>>8)&0xff;
-	instructions[3] = ((int )f>>16)&0xff;
-	instructions[4] = ((int )f>>24)&0xff;
+	instructions[1] = (unsigned char )((f>>0x00)&0xff);
+	instructions[2] = (unsigned char )((f>>0x08)&0xff);
+	instructions[3] = (unsigned char )((f>>0x10)&0xff);
+	instructions[4] = (unsigned char )((f>>0x18)&0xff);
 	instructions[5] = 0xe9;//JMP out of here
 	instructions[6] = 0xf3;
 	instructions[7] = 0x00;
