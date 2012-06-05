@@ -19,7 +19,7 @@ Sets the default locations of (all kinds of things).
 
 #define INPUT_LOG_PATH HOME"/adom-tas/inputs.log"
 #define RANDOM_LOG_PATH HOME"/adom-tas/state.log"
-#define SRANDOM_LOG_PATH HOME"/adom-tas/sstate.log"
+#define SRANDOM_LOG_PATH HOME"/adom-tas/sim_state.log"
 #define CALL_LOG_PATH HOME"/adom-tas/calls.log"
 
 /**

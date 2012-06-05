@@ -368,14 +368,24 @@ void initialize() {
 	shmup();
 	conf->pids[0] = getpid();
 
-	const unsigned char instructions[] = {//TODO document
-			0xe8, 0xbd, 0x71, 0xf4, 0xaf,//CALL internal() 0x08090733->0xb7fd78f0 = 0xaff471bd
-			0xe9, 0xf3, 0x00, 0x00, 0x00//JMP out of here
-		};//redirects S to 0xb7fd78f0 (not 0xb7fd7760)
+	void *f = (void *)((int )&internal-0x08090733);
+	printf("0x%08x", (unsigned int )f);
+	unsigned char instructions[10];//TODO document
+	instructions[0] = 0xe8;//CALL internal() 0x08090733->&internal
+	instructions[1] = (int )f&0xff;
+	instructions[2] = ((int )f>>8)&0xff;
+	instructions[3] = ((int )f>>16)&0xff;
+	instructions[4] = ((int )f>>24)&0xff;
+	instructions[5] = 0xe9;//JMP out of here
+	instructions[6] = 0xf3;
+	instructions[7] = 0x00;
+	instructions[8] = 0x00;
+	instructions[9] = 0x00;
+	//redirects S to somewhere
 	void *location = (void *)0x0809072a;//conjurations and wizardry
 	if (mprotect(PAGE(location), PAGE_SIZE(sizeof (instructions)), PROT_READ|PROT_WRITE|PROT_EXEC) == 0)
 		memcpy(location, instructions, sizeof (instructions));//TODO make sure it's patching the right instructions
-	else printfl(":(");
+	else printfl(":(\n");
 
 	printfl("Logging is disabled for: printf, wrefresh, init_pair, wgetch.\n");
 }
@@ -482,6 +492,7 @@ int wgetch(WINDOW *win) { OVERLOAD//bloat
 	else if (key == 0x113) {
 		globstate = globstate%9+1;
 		wrefresh(win);
+		seed(now);
 		printil();//TODO move these
 		printrl();
 		printsrl();
