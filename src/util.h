@@ -70,7 +70,7 @@ Returns the page size of an object.
 @param size The size of the object.
 @return The page size of the object.
 **/
-#define PAGE_SIZE(size) ((size_t )((1+(sizeof (no_yes_no)-1)/getpagesize())*getpagesize()))
+#define PAGE_SIZE(size) ((size_t )((1+(sizeof (size)-1)/getpagesize())*getpagesize()))
 
 /*
 Bad things live in header files.

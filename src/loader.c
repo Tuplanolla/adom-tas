@@ -69,6 +69,10 @@ int printfl(const char *fmt, ...) {
 	return result;
 }
 
+void internal() {//Don't move me! My address will change!
+	printfl(":)\n");
+}//Don't worry. You can use gdb "print internal" to find me.
+
 /**
 Formats and logs a message.
 @param stream The destination stream.
@@ -90,21 +94,6 @@ int fprintfl(FILE *stream, const char *fmt, ...) {
 	va_start(ap, fmt);
 	const int result = vfprintfl(stream, fmt, ap);
 	va_end(ap);
-	return result;
-}
-
-/**
-Logs the ARC4 status.
-**/
-int printrl() {
-	FILE *random_stream = fopen(RANDOM_LOG_PATH, "w");
-	int result = 0;
-	if (random_stream != NULL) {
-		result += fwrite(ARC4_S, sizeof (unsigned char), 0x100, random_stream);
-		result += fwrite(ARC4_I, sizeof (unsigned char), 1, random_stream);
-		result += fwrite(ARC4_J, sizeof (unsigned char), 1, random_stream);
-	}
-	fclose(random_stream);
 	return result;
 }
 
@@ -163,7 +152,6 @@ int harc4() {
 	unsigned char i = 0x00;
 	do {
 		result = prime*result+(int )arc4_s[i];
-		if (i == 0xff) break;
 		i++;
 	} while(i != 0x00);
 	return result;
@@ -175,11 +163,17 @@ void sarc4(const int seed) {
 		i++;
 	} while(i != 0x00);
 	do {
-		j = j+arc4_s[i]+((unsigned char *)&seed)[i%sizeof (int)];
+		j += arc4_s[i]+((unsigned char *)&seed)[(int )i%sizeof (int)];
 		SWAP(arc4_s[i], arc4_s[j]);
-		if (i == 0xff) break;
 		i++;
 	} while(i != 0x00);
+}
+unsigned char arc4_i = 0x00, arc4_j = 0x00;
+unsigned char arc4() {
+	arc4_i++;
+	arc4_j += arc4_s[arc4_i];
+	SWAP(arc4_s[arc4_i], arc4_s[arc4_j]);
+	return arc4_s[(int )(arc4_s[arc4_i]+arc4_s[arc4_j])];
 }
 
 int ARC4_H() {//Don't repeat yourself...
@@ -191,6 +185,33 @@ int ARC4_H() {//Don't repeat yourself...
 		if (i == 0xff) break;
 		i++;
 	} while(i != 0x00);
+	return result;
+}
+
+
+/**
+Logs the ARC4 status.
+**/
+int printrl() {
+	FILE *random_stream = fopen(RANDOM_LOG_PATH, "w");
+	int result = 0;
+	if (random_stream != NULL) {
+		result += fwrite(ARC4_S, sizeof (unsigned char), 0x100, random_stream);
+		result += fwrite(ARC4_I, sizeof (unsigned char), 1, random_stream);
+		result += fwrite(ARC4_J, sizeof (unsigned char), 1, random_stream);
+	}
+	fclose(random_stream);
+	return result;
+}
+int printsrl() {
+	FILE *random_stream = fopen(SRANDOM_LOG_PATH, "w");
+	int result = 0;
+	if (random_stream != NULL) {
+		result += fwrite(arc4_s, sizeof (unsigned char), 0x100, random_stream);
+		result += fwrite(&arc4_i, sizeof (unsigned char), 1, random_stream);
+		result += fwrite(&arc4_j, sizeof (unsigned char), 1, random_stream);
+	}
+	fclose(random_stream);
 	return result;
 }
 
@@ -279,8 +300,13 @@ real_srandom(time(NULL));
 sarc4(real_random());
 </pre>
 **/
-void seed() {
-	SARC4_TIME();
+void seed(const int seed) {
+	//SARC4_TIME();
+	arc4_i = 0;
+	arc4_j = 0;
+	real_srandom(seed);
+	sarc4(real_random());
+	//memcpy(ARC4_S, arc4_s, sizeof (arc4_s));
 }
 
 /**
@@ -341,6 +367,15 @@ void initialize() {
 	real_unlink("/dev/shm/adom-tas");//What is portable code?
 	shmup();
 	conf->pids[0] = getpid();
+
+	const unsigned char instructions[] = {//TODO document
+			0xe8, 0xbd, 0x71, 0xf4, 0xaf,//CALL internal() 0x08090733->0xb7fd78f0 = 0xaff471bd
+			0xe9, 0xf3, 0x00, 0x00, 0x00//JMP out of here
+		};//redirects S to 0xb7fd78f0 (not 0xb7fd7760)
+	void *location = (void *)0x0809072a;//conjurations and wizardry
+	if (mprotect(PAGE(location), PAGE_SIZE(sizeof (instructions)), PROT_READ|PROT_WRITE|PROT_EXEC) == 0)
+		memcpy(location, instructions, sizeof (instructions));//TODO make sure it's patching the right instructions
+	else printfl(":(");
 
 	printfl("Logging is disabled for: printf, wrefresh, init_pair, wgetch.\n");
 }
@@ -447,8 +482,9 @@ int wgetch(WINDOW *win) { OVERLOAD//bloat
 	else if (key == 0x113) {
 		globstate = globstate%9+1;
 		wrefresh(win);
-		printrl();//TODO move
-		printil();//TODO move
+		printil();//TODO move these
+		printrl();
+		printsrl();
 		return 0;
 	}
 	else if (key == 0x114) {
@@ -456,9 +492,21 @@ int wgetch(WINDOW *win) { OVERLOAD//bloat
 		wrefresh(win);
 		return 0;
 	}
-	else if (key == 'S') {//bad
-		seed();//TODO fix
+	else if (key == '_') {//bad
+		seed(now);//TODO fix
 		frame_add(TRUE, 0, 0, now);
+		wrefresh(win);
+		return 0;
+	}
+	else if (key == -12) {//worse
+		seed(now);//a failed attempt to simulate game loading
+		for (int i = 0; i < 0xffff; i++) {
+			for (int j = 0; j < 4; j++) arc4();
+			if (harc4() == ARC4_H()) {
+				printfl("Built the hash %d:0x%08x.\n", i, harc4());
+				break;
+			}
+		}
 		wrefresh(win);
 		return 0;
 	}
