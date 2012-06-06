@@ -42,8 +42,7 @@ WGETCH real_wgetch;
 WGETNSTR real_wgetnstr;
 UNLINK real_unlink;
 TIME real_time;
-RAND real_rand;
-SRAND real_srand;
+LOCALTIME real_localtime;
 RANDOM real_random;
 SRANDOM real_srandom;
 IOCTL real_ioctl;
@@ -285,8 +284,7 @@ void load_dynamic_libraries() {
 	if (handle == NULL) exit(error(DLOPEN_LIBC_ERROR));
 	real_unlink = (UNLINK )dlsym(handle, "unlink");
 	real_time = (TIME )dlsym(handle, "time");
-	real_rand = (RAND )dlsym(handle, "rand");
-	real_srand = (SRAND )dlsym(handle, "srand");
+	real_localtime = (LOCALTIME )dlsym(handle, "localtime");
 	real_random = (RANDOM )dlsym(handle, "random");
 	real_srandom = (SRANDOM )dlsym(handle, "srandom");
 	real_ioctl = (IOCTL )dlsym(handle, "ioctl");
@@ -588,22 +586,6 @@ int wgetch(WINDOW *win) { OVERLOAD//bloat
 }
 
 /**
-Overloads rand with a simple log wrapper.
-**/
-int rand() { OVERLOAD
-	printfl("Called rand().\n");
-	return real_rand();
-}
-
-/**
-Overloads srand with a simple log wrapper.
-**/
-void srand(unsigned int seed) { OVERLOAD
-	printfl("Called srand(%u).\n", seed);
-	real_srand(seed);
-}
-
-/**
 Overloads random with a simple log wrapper.
 **/
 long random() { OVERLOAD
@@ -635,6 +617,14 @@ time_t time(time_t *t) { OVERLOAD
 	const time_t n = (time_t )now;
 	if (t != NULL) *t = n;
 	return n;
+}
+
+/**
+Overloads localtime with a simple log wrapper.
+**/
+struct tm *localtime(const time_t *timep) { OVERLOAD
+	printfl("Called localtime(0x%08x).\n", (unsigned int )timep);
+	return gmtime(timep);//timezones are useless anyway
 }
 
 /**
