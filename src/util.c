@@ -12,6 +12,12 @@ Provides general-purpose utilities.
 This is an old implementation that most likely sucks, but works for now.
 */
 frame_t *first_frame = NULL, *last_frame = NULL;
+void set_first_frame(frame_t *ff) {
+	first_frame = ff;
+}
+void set_last_frame(frame_t *ff) {
+	last_frame = ff;
+}
 frame_t *get_first_frame() {
 	return first_frame;
 }

@@ -19,6 +19,8 @@ Checklist
 		[X] ttyrec
 		[X] ffmpeg
 [ ] Implement emulation tools
+	[X] Disable the actual save function
+	[ ] Disable the actual quit function
 	[X] Find the random number generator's seed function
 	[X] Redirect the seed function to the recorder and back again
 	[ ] Find the random number generator's reseed function
@@ -37,8 +39,8 @@ Checklist
 		[X] Input code (int32_t key)
 		[X] Time manipulation (uint32_t t)
 		[X] Playback duration (uint8_t sixteenths)
-	[ ] Implement playing back a recording
-	[ ] Implement dumping a ttyrec
+	[X] Implement playing back a recording
+	[X] Implement dumping a ttyrec
 	[X] Implement dumping an avi
 	[ ] Refine sloppy implementations
 [ ] Implement analysis tools
@@ -56,6 +58,7 @@ Checklist
 	[ ] Implement cheats that disable the recording
 	[X] Refine sloppy implementations
 [ ] Document
+	[ ] Documentation
 	[ ] Executable
 	[ ] Emulation tools
 	[ ] Recording tools

@@ -87,6 +87,7 @@ int vfprintfl(FILE *stream, const char *fmt, va_list ap) {
 	}
 	result += vfprintf(stream, fmt, ap);
 	result += fprintf(stream, "\n");
+	fflush(log_stream);
 	return result;
 }
 int fprintfl(FILE *stream, const char *fmt, ...) {
@@ -110,6 +111,28 @@ int printil() {
 			result += fwrite(&this_frame->input, sizeof (int), 1, input_stream);
 			this_frame = this_frame->next;
 		}
+	}
+	fclose(input_stream);
+	return result;
+}
+
+/**
+Unlogs the inputs?
+**/
+int slurpil() {
+	FILE *input_stream = fopen(INPUT_LOG_PATH, "r");
+	int result = 0;
+	if (input_stream != NULL) {
+		while (TRUE) {
+			unsigned int duration;
+			int input;
+			int subresult = fread(&duration, sizeof (int), 1, input_stream);
+			subresult += fread(&input, sizeof (int), 1, input_stream);
+			if (subresult == 0) break;
+			frame_add(duration == 0, duration, input, input);//really bad
+		}
+		if (feof(input_stream)) /*error*/;
+		clearerr(input_stream);
 	}
 	fclose(input_stream);
 	return result;
@@ -368,14 +391,14 @@ void initialize() {
 	shmup();
 	conf->pids[0] = getpid();
 
-	/*
-	This is an attempt to test the system on an x64.
-	*/
 	void *CHEESE_MAGIC = (void *)0x08090733;
-	void *handle = dlopen(LIBRARY_PATH, RTLD_LAZY);//It gets worse by the minute!
+	/*
+	This was an attempt to test the system on an x64.
+	*/
+	/*void *handle = dlopen(LIBRARY_PATH, RTLD_LAZY);//hopefully unnecessary
 	if (handle == NULL) exit(error(DLOPEN_LIBC_ERROR));
-	void *internal_address = dlsym(handle, "internal");
-	unsigned int f = (unsigned int )internal_address-(unsigned int )CHEESE_MAGIC;
+	void *internal_address = dlsym(handle, "internal");*/
+	unsigned int f = (unsigned int )&internal-(unsigned int )CHEESE_MAGIC;
 	printfl("Somehow found 0x%08x-0x%08x = 0x%08x.\n", (unsigned int )&internal, 0x08090733, f);
 	internal();
 	unsigned char instructions[10];//TODO document
@@ -467,23 +490,33 @@ Overloads wgetch with a simple log wrapper.
 **/
 bool was_meta = FALSE;//not good
 int was_colon = FALSE;//worse
-struct mvaddnstr_s {
-	const int y;
-	const int x;
-	const char *string;
-	const int n;
-	struct mvaddnstr_s *next;
-};
-typedef struct mvaddnstr_s mvaddnstr_t;
-mvaddnstr_t *draw_queue;//never used
-
 bool condensed = FALSE;
+bool playbacking = FALSE;
+frame_t *playback_frame;
 char codeins[7];
 int wgetch(WINDOW *win) { OVERLOAD//bloat
 	//printfl("Called wgetch(0x%08x).\n", (unsigned int )win);
+	if (playbacking) {
+		if (playback_frame != NULL) {//TODO move this all
+			struct timespec req;
+			bool out_of_variable_names = FALSE;
+			if (playback_frame->duration >= 16) out_of_variable_names = TRUE;
+			req.tv_sec = (time_t )(out_of_variable_names ? playback_frame->duration : 0);
+			req.tv_nsec = out_of_variable_names ? 0l : 1000000000l/16l*playback_frame->duration;
+			nanosleep(&req, NULL);
+			int yield = playback_frame->input;
+			playback_frame = playback_frame->next;
+			return yield;
+		}
+	}
 	int key = real_wgetch(win);
 	if (key == 0x110) {
-		condensed = !condensed;
+		if (frame == 0) {//move to playback
+			slurpil();
+			playbacking = TRUE;
+			playback_frame = get_first_frame();
+		}
+		else condensed = !condensed;
 		wrefresh(win);
 		return 0;
 	}
@@ -548,7 +581,7 @@ int wgetch(WINDOW *win) { OVERLOAD//bloat
 		strcat(codeins, code);//TODO turn this into a macro
 		frame++;
 	}
-	unsigned int duration = 1;
+	unsigned int duration = 8;
 	frame_add(FALSE, duration, key, 0);//meta, colon and w are undisplayed but still recorded (for now)
 	//wrefresh(win);
 	return key;
