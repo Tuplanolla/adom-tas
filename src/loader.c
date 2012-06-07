@@ -25,7 +25,8 @@ TODO put close(log_stream); somewhere
 #include "config.h"
 #include "util.h"
 #include "adom.h"
-#include "error.h"
+#include "problem.h"
+#include "log.h"
 #include "loader.h"
 
 /**
@@ -46,6 +47,11 @@ LOCALTIME real_localtime;
 RANDOM real_random;
 SRANDOM real_srandom;
 IOCTL real_ioctl;
+
+FILE * error_log;
+FILE * warning_log;
+FILE * note_log;
+FILE * call_log;
 
 /**
 Formats and logs a message.
@@ -73,27 +79,53 @@ void internal() {//Move me! My address is found automatically!
 }
 
 /**
-Formats and logs a message.
-@param stream The destination stream.
-@param fmt The message format.
-@param ... The parameters to format.
-@return The amount of characters written.
+Very important temporary variables.
 **/
-int vfprintfl(FILE *stream, const char *fmt, va_list ap) {
-	int result = 0;
-	if (stream == stdout || stream == stderr) {
-		result += fprintf(stream, "Log: ");
-	}
-	result += vfprintf(stream, fmt, ap);
-	result += fprintf(stream, "\n");
-	fflush(log_stream);
+int frame = 0, now = 0, globstate = 1;//0x7fe81780
+
+/**
+Simulates the ARC4 of the executable.
+**/
+unsigned char arc4_s[0x100];
+unsigned char arc4_i = 0x00, arc4_j = 0x00;
+int harc4() {
+	const int prime = 0x0000001f;
+	int result = 0x00000001;
+	unsigned char i = 0x00;
+	do {
+		result = prime*result+(int )arc4_s[i];
+		i++;
+	} while(i != 0x00);
 	return result;
 }
-int fprintfl(FILE *stream, const char *fmt, ...) {
-	va_list	ap;
-	va_start(ap, fmt);
-	const int result = vfprintfl(stream, fmt, ap);
-	va_end(ap);
+void sarc4(const int seed) {
+	unsigned char i = 0x00, j = 0x00;
+	do {
+		arc4_s[i] = i;
+		i++;
+	} while(i != 0x00);
+	do {
+		j += arc4_s[i]+((unsigned char *)&seed)[(int )i%sizeof (int)];
+		SWAP(arc4_s[i], arc4_s[j]);
+		i++;
+	} while(i != 0x00);
+}
+unsigned char arc4() {
+	arc4_i++;
+	arc4_j += arc4_s[arc4_i];
+	SWAP(arc4_s[arc4_i], arc4_s[arc4_j]);
+	return arc4_s[(int )(arc4_s[arc4_i]+arc4_s[arc4_j])];
+}
+
+int ARC4_H() {//Don't repeat yourself...
+	const int prime = 0x0000001f;
+	int result = 0x00000001;
+	unsigned char i = 0x00;
+	do {
+		result = prime*result+(int )ARC4_S[i];
+		if (i == 0xff) break;
+		i++;
+	} while(i != 0x00);
 	return result;
 }
 
@@ -136,80 +168,6 @@ int slurpil() {
 	fclose(input_stream);
 	return result;
 }
-
-/**
-Logs an error message and returns its error code.
-@param code The error code.
-@return The error code.
-**/
-error_t error(const error_t code) {
-	printfl("Error: %s\n", error_message(code));
-	return code;
-}
-
-/**
-Logs a warning message and returns its error code.
-@param code The error code.
-@return The error code.
-**/
-error_t warning(const error_t code) {
-	printfl("Warning: %s\n", error_message(code));
-	return code;
-}
-
-//There are too many logs. This requires some thinking.
-
-/**
-Very important temporary variables.
-**/
-int frame = 0, now = 0, globstate = 1;//0x7fe81780
-
-/**
-Simulates the ARC4 of the executable.
-**/
-char arc4_s[0x100];
-int harc4() {
-	const int prime = 0x0000001f;
-	int result = 0x00000001;
-	unsigned char i = 0x00;
-	do {
-		result = prime*result+(int )arc4_s[i];
-		i++;
-	} while(i != 0x00);
-	return result;
-}
-void sarc4(const int seed) {
-	unsigned char i = 0x00, j = 0x00;
-	do {
-		arc4_s[i] = i;
-		i++;
-	} while(i != 0x00);
-	do {
-		j += arc4_s[i]+((unsigned char *)&seed)[(int )i%sizeof (int)];
-		SWAP(arc4_s[i], arc4_s[j]);
-		i++;
-	} while(i != 0x00);
-}
-unsigned char arc4_i = 0x00, arc4_j = 0x00;
-unsigned char arc4() {
-	arc4_i++;
-	arc4_j += arc4_s[arc4_i];
-	SWAP(arc4_s[arc4_i], arc4_s[arc4_j]);
-	return arc4_s[(int )(arc4_s[arc4_i]+arc4_s[arc4_j])];
-}
-
-int ARC4_H() {//Don't repeat yourself...
-	const int prime = 0x0000001f;
-	int result = 0x00000001;
-	unsigned char i = 0x00;
-	do {
-		result = prime*result+(int )ARC4_S[i];
-		if (i == 0xff) break;
-		i++;
-	} while(i != 0x00);
-	return result;
-}
-
 
 /**
 Logs the ARC4 status.
@@ -281,7 +239,7 @@ void load_dynamic_libraries() {
 	char *path = getenv("LIBC_PATH");
 	if (path == NULL) path = LIBC_PATH;
 	void *handle = dlopen(path, RTLD_LAZY);//requires either RTLD_LAZY or RTLD_NOW
-	if (handle == NULL) exit(error(DLOPEN_LIBC_ERROR));
+	if (handle == NULL) exit(error(DLOPEN_LIBC_PROBLEM));
 	real_unlink = (UNLINK )dlsym(handle, "unlink");
 	real_time = (TIME )dlsym(handle, "time");
 	real_localtime = (LOCALTIME )dlsym(handle, "localtime");
@@ -295,7 +253,7 @@ void load_dynamic_libraries() {
 	path = getenv("LIBNCURSES_PATH");
 	if (path == NULL) path = LIBNCURSES_PATH;
 	handle = dlopen(path, RTLD_LAZY);
-	if (handle == NULL) exit(error(DLOPEN_LIBNCURSES_ERROR));
+	if (handle == NULL) exit(error(DLOPEN_LIBNCURSES_PROBLEM));
 	real_init_pair = (INIT_PAIR )dlsym(handle, "init_pair");
 	real_wclear = (WCLEAR )dlsym(handle, "wclear");
 	real_wrefresh = (WREFRESH )dlsym(handle, "wrefresh");
@@ -374,7 +332,6 @@ Guarantees the dynamically linked libraries are only loaded once.
 **/
 bool initialized = FALSE;
 void initialize() {
-	if (initialized) return;
 	initialized = TRUE;
 
 	load_dynamic_libraries();
@@ -481,7 +438,7 @@ void load(const int state) {
 /**
 Annotates (and more) overloaded functions.
 **/
-#define OVERLOAD initialize();
+#define OVERLOAD if (!initialized) initialize();
 
 /**
 Overloads wgetch with a simple log wrapper.
@@ -673,7 +630,7 @@ int wrefresh(WINDOW *win) { OVERLOAD
 		if (conf->pids != NULL) {
 			char somer[TERM_COL];
 			bool somery = conf->pids[index] != 0;
-			sprintf(somer, "%s %c%d%c", some, somery ? '[' : ' ', index, /*conf->pids[index],*/ somery ? ']' : ' ');
+			sprintf(somer, "%s %c%d%c", some, somery ? '[' : '<', index, /*conf->pids[index],*/ somery ? ']' : '>');
 			strcpy(some, somer);
 		}
 	}
