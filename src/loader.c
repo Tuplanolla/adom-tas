@@ -2,12 +2,12 @@
 Provides.
 
 TODO put close(shm_fd); somewhere
-TODO put close(log_stream); somewhere
+TODO put close(*_stream); somewhere
 **/
 #ifndef LOADER_C
 #define LOADER_C
 
-#include <stdlib.h>
+#include <stdlib.h>//TODO get rid of the unnecessary
 #include <stdio.h>
 #include <curses.h>
 #include <dlfcn.h>
@@ -21,18 +21,29 @@ TODO put close(log_stream); somewhere
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <libconfig.h>
 
-#include "config.h"
 #include "util.h"
-#include "adom.h"
 #include "problem.h"
 #include "log.h"
+#include "put.h"
+#include "config.h"
+#include "adom.h"
 #include "loader.h"
+
+int rows;
+int cols;
+const char * input_path;
+const char * output_path;
+FILE * error_stream;
+FILE * warning_stream;
+FILE * note_stream;
+FILE * call_stream;
 
 /**
 Declares the unmodified versions of the functions that are overloaded.
 **/
-INIT_PAIR real_init_pair;
+INIT_PAIR real_init_pair;//TODO get rid of the unnecessary
 WCLEAR real_wclear;
 WREFRESH real_wrefresh; 
 WMOVE real_wmove;
@@ -48,123 +59,54 @@ RANDOM real_random;
 SRANDOM real_srandom;
 IOCTL real_ioctl;
 
-FILE * error_log;
-FILE * warning_log;
-FILE * note_log;
-FILE * call_log;
-
-/**
-Formats and logs a message.
-@param fmt The message format.
-@param ... The parameters to format.
-@return The amount of characters written.
-@deprecated
-**/
-FILE *log_stream = NULL;
-int printfl(const char *fmt, ...) {
-	va_list	ap;
-	va_start(ap, fmt);
-	int result = 0;
-	if (log_stream == stdout || log_stream == stderr) {
-		result += fprintf(log_stream, "Log: ");
-	}
-	result += vfprintf(log_stream, fmt, ap);
-	fflush(log_stream);
-	va_end(ap);
-	return result;
-}
-
 void internal() {//Move me! My address is found automatically!
-	printfl(":)\n");
+	fprintfl(note_stream, ":)");
 }
 
 /**
 Very important temporary variables.
 **/
-int frame = 0, now = 0, globstate = 1;//0x7fe81780
+int frame = 0, globstate = 1;
+time_t now = 0;//0x7fe81780
 
 /**
-Simulates the ARC4 of the executable.
+Outputs the frames (for recording).
 **/
-unsigned char arc4_s[0x100];
-unsigned char arc4_i = 0x00, arc4_j = 0x00;
-int harc4() {
-	const int prime = 0x0000001f;
-	int result = 0x00000001;
-	unsigned char i = 0x00;
-	do {
-		result = prime*result+(int )arc4_s[i];
-		i++;
-	} while(i != 0x00);
-	return result;
-}
-void sarc4(const int seed) {
-	unsigned char i = 0x00, j = 0x00;
-	do {
-		arc4_s[i] = i;
-		i++;
-	} while(i != 0x00);
-	do {
-		j += arc4_s[i]+((unsigned char *)&seed)[(int )i%sizeof (int)];
-		SWAP(arc4_s[i], arc4_s[j]);
-		i++;
-	} while(i != 0x00);
-}
-unsigned char arc4() {
-	arc4_i++;
-	arc4_j += arc4_s[arc4_i];
-	SWAP(arc4_s[arc4_i], arc4_s[arc4_j]);
-	return arc4_s[(int )(arc4_s[arc4_i]+arc4_s[arc4_j])];
-}
-
-int ARC4_H() {//Don't repeat yourself...
-	const int prime = 0x0000001f;
-	int result = 0x00000001;
-	unsigned char i = 0x00;
-	do {
-		result = prime*result+(int )ARC4_S[i];
-		if (i == 0xff) break;
-		i++;
-	} while(i != 0x00);
-	return result;
-}
-
-/**
-Logs the inputs.
-**/
-int printil() {
-	FILE *input_stream = fopen(INPUT_LOG_PATH, "w");
-	int result = 0;
-	if (input_stream != NULL) {
-		frame_t *this_frame = get_first_frame();
-		while (this_frame != NULL) {
-			result += fwrite(&this_frame->duration, sizeof (int), 1, input_stream);
-			result += fwrite(&this_frame->input, sizeof (int), 1, input_stream);
-			this_frame = this_frame->next;
-		}
+int barf() {
+	FILE * output_stream = fopen(output_path, "wb");
+	if (output_stream == NULL) {
+		return error(OUTPUT_ACCESS_PROBLEM);
 	}
-	fclose(input_stream);
+	int result = 0;
+	frame_t * this_frame = get_first_frame();
+	while (this_frame != NULL) {
+		result += fwrite(&this_frame->duration, sizeof (int), 1, output_stream);
+		result += fwrite(&this_frame->input, sizeof (int), 1, output_stream);
+		this_frame = this_frame->next;
+	}
+	fclose(output_stream);
 	return result;
 }
 
 /**
-Unlogs the inputs?
+Inputs the frames (for playback).
 **/
-int slurpil() {
-	FILE *input_stream = fopen(INPUT_LOG_PATH, "r");
-	int result = 0;
-	if (input_stream != NULL) {
-		while (TRUE) {
-			unsigned int duration;
-			int input;
-			int subresult = fread(&duration, sizeof (int), 1, input_stream);
-			subresult += fread(&input, sizeof (int), 1, input_stream);
-			if (subresult == 0) break;
-			frame_add(duration == 0, duration, input, input);//really bad
-		}
-		if (feof(input_stream)) /*error*/;
-		clearerr(input_stream);
+int slurp() {
+	FILE * input_stream = fopen(input_path, "rb");
+	if (input_stream == NULL) {
+		return error(INPUT_ACCESS_PROBLEM);
 	}
+	int result = 0;
+	while (TRUE) {
+		unsigned int duration;
+		int input;
+		int subresult = fread(&duration, sizeof (int), 1, input_stream);
+		subresult += fread(&input, sizeof (int), 1, input_stream);
+		if (subresult == 0) break;
+		frame_add(duration == 0, duration, input, input);//really bad
+	}
+	if (feof(input_stream)) /*error*/;
+	clearerr(input_stream);
 	fclose(input_stream);
 	return result;
 }
@@ -173,7 +115,7 @@ int slurpil() {
 Logs the ARC4 status.
 **/
 int printrl() {
-	FILE *random_stream = fopen(RANDOM_LOG_PATH, "w");
+	FILE * random_stream = fopen(TEMPORARY_ACTUAL_PATH, "wb");
 	int result = 0;
 	if (random_stream != NULL) {
 		result += fwrite(ARC4_S, sizeof (unsigned char), 0x100, random_stream);
@@ -184,7 +126,7 @@ int printrl() {
 	return result;
 }
 int printsrl() {
-	FILE *random_stream = fopen(SRANDOM_LOG_PATH, "w");
+	FILE * random_stream = fopen(TEMPORARY_SIM_PATH, "wb");
 	int result = 0;
 	if (random_stream != NULL) {
 		result += fwrite(arc4_s, sizeof (unsigned char), 0x100, random_stream);
@@ -201,7 +143,7 @@ The key code is from one to three characters long.
 @param code The key code to return.
 @param key The key number.
 */
-void key_code(char *code, const int key) {
+void key_code(char * code, const int key) {
 	#define key_code_RETURN(str) {\
 			strcpy(code, str);\
 			return;\
@@ -230,47 +172,6 @@ void key_code(char *code, const int key) {
 }
 
 /**
-Loads functions from dynamically linked libraries (libc and libncurses).
-**/
-void load_dynamic_libraries() {
-	/*
-	Imports functions from the C standard library.
-	*/
-	char *path = getenv("LIBC_PATH");
-	if (path == NULL) path = LIBC_PATH;
-	void *handle = dlopen(path, RTLD_LAZY);//requires either RTLD_LAZY or RTLD_NOW
-	if (handle == NULL) exit(error(DLOPEN_LIBC_PROBLEM));
-	real_unlink = (UNLINK )dlsym(handle, "unlink");
-	real_time = (TIME )dlsym(handle, "time");
-	real_localtime = (LOCALTIME )dlsym(handle, "localtime");
-	real_random = (RANDOM )dlsym(handle, "random");
-	real_srandom = (SRANDOM )dlsym(handle, "srandom");
-	real_ioctl = (IOCTL )dlsym(handle, "ioctl");
-
-	/*
-	Imports functions from New Cursor Optimization library.
-	*/
-	path = getenv("LIBNCURSES_PATH");
-	if (path == NULL) path = LIBNCURSES_PATH;
-	handle = dlopen(path, RTLD_LAZY);
-	if (handle == NULL) exit(error(DLOPEN_LIBNCURSES_PROBLEM));
-	real_init_pair = (INIT_PAIR )dlsym(handle, "init_pair");
-	real_wclear = (WCLEAR )dlsym(handle, "wclear");
-	real_wrefresh = (WREFRESH )dlsym(handle, "wrefresh");
-	real_wmove = (WMOVE )dlsym(handle, "wmove");
-	real_waddch = (WADDCH )dlsym(handle, "waddch");
-	real_waddnstr = (WADDNSTR )dlsym(handle, "waddnstr");
-	real_winch = (WINCH )dlsym(handle, "winch");
-	real_wgetch = (WGETCH )dlsym(handle, "wgetch");
-	real_wgetnstr = (WGETNSTR )dlsym(handle, "wgetnstr");
-
-	/*
-	Prevents reloading libraries for child processes.
-	*/
-	unsetenv("LD_PRELOAD");//TODO fix
-}
-
-/**
 Seeds the ARC4 of the executable.
 
 Seeding can be simulated:
@@ -296,65 +197,298 @@ struct shm_s {
 	int pids[SAVE_STATES];
 };
 typedef struct shm_s shm_t;
-int shm_fd;//some handle
-shm_t *conf;//shared
+int shm_fd;
+shm_t * conf;
 void shmup() {
 	bool first = TRUE;
 
-	printfl("Started to map shared memory.\n");
-	shm_fd = shm_open(SHM_PATH, O_RDWR|O_CREAT|O_EXCL, S_IRUSR|S_IWUSR);
+	fprintfl(note_stream, "Started to map shared memory.");
+	shm_fd = shm_open(SHM_PATH, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
 	if (shm_fd < 0) {
 		first = FALSE;
 	}
-	shm_fd = shm_open(SHM_PATH, O_RDWR|O_CREAT, S_IRUSR|S_IWUSR);
+	shm_fd = shm_open(SHM_PATH, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 	if (shm_fd < 0) {
-		printfl("Failed to map shared memory.\n");
+		fprintfl(note_stream, "Failed to map shared memory.");
 		return;//error here
 	}
 
 	ftruncate(shm_fd, (off_t )sizeof (shm_t));
 
-	conf = (shm_t *)mmap(NULL, sizeof (shm_t), PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
+	conf = (shm_t * )mmap(NULL, sizeof (shm_t), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
 	if (conf == MAP_FAILED) {
-		printfl("Failed to map shared memory.\n");
+		fprintfl(note_stream, "Failed to map shared memory.");
 		return;//error here
 	}
 
 	if (first) {
 		for (int index = 0; index < SAVE_STATES; index++) conf->pids[index] = 0;
-		printfl("Mapped shared memory.\n");
+		fprintfl(note_stream, "Mapped shared memory.");
 	}
-	else printfl("Remapped shared memory.\n");
+	else fprintfl(note_stream, "Remapped shared memory.");
 }
 
 /**
-Guarantees the dynamically linked libraries are only loaded once.
+Initializes this process.
 **/
 bool initialized = FALSE;
-void initialize() {
-	initialized = TRUE;
+int initialize() {
+	struct stat buf;
 
-	load_dynamic_libraries();
+	error_stream = stderr;
+	warning_stream = stderr;
+	note_stream = stderr;
+	call_stream = NULL;
 
-	log_stream = fopen(CALL_LOG_PATH, "w");
-	if (log_stream == NULL) {
-		log_stream = stderr;
-		warning(LOG_WARNING);
+	/*
+	Loads the configuration file.
+	*/
+	config_t config;
+	config_init(&config);
+	if (config_read_file(&config, config_path) == 0) {
+		config_destroy(&config);
+		return error(CONFIG_PROBLEM);
 	}
 
+	/*
+	Enables loading libraries.
+
+	The configuration file is first parsed,
+	the environment variable is then read and
+	the existence of the file is then checked.
+	*/
+	const char * libc_path;
+	if (config_lookup_string(&config, "libc", &libc_path) == 0) {
+		libc_path = getenv("LIBC");
+		if (libc_path == NULL) {
+			return error(LIBC_FIND_PROBLEM);
+		}
+	}
+	if (stat(libc_path, &buf) != 0) {
+		return error(LIBC_ACCESS_PROBLEM);
+	}
+	const char * libncurses_path;
+	if (config_lookup_string(&config, "libncurses", &libncurses_path) == 0) {
+		libncurses_path = getenv("LIBNCURSES");
+		if (libncurses_path == NULL) {
+			return error(LIBNCURSES_FIND_PROBLEM);
+		}
+	}
+	if (stat(libncurses_path, &buf) != 0) {
+		return error(LIBNCURSES_ACCESS_PROBLEM);
+	}
+
+	/*
+	Loads functions from dynamically linked libraries.
+	*/
+	{
+		void * handle = dlopen(libc_path, RTLD_LAZY);//requires either RTLD_LAZY or RTLD_NOW
+		if (handle == NULL) {
+			exit(error(LIBC_PROBLEM));
+		}
+		real_unlink = (UNLINK )dlsym(handle, "unlink");
+		real_time = (TIME )dlsym(handle, "time");
+		real_localtime = (LOCALTIME )dlsym(handle, "localtime");
+		real_random = (RANDOM )dlsym(handle, "random");
+		real_srandom = (SRANDOM )dlsym(handle, "srandom");
+		real_ioctl = (IOCTL )dlsym(handle, "ioctl");
+		//dlclose(handle);
+	}
+	{
+		void * handle = dlopen(libncurses_path, RTLD_LAZY);
+		if (handle == NULL) {
+			exit(error(LIBNCURSES_PROBLEM));
+		}
+		real_init_pair = (INIT_PAIR )dlsym(handle, "init_pair");
+		real_wclear = (WCLEAR )dlsym(handle, "wclear");
+		real_wrefresh = (WREFRESH )dlsym(handle, "wrefresh");
+		real_wmove = (WMOVE )dlsym(handle, "wmove");
+		real_waddch = (WADDCH )dlsym(handle, "waddch");
+		real_waddnstr = (WADDNSTR )dlsym(handle, "waddnstr");
+		real_winch = (WINCH )dlsym(handle, "winch");
+		real_wgetch = (WGETCH )dlsym(handle, "wgetch");
+		real_wgetnstr = (WGETNSTR )dlsym(handle, "wgetnstr");
+		//dlclose(handle);
+	}
+
+	/*
+	Prevents reloading libraries for child processes.
+	*/
+	if (unsetenv("LD_PRELOAD") != 0) {
+		warning(LD_PRELOAD_UNSET_PROBLEM);
+	}
+
+	/*
+	Finds the size of the terminal.
+
+	The configuration file is first parsed and
+	the default size is then guessed.
+	*/
+	if (config_lookup_int(&config, "rows", &rows) == 0) {
+		warning(CONFIG_ROW_PROBLEM);
+		rows = 25;
+	}
+	if (config_lookup_int(&config, "cols", &cols) == 0) {
+		warning(CONFIG_COL_PROBLEM);
+		cols = 80;
+	}
+
+	/*
+	Opens the put streams.
+
+	The configuration file is first parsed and
+	the existence of the put file is then checked.
+	*/
+	const char * input_path;
+	if (config_lookup_string(&config, "input", &input_path) == 0) {
+		warning(CONFIG_INPUT_PROBLEM);
+	}
+	else {
+		if (stat(input_path, &buf) == 0) {
+			warning(INPUT_FIND_PROBLEM);
+		}
+	}
+	const char * output_path;
+	if (config_lookup_string(&config, "output", &output_path) == 0) {
+		warning(CONFIG_OUTPUT_PROBLEM);
+	}
+	else {
+		if (stat(output_path, &buf) == 0) {
+			warning(OUTPUT_OVERWRITE_PROBLEM);
+		}
+	}
+
+	/*
+	Opens the log streams.
+
+	The configuration file is first parsed,
+	the existence of the log file is then checked,
+	the log file is then created and
+	the log stream is finally opened.
+	*/
+	FILE * new_error_stream;
+	FILE * new_warning_stream;
+	FILE * new_note_stream;
+	FILE * new_call_stream;
+	const char * error_path;
+	if (config_lookup_string(&config, "error", &error_path) == 0) {
+		warning(CONFIG_ERROR_LOG_PROBLEM);
+		new_error_stream = stderr;
+	}
+	else {
+		if (strcmp(error_path, "stdout") == 0) {
+			new_error_stream = stdout;
+		}
+		else if (strcmp(error_path, "stderr") == 0) {
+			new_error_stream = stderr;
+		}
+		else {
+			if (stat(error_path, &buf) == 0) {
+				note(ERROR_LOG_OVERWRITE_PROBLEM);
+			}
+			new_error_stream = fopen(error_path, "w");
+			if (new_error_stream == NULL) {
+				warning(ERROR_LOG_ACCESS_PROBLEM);
+				new_error_stream = stderr;
+			}
+		}
+	}
+	const char * warning_path;
+	if (config_lookup_string(&config, "warning", &warning_path) == 0) {
+		warning(CONFIG_WARNING_LOG_PROBLEM);
+		new_warning_stream = stderr;
+	}
+	else {
+		if (strcmp(warning_path, "stdout") == 0) {
+			new_warning_stream = stdout;
+		}
+		else if (strcmp(warning_path, "stderr") == 0) {
+			new_warning_stream = stderr;
+		}
+		else {
+			if (stat(warning_path, &buf) == 0) {
+				note(WARNING_LOG_OVERWRITE_PROBLEM);
+			}
+			new_warning_stream = fopen(warning_path, "w");
+			if (new_warning_stream == NULL) {
+				warning(WARNING_LOG_ACCESS_PROBLEM);
+				new_warning_stream = stderr;
+			}
+		}
+	}
+	const char * note_path;
+	if (config_lookup_string(&config, "note", &note_path) == 0) {
+		new_note_stream = stderr;
+		warning(CONFIG_NOTE_LOG_PROBLEM);
+	}
+	else {
+		if (strcmp(note_path, "stdout") == 0) {
+			new_note_stream = stdout;
+		}
+		else if (strcmp(note_path, "stderr") == 0) {
+			new_note_stream = stderr;
+		}
+		else {
+			if (stat(note_path, &buf) == 0) {
+				note(NOTE_LOG_OVERWRITE_PROBLEM);
+			}
+			new_note_stream = fopen(note_path, "w");
+			if (new_note_stream == NULL) {
+				warning(NOTE_LOG_ACCESS_PROBLEM);
+				new_note_stream = stderr;
+			}
+		}
+	}
+	const char * call_path;
+	if (config_lookup_string(&config, "call", &call_path) == 0) {
+		warning(CONFIG_CALL_LOG_PROBLEM);
+		new_call_stream = NULL;
+	}
+	else {
+		if (strcmp(call_path, "stdout") == 0) {
+			new_call_stream = stdout;
+		}
+		else if (strcmp(call_path, "stderr") == 0) {
+			new_call_stream = stderr;
+		}
+		else {
+			if (stat(call_path, &buf) == 0) {
+				note(CALL_LOG_OVERWRITE_PROBLEM);
+			}
+			new_call_stream = fopen(call_path, "w");
+			if (new_call_stream == NULL) {
+				warning(CALL_LOG_ACCESS_PROBLEM);
+			}
+		}
+		if (new_call_stream != NULL) {
+			note(CALL_LOG_PROBLEM);
+		}
+	}
+	if (new_error_stream != error_stream
+			|| new_warning_stream != warning_stream
+			|| new_note_stream != note_stream
+			|| new_call_stream != call_stream) {
+		note(LOG_CHANGE_PROBLEM);
+		error_stream = new_error_stream;
+		warning_stream = new_warning_stream;
+		note_stream = new_note_stream;
+		call_stream = new_call_stream;
+	}
+
+	//crap follows
 	real_unlink("/dev/shm/adom-tas");//What is portable code?
 	shmup();
 	conf->pids[0] = getpid();
 
-	void *CHEESE_MAGIC = (void *)0x08090733;
+	void * CHEESE_MAGIC = (void * )0x08090733;
 	/*
 	This was an attempt to test the system on an x64.
 	*/
-	/*void *handle = dlopen(LIBRARY_PATH, RTLD_LAZY);//hopefully unnecessary
+	/*void * handle = dlopen(LIBRARY_PATH, RTLD_LAZY);//hopefully unnecessary
 	if (handle == NULL) exit(error(DLOPEN_LIBC_ERROR));
-	void *internal_address = dlsym(handle, "internal");*/
+	void * internal_address = dlsym(handle, "internal");*/
 	unsigned int f = (unsigned int )&internal-(unsigned int )CHEESE_MAGIC;
-	printfl("Somehow found 0x%08x-0x%08x = 0x%08x.\n", (unsigned int )&internal, 0x08090733, f);
+	fprintfl(note_stream, "Somehow found 0x%08x-0x%08x = 0x%08x.", (unsigned int )&internal, 0x08090733, f);
 	internal();
 	unsigned char instructions[10];//TODO document
 	instructions[0] = 0xe8;//CALL internal() 0x08090733->&internal
@@ -367,24 +501,39 @@ void initialize() {
 	instructions[7] = 0x00;
 	instructions[8] = 0x00;
 	instructions[9] = 0x00;
-	//redirects S to somewhere
-	void *location = (void *)0x0809072a;//conjurations and wizardry
+	//redirects S somewhere
+	void * location = (void * )0x0809072a;//conjurations and wizardry
 	if (mprotect(PAGE(location), PAGE_SIZE(sizeof (instructions)), PROT_READ|PROT_WRITE|PROT_EXEC) == 0)
 		memcpy(location, instructions, sizeof (instructions));//TODO make sure it's patching the right instructions
-	else printfl(":(\n");
+	else fprintfl(note_stream, ":(");
 
-	printfl("Logging is disabled for: printf, wrefresh, init_pair, wgetch.\n");
+	/*
+	Unloads the configuration file.
+
+	The memory allocated by <code>config_lookup_string</code> calls is automatically deallocated.
+	*/
+	config_destroy(&config);
+
+	initialized = TRUE;
+	return 0;//Why?
+}
+
+void uninitialize() {
+	fclose(error_stream);
+	fclose(warning_stream);
+	fclose(note_stream);
+	fclose(call_stream);
 }
 
 bool tired = TRUE;
 void continuator(const int signo) {
 	if (signo == SIGCONT) {
-		printfl("Caught CONT.\n");
+		fprintfl(note_stream, "Caught CONT.");
 		tired = FALSE;
 	}
 }
 void dreamcatcher(const int signo) {
-	printfl("Somehow caught \"%s\".\n", strsignal(signo));
+	fprintfl(note_stream, "Somehow caught \"%s\".", strsignal(signo));
 }
 
 /**
@@ -393,20 +542,20 @@ Saves the game to memory.
 void save(const int state) {
 	pid_t pid = fork();//returns 0 in child, process id of child in parent, -1 on error
 	shmup();
-	if (signal(SIGTERM, dreamcatcher) == SIG_ERR) printfl("Can't catch anything.\n");
-	if (signal(SIGINT, dreamcatcher) == SIG_ERR) printfl("Can't catch anything.\n");
-	if (signal(SIGHUP, dreamcatcher) == SIG_ERR) printfl("Can't catch anything.\n");
-	if (signal(SIGQUIT, dreamcatcher) == SIG_ERR) printfl("Can't catch anything.\n");
-	if (signal(SIGTRAP, dreamcatcher) == SIG_ERR) printfl("Can't catch anything.\n");
-	if (signal(SIGABRT, dreamcatcher) == SIG_ERR) printfl("Can't catch anything.\n");
-	if (signal(SIGSTOP, dreamcatcher) == SIG_ERR) printfl("Can't catch anything.\n");;
-	if (signal(SIGTTOU, dreamcatcher) == SIG_ERR) printfl("Can't catch anything.\n");
+	if (signal(SIGTERM, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
+	if (signal(SIGINT, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
+	if (signal(SIGHUP, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
+	if (signal(SIGQUIT, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
+	if (signal(SIGTRAP, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
+	if (signal(SIGABRT, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
+	if (signal(SIGSTOP, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");;
+	if (signal(SIGTTOU, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 	if (pid != (pid_t )NULL) {//parent
 		if (conf->pids[state] != 0) {//removes an old save
 			kill(conf->pids[state], SIGKILL);//kills the parent of another process and causes weird problems
 		}
 		conf->pids[state] = getpid();
-		if (signal(SIGCONT, continuator) == SIG_ERR) printfl("Can't catch CONT.\n");
+		if (signal(SIGCONT, continuator) == SIG_ERR) fprintfl(note_stream, "Can't catch CONT.");
 		//printf("<%d fell asleep>", (int )getpid()); fflush(stdout);
 		struct timespec req;
 		req.tv_sec = (time_t )0;
@@ -437,7 +586,10 @@ void load(const int state) {
 
 /**
 Annotates (and more) overloaded functions.
+
+The first call loads the libraries.
 **/
+//#define OVERLOAD if (!initialized) initialized = initialize();
 #define OVERLOAD if (!initialized) initialize();
 
 /**
@@ -447,10 +599,10 @@ bool was_meta = FALSE;//not good
 int was_colon = FALSE;//worse
 bool condensed = FALSE;
 bool playbacking = FALSE;
-frame_t *playback_frame;
+frame_t * playback_frame;
 char codeins[7];
-int wgetch(WINDOW *win) { OVERLOAD//bloat
-	//printfl("Called wgetch(0x%08x).\n", (unsigned int )win);
+int wgetch(WINDOW * win) { OVERLOAD//bloat
+	call("wgetch(0x%08x).", (unsigned int )win);
 	if (playbacking) {
 		if (playback_frame != NULL) {//TODO move this all
 			struct timespec req;
@@ -467,7 +619,7 @@ int wgetch(WINDOW *win) { OVERLOAD//bloat
 	int key = real_wgetch(win);
 	if (key == 0x110) {
 		if (frame == 0) {//move to playback
-			slurpil();
+			slurp();
 			playbacking = TRUE;
 			playback_frame = get_first_frame();
 		}
@@ -489,7 +641,7 @@ int wgetch(WINDOW *win) { OVERLOAD//bloat
 		globstate = globstate%9+1;
 		wrefresh(win);
 		seed(now);
-		printil();//TODO move these
+		barf();//TODO move these
 		printrl();
 		printsrl();
 		return 0;
@@ -509,8 +661,8 @@ int wgetch(WINDOW *win) { OVERLOAD//bloat
 		seed(now);//a failed attempt to simulate game loading
 		for (int i = 0; i < 0xffff; i++) {
 			for (int j = 0; j < 4; j++) arc4();
-			if (harc4() == ARC4_H()) {
-				printfl("Built the hash %d:0x%08x.\n", i, harc4());
+			if (harc4(arc4_s) == harc4(ARC4_S)) {
+				fprintfl(note_stream, "Built the hash %d:0x%08x.", i, harc4());
 				break;
 			}
 		}
@@ -546,7 +698,7 @@ int wgetch(WINDOW *win) { OVERLOAD//bloat
 Overloads random with a simple log wrapper.
 **/
 long random() { OVERLOAD
-	printfl("Called random().\n");
+	call("random().");
 	return real_random();
 }
 
@@ -554,7 +706,7 @@ long random() { OVERLOAD
 Overloads srandom with a simple log wrapper.
 **/
 void srandom(unsigned int seed) { OVERLOAD
-	printfl("Called srandom(%u).\n", seed);
+	call("srandom(%u).", seed);
 	real_srandom(seed);
 }
 
@@ -562,15 +714,15 @@ void srandom(unsigned int seed) { OVERLOAD
 Overloads init_pair with a simple log wrapper.
 **/
 int init_pair(short pair, short f, short b) { OVERLOAD
-	//printfl("Called init_pair(%d, %d, %d).\n", pair, f, b);
+	call("init_pair(%d, %d, %d).", pair, f, b);
 	return real_init_pair(pair, f, b);
 }
 
 /**
 Overloads time with a simple log wrapper.
 **/
-time_t time(time_t *t) { OVERLOAD
-	printfl("Called time(0x%08x).\n", (unsigned int )t);
+time_t time(time_t * t) { OVERLOAD
+	call("time(0x%08x).", (unsigned int )t);
 	const time_t n = (time_t )now;
 	if (t != NULL) *t = n;
 	return n;
@@ -579,16 +731,16 @@ time_t time(time_t *t) { OVERLOAD
 /**
 Overloads localtime with a simple log wrapper.
 **/
-struct tm *localtime(const time_t *timep) { OVERLOAD
-	printfl("Called localtime(0x%08x).\n", (unsigned int )timep);
+struct tm * localtime(const time_t * timep) { OVERLOAD
+	call("localtime(0x%08x).", (unsigned int )timep);
 	return gmtime(timep);//timezones are useless anyway
 }
 
 /**
 Overloads wrefresh with a "simple log wrapper".
 **/
-int wrefresh(WINDOW *win) { OVERLOAD
-	//printfl("Called wrefresh(0x%08x).\n", (unsigned int )win);
+int wrefresh(WINDOW * win) { OVERLOAD
+	call("wrefresh(0x%08x).", (unsigned int )win);
 
 	int x, y;
 	attr_t attrs;
@@ -618,8 +770,8 @@ int wrefresh(WINDOW *win) { OVERLOAD
 		mvaddnstr(ws_y, ws_x, ws_buf, TERM_COL-ws_x);\
 		ws_x--;
 	ws_ADDSTR("S: %d", 4, globstate);
-	ws_ADDSTR("T: 0x%08x", 13, now);
-	ws_ADDSTR("R: 0x%08x", 13, ARC4_H());
+	ws_ADDSTR("T: 0x%08x", 13, (unsigned int )now);
+	ws_ADDSTR("R: 0x%08x", 13, harc4(ARC4_S));
 	ws_ADDSTR("G: %d", 13, TURNS);
 	ws_ADDSTR("F: %d", 13, frame);
 	ws_ADDSTR("I: %s", 9, codeins);
@@ -649,17 +801,22 @@ Tells sweet lies about the terminal size.
 int ioctl(int d, unsigned long request, ...) { OVERLOAD
 	va_list	argp;
 	va_start(argp, request);
-	const void *arg = va_arg(argp, void *);
-	printfl("Called ioctl(%d, %lu, 0x%08x).\n", d, request, (unsigned int )arg);
+	const void * arg = va_arg(argp, void * );
+	call("ioctl(0x%08x, %lu, 0x%08x).", (unsigned int )d, request, (unsigned int )arg);
 	const int result = real_ioctl(d, request, arg);
 	if (request == TIOCGWINSZ) {
-		struct winsize *size;
-		size = (struct winsize *)arg;
-		size->ws_row = TERM_ROW;
-		size->ws_col = TERM_COL;
+		struct winsize * size;
+		size = (struct winsize * )arg;
+		size->ws_row = rows;
+		size->ws_col = cols;
 	}
 	va_end(argp);
 	return result;
+}
+
+chtype winch(WINDOW *win) { OVERLOAD
+	call("winch(0x%08x).", (unsigned int )win);
+	return real_winch(win);
 }
 
 #endif

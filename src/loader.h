@@ -4,6 +4,8 @@ Lists the functions of the loader.
 #ifndef LOADER_H
 #define LOADER_H
 
+#include <curses.h>
+
 /**
 Declares the original dynamically linked library functions.
 **/
@@ -19,7 +21,7 @@ typedef int (*WGETNSTR)(WINDOW *win, char *str, int n);
 typedef int (*UNLINK)(const char *pathname);
 typedef time_t (*TIME)(time_t *timer);
 typedef int (*IOCTL)(int d, unsigned long request, ...);
-typedef struct tm (*LOCALTIME)(const time_t *timep);
+typedef struct tm *(*LOCALTIME)(const time_t *timep);
 typedef long (*RANDOM)();
 typedef void (*SRANDOM)(unsigned int seed);
 

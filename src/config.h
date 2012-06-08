@@ -4,23 +4,24 @@ Provides default values for configuration variables.
 #ifndef CONFIG_H
 #define CONFIG_H
 
+extern int rows;
+extern int cols;
+
+const char * const config_path = "adom-tas.cfg";
+
+const char * const config_file = ".adom.cfg";
+const char * const version_file = ".adom.ver";
+const char * const keybind_file = ".adom.kbd";
+const char * const process_file = ".adom.prc";
+
 /**
 Sets the default locations of (all kinds of things).
 **/
-#define HOME "/home/user"//TODO automate
-#define EXECUTABLE_PATH HOME"/adom/adom"
-#define LIBRARY_PATH HOME"/adom-tas/bin/adom-tas.so"
-#define LOG_PATH HOME"/adom-tas/all.log"
-#define DATA_PATH HOME"/.adom.data"
-#define VERSION_DATA_PATH DATA_PATH"/.adom.ver"
-#define KEYBIND_DATA_PATH DATA_PATH"/.adom.kbd"
-#define CONFIG_DATA_PATH DATA_PATH"/.adom.cfg"
-#define WHATEVER_DATA_PATH DATA_PATH"/.adom.prc"
-
-#define INPUT_LOG_PATH HOME"/adom-tas/inputs.log"
-#define RANDOM_LOG_PATH HOME"/adom-tas/state.log"
-#define SRANDOM_LOG_PATH HOME"/adom-tas/sim_state.log"
-#define CALL_LOG_PATH HOME"/adom-tas/calls.log"
+#define TEMPORARY_HOME "/home/user"
+#define TEMPORARY_INPUT_PATH TEMPORARY_HOME"/adom-tas/input.tas"
+#define TEMPORARY_OUTPUT_PATH TEMPORARY_HOME"/adom-tas/output.tas"
+#define TEMPORARY_ACTUAL_PATH TEMPORARY_HOME"/adom-tas/actual_state.log"
+#define TEMPORARY_SIM_PATH TEMPORARY_HOME"/adom-tas/simulated_state.log"
 
 /**
 Sets the amount of save states.
