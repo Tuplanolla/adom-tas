@@ -14,7 +14,7 @@ Installation
 ADoM TAS is only for Linux since it relies on injecting assembly instructions to another Linux executable.
 Installing it is simple (here with Arch Linux):
 
-	[user@arch ~]$ pacman -S gcc libc libncurses libconfig make git
+	[user@arch ~]$ pacman -S gcc libc libncurses libconfig make ssh git
 	[user@arch ~]$ git clone git@github.com:Tuplanolla/adom-tas.git
 	[user@arch ~]$ cd adom-tas
 	[user@arch adom-tas]$ make
@@ -107,6 +107,8 @@ Checklist
 Progression
 -----------
 
+The typical usage of ADoM TAS creates a process tree:
+
 	Start playing:
 	----[ ]
 	Save the first state:
@@ -160,7 +162,7 @@ Progression
 User Interface
 --------------
 
-The user interface (out of date now) deserves a mention here since it's so intuitive.
+The user interface deserves a mention here since it's so intuitive.
 
 The status bar looks like
 
@@ -168,6 +170,6 @@ The status bar looks like
 Coward    <span style="background-color: #d58080; color: #000000;">I: \M\Cf </span> <span style="background-color: #d5d580; color: #000000;">F: 21        </span> <span style="background-color: #80d580; color: #000000;">G: 7         </span> <span style="background-color: #8080d5; color: #000000;">R: 0xe87de001</span> <span style="background-color: #80d5d5; color: #000000;">T: 0x7fe81780</span> <span style="background-color: #d580d5; color: #000000;">S: 2</span>
 </pre>
 
-and contains the last input (Alt Ctrl F), the number of the last recorded frame (#21), the number of the last played turn (#7), the current hash of the random number generator's state, the current system time (2038-01-01 00:00:00) and the selected save state (#2).
+and contains the last input (Alt Ctrl F), the number of the last recorded frame (#21), the number of the last played turn (#7), the current hash of the random number generator's state, the current system time (2038-01-01 00:00:00) and the currently selected save state (#2).
 
 The keys to save, load and control the statusbar are currently undefined.

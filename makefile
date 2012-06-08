@@ -21,8 +21,8 @@ $(OBJ)/%.o: $(SRC)/%.c
 $(BIN)/$(NAME).so: prepare $(OBJ)/loader.o $(OBJ)/util.o $(OBJ)/log.o $(OBJ)/adom.o
 	$(GCC) -fpic -shared -o $(BIN)/$(NAME).so $(OBJ)/loader.o $(OBJ)/util.o $(OBJ)/log.o $(OBJ)/adom.o
 
-$(BIN)/$(NAME): prepare $(OBJ)/wrapper.o $(OBJ)/log.o
-	$(GCC) -lncurses -o $(BIN)/$(NAME) $(OBJ)/wrapper.o $(OBJ)/log.o
+$(BIN)/$(NAME): prepare $(OBJ)/wrapper.o $(OBJ)/util.o $(OBJ)/log.o $(OBJ)/adom.o
+	$(GCC) -lncurses -o $(BIN)/$(NAME) $(OBJ)/wrapper.o $(OBJ)/util.o $(OBJ)/log.o $(OBJ)/adom.o
 
 run: all
 	$(BIN)/$(NAME)

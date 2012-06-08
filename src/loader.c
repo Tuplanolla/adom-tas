@@ -1,8 +1,5 @@
 /**
-Provides.
-
-TODO put close(shm_fd); somewhere
-TODO put close(*_stream); somewhere
+Serves as a loader for the executable.
 **/
 #ifndef LOADER_C
 #define LOADER_C
@@ -228,6 +225,10 @@ void shmup() {
 	else fprintfl(note_stream, "Remapped shared memory.");
 }
 
+void dreamcatcher(const int signo) {
+	fprintfl(note_stream, "Somehow caught \"%s\".", strsignal(signo));
+}
+
 /**
 Initializes this process.
 **/
@@ -371,7 +372,7 @@ int initialize() {
 	FILE * new_note_stream;
 	FILE * new_call_stream;
 	const char * error_path;
-	if (config_lookup_string(&config, "error", &error_path) == 0) {
+	if (config_lookup_string(&config, "errors", &error_path) == 0) {
 		warning(CONFIG_ERROR_LOG_PROBLEM);
 		new_error_stream = stderr;
 	}
@@ -394,7 +395,7 @@ int initialize() {
 		}
 	}
 	const char * warning_path;
-	if (config_lookup_string(&config, "warning", &warning_path) == 0) {
+	if (config_lookup_string(&config, "warnings", &warning_path) == 0) {
 		warning(CONFIG_WARNING_LOG_PROBLEM);
 		new_warning_stream = stderr;
 	}
@@ -417,7 +418,7 @@ int initialize() {
 		}
 	}
 	const char * note_path;
-	if (config_lookup_string(&config, "note", &note_path) == 0) {
+	if (config_lookup_string(&config, "notes", &note_path) == 0) {
 		new_note_stream = stderr;
 		warning(CONFIG_NOTE_LOG_PROBLEM);
 	}
@@ -440,7 +441,7 @@ int initialize() {
 		}
 	}
 	const char * call_path;
-	if (config_lookup_string(&config, "call", &call_path) == 0) {
+	if (config_lookup_string(&config, "calls", &call_path) == 0) {
 		warning(CONFIG_CALL_LOG_PROBLEM);
 		new_call_stream = NULL;
 	}
@@ -514,6 +515,8 @@ int initialize() {
 	*/
 	config_destroy(&config);
 
+	if (signal(SIGWINCH, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "No no resizing!");
+
 	initialized = TRUE;
 	return 0;//Why?
 }
@@ -523,6 +526,7 @@ void uninitialize() {
 	fclose(warning_stream);
 	fclose(note_stream);
 	fclose(call_stream);
+	close(shm_fd);
 }
 
 bool tired = TRUE;
@@ -531,9 +535,6 @@ void continuator(const int signo) {
 		fprintfl(note_stream, "Caught CONT.");
 		tired = FALSE;
 	}
-}
-void dreamcatcher(const int signo) {
-	fprintfl(note_stream, "Somehow caught \"%s\".", strsignal(signo));
 }
 
 /**
@@ -548,7 +549,7 @@ void save(const int state) {
 	if (signal(SIGQUIT, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 	if (signal(SIGTRAP, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 	if (signal(SIGABRT, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
-	if (signal(SIGSTOP, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");;
+	if (signal(SIGSTOP, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 	if (signal(SIGTTOU, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 	if (pid != (pid_t )NULL) {//parent
 		if (conf->pids[state] != 0) {//removes an old save
@@ -743,10 +744,10 @@ int wrefresh(WINDOW * win) { OVERLOAD
 	call("wrefresh(0x%08x).", (unsigned int )win);
 
 	int x, y;
-	attr_t attrs;
-	short pair;
+	attr_t attrs; attr_t * _attrs = &attrs;//prevents a warning about a curses bug
+	short pair; short * _pair = &pair;
 	getyx(win, y, x);
-	wattr_get(win, &attrs, &pair, NULL);
+	wattr_get(win, _attrs, _pair, NULL);
 
 	short ws_pair = PAIRS;
 	#define ws_INIT_PAIR(b) \
@@ -812,11 +813,6 @@ int ioctl(int d, unsigned long request, ...) { OVERLOAD
 	}
 	va_end(argp);
 	return result;
-}
-
-chtype winch(WINDOW *win) { OVERLOAD
-	call("winch(0x%08x).", (unsigned int )win);
-	return real_winch(win);
 }
 
 #endif

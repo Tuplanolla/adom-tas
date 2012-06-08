@@ -8,8 +8,6 @@ extern FILE * error_stream;
 extern FILE * warning_stream;
 extern FILE * note_stream;
 extern FILE * call_stream;
-extern FILE * input_stream;
-extern FILE * output_stream;
 
 int vfprintfl(FILE * stream, const char * fmt, va_list ap);
 int fprintfl(FILE * stream, const char * fmt, ...);

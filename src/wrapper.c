@@ -20,7 +20,7 @@ Serves as wrapper for the executable.
 #include "config.h"
 #include "loader.h"
 
-TIME real_time = time;
+TIME real_time = time;//TODO the rest
 LOCALTIME real_localtime = localtime;
 
 FILE * error_stream;
@@ -43,8 +43,21 @@ int main(int argc, char ** argv) {
 	note_stream = stderr;
 
 	/*
-	Loads the configuration file.
+	Prepares the configuration file.
+
+	The existence of the configuration file is first checked,
+	if it does not exist
+		the configuration file is first created and
+		this process is then terminated,
+	otherwise
+		the configuration file is parsed.
 	*/
+	if (stat(config_path, &buf) != 0) {
+		FILE * stream = fopen(config_path, "w");
+		fprintf(stream, config_str);
+		fclose(stream);
+		return error(CONFIG_FIND_PROBLEM);
+	}
 	config_t config;
 	config_init(&config);
 	if (config_read_file(&config, config_path) == 0) {
@@ -55,7 +68,7 @@ int main(int argc, char ** argv) {
 	/*
 	Enables preloading libraries.
 
-	The configuration file is first parsed,
+	The configuration file is first searched,
 	the environment variable is then read,
 	the existence of the file is then checked and
 	the environment variable is finally set.
@@ -77,7 +90,7 @@ int main(int argc, char ** argv) {
 	/*
 	Finds the executable and identifies it heuristically.
 
-	The configuration file is first parsed,
+	The configuration file is first searched,
 	the existence of the file is then checked,
 	the permissions of the file are then checked,
 	the size of the file is finally verified.
@@ -92,14 +105,14 @@ int main(int argc, char ** argv) {
 	if (buf.st_mode & (S_ISUID | S_ISGID)) {
 		return error(EXEC_ACCESS_PROBLEM);
 	}
-	if (buf.st_size != 2452608) {
+	if (buf.st_size != file_size) {
 		return error(EXEC_SIZE_PROBLEM);
 	}
 
 	/*
 	Finds the data path of the executable.
 
-	The configuration file is first parsed and
+	The configuration file is first searched and
 	the existence of the directory is then checked.
 	*/
 	const char * data_path;
@@ -113,7 +126,7 @@ int main(int argc, char ** argv) {
 	/*
 	Verifies the version of the executable.
 
-	The configuration file is first parsed,
+	The configuration file is first searched,
 	the version file is then read and
 	the version is finally verified.
 	*/
@@ -126,15 +139,10 @@ int main(int argc, char ** argv) {
 			warning(VERSION_FIND_PROBLEM);
 		}
 		else {
-			unsigned char version[4];
+			unsigned char version[sizeof (file_version)];
 			fread(version, 1, sizeof (version), stream);
 			fclose(stream);
-			unsigned char desired_version[4];
-			desired_version[0] = 1;
-			desired_version[1] = 1;
-			desired_version[2] = 1;
-			desired_version[3] = 0;
-			if (memcmp(version, desired_version, sizeof (version)) != 0) {
+			if (memcmp(version, file_version, sizeof (version)) != 0) {
 				return error(VERSION_PROBLEM);
 			}
 		}
@@ -144,7 +152,7 @@ int main(int argc, char ** argv) {
 	/*
 	Removes the process file of the executable.
 
-	The configuration file is first parsed,
+	The configuration file is first searched,
 	the existence of the process file is then checked and
 	the process file is finally removed.
 	*/
