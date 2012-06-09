@@ -12,14 +12,54 @@ Installation
 ------------
 
 ADoM TAS is only for Linux since it relies on injecting assembly instructions to another Linux executable.
-Installing it is simple (here with Arch Linux):
 
-	[user@arch ~]$ pacman -S gcc libc libncurses libconfig make ssh git
+The following examples are for installing it from source on (a freshly installed) Arch Linux.
+
+Install build tools:
+
+	[user@arch ~]$ pacman -S gcc make
+
+Install the dependencies using your package manager of choice:
+
+	[user@arch ~]$ pacman -S libc libncurses libconfig
+
+Install tools to clone the repository:
+
+	[user@arch ~]$ pacman -S ssh git
+
+Clone the repository:
+
 	[user@arch ~]$ git clone git@github.com:Tuplanolla/adom-tas.git
+
+Build the files:
+
 	[user@arch ~]$ cd adom-tas
 	[user@arch adom-tas]$ make
-	[user@arch adom-tas]$ nano adom-tas.cfg
+
+Run to generate a template configuration file:
+
 	[user@arch adom-tas]$ bin/adom-tas
+
+Edit the configuration file:
+
+	[user@arch adom-tas]$ nano adom-tas.cfg
+
+Run normally:
+
+	[user@arch adom-tas]$ bin/adom-tas
+
+If you want to encode video files you'll need extra packages:
+
+	[user@arch ~]$ pacman -S ttyrec ffmpeg
+
+Recording is managed by Bash scripts:
+
+	[user@arch ~]$ res/ttyrec.sh
+	[user@arch ~]$ res/ffmpeg.sh
+
+Installing the whole thing from the binaries will eventually be possible:
+
+	[user@arch ~]$ wget adom-tas.so adom-tas
 
 Configuration
 -------------
@@ -42,7 +82,8 @@ Conventions
 
 The naming conventions used in the project follow those of the implementations of the functions.
 
-The syntatic conventions in the other hand follow the simplest possible consistent set of rules that allows condensed code (keywords are always followed by spaces, pointers are always separated from the type and the identifier, comments and casts are removable using the simplest possible algorithm to leave no traces, etc).
+The syntatic conventions in the other hand follow the simplest possible consistent set of rules that allows condensed code.
+Keywords are always followed by spaces, pointers are always separated from the type and the identifier, comments and casts are removable using the simplest possible algorithm to leave no traces, etc.
 
 Checklist
 ---------
@@ -82,7 +123,8 @@ Checklist
 		[X] Implement playing back a recording
 		[X] Implement dumping a ttyrec
 		[X] Implement dumping an avi
-		[X] Refine sloppy implementations
+		[ ] Synchronize dumping with playback
+		[ ] Refine sloppy implementations
 	[ ] Implement analysis tools
 		[X] Find the turn count variable
 		[X] Find a way to get around overloading macros

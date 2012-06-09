@@ -31,7 +31,7 @@ void frame_add(bool reseed, unsigned int duration, int input, unsigned int time)
 	new_frame = (frame_t *)malloc(sizeof (frame_t));
 
 	new_frame->duration = reseed ? 0 : (int )duration;
-	new_frame->input = (int )input;
+	new_frame->value = (int )input;
 
 	//first object
 	if (first_frame == NULL && last_frame == NULL) {
@@ -48,7 +48,6 @@ void frame_add(bool reseed, unsigned int duration, int input, unsigned int time)
 	new_frame->next = NULL;
 	frame_count++;
 	return;
-
 }
 
 //get an object

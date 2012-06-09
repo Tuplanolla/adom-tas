@@ -12,7 +12,7 @@ const char * const keybind_file = ".adom.kbd";
 const char * const process_file = ".adom.prc";
 
 const char * const config_path = "adom-tas.cfg";
-const char * const config_str = 
+const char * const config_str =
 		"exec       = \"/var/games/adom\"//required"
 		"data       = \"/root/.adom.data\"//required"
 		"libc       = \"/lib/libc.so.5\"//required"

@@ -30,5 +30,6 @@ extern unsigned char arc4_j;
 int harc4();
 void sarc4(const int seed);
 unsigned char arc4();
+void key_code(char * code, const int key);
 
 #endif

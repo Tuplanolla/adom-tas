@@ -30,8 +30,8 @@ Serves as a loader for the executable.
 
 int rows;
 int cols;
-const char * input_path;
-const char * output_path;
+char * input_file;
+char * output_file;
 FILE * error_stream;
 FILE * warning_stream;
 FILE * note_stream;
@@ -56,30 +56,139 @@ RANDOM real_random;
 SRANDOM real_srandom;
 IOCTL real_ioctl;
 
-void internal() {//Move me! My address is found automatically!
-	fprintfl(note_stream, ":)");
-}
-
 /**
 Very important temporary variables.
 **/
-int frame = 0, globstate = 1;
-time_t now = 0;//0x7fe81780
+int globstate = 1;
+time_t current_time = 0;//0x7fe81780
+
+/**
+Represents a recorded frame.
+
+Three kinds of inputs exist:
+<pre>
+enum input_e {
+	NO_INPUT,
+	KEY_INPUT,
+	TIME_INPUT,
+	SEED_INPUT
+};
+typedef enum input_e input_t;
+</pre>
+<code>KEY_INPUT</code> represents pressing a key,
+<code>TIME_INPUT</code> represents changing the system time and
+<code>SEED_INPUT</code> represents reseeding the random number generator.
+The variables required to represent a frame depend on the inputs:
+<pre>
+struct frame_s {
+	input_t input;
+	int key;
+	time_t time;
+	unsigned char duration;
+	struct frame_s * next;
+};
+typedef struct frame_s frame_t;
+</pre>
+Since <code>time_t</code> can be treated as an <code>int</code> or a <code>long</code>,
+only <code>KEY_INPUT</code> inputs are visible and
+<code>TIME_INPUT</code> is only used with the next <code>SEED_INPUT</code>
+the struct can be condensed:
+<pre>
+struct frame_s {
+	int duration;//duration == 0 ? input = KEY_INPUT : input = SEED_INPUT
+	int value;//duration != 0 ? key = value : time += value
+	struct frame_s * next;
+};
+typedef struct frame_s frame_t;
+</pre>
+Thus only two <code>int</code>s are needed.
+**/
+struct frame_s {
+	int duration;
+	int value;
+	struct frame_s * next;
+};
+typedef struct frame_s frame_t;
+
+frame_t * first_frame = NULL;
+frame_t * last_frame = NULL;
+unsigned int frame_count = 0;
+
+/**
+Adds a frame.
+**/
+frame_t * add_frame(int duration, int value) {
+	frame_t * new_frame = malloc(sizeof (frame_t));
+	new_frame->duration = duration;
+	new_frame->value = value;
+	new_frame->next = NULL;
+	if (first_frame == NULL) {//the first
+		first_frame = new_frame;
+	}
+	else {//the rest
+		last_frame->next = new_frame;
+	}
+	last_frame = new_frame;
+	frame_count++;
+	return new_frame;
+}
+
+/**
+Removes all frames.
+**/
+void remove_frames() {
+	frame_t * current_frame = first_frame;
+	first_frame = NULL;
+	last_frame = NULL;
+	while (current_frame != NULL) {
+		frame_t * old_frame = current_frame;
+		current_frame = current_frame->next;
+		free(old_frame);
+	}
+}
+
+time_t last_time;
+
+/**
+Adds a <code>KEY_INPUT</code> frame.
+**/
+frame_t * add_key_frame(unsigned int duration, int input) {
+	return add_frame((int )duration, input);
+}
+
+/**
+Adds a <code>TIME_INPUT</code> and <code>SEED_INPUT</code> frame.
+**/
+frame_t * add_seed_frame(time_t time) {
+	if (first_frame == NULL) {
+		last_time = current_time;
+	}
+	const time_t step_time = current_time-last_time;
+	last_time = current_time;
+	return add_frame(0, (int )step_time);
+}
+
+/**
+Called from injected Assembly (details arrive later).
+**/
+void internal() {
+	fprintfl(note_stream, ":)");
+}
 
 /**
 Outputs the frames (for recording).
 **/
 int barf() {
-	FILE * output_stream = fopen(output_path, "wb");
+	FILE * output_stream = fopen(output_file, "wb");
 	if (output_stream == NULL) {
 		return error(OUTPUT_ACCESS_PROBLEM);
 	}
 	int result = 0;
-	frame_t * this_frame = get_first_frame();
-	while (this_frame != NULL) {
-		result += fwrite(&this_frame->duration, sizeof (int), 1, output_stream);
-		result += fwrite(&this_frame->input, sizeof (int), 1, output_stream);
-		this_frame = this_frame->next;
+	frame_t * current_frame = first_frame;
+	while (current_frame != NULL) {
+		result += fwrite(&current_frame->duration, sizeof (current_frame->duration), 1, output_stream);
+		result += fwrite(&current_frame->value, sizeof (current_frame->value), 1, output_stream);
+		current_frame = current_frame->next;
 	}
 	fclose(output_stream);
 	return result;
@@ -89,18 +198,19 @@ int barf() {
 Inputs the frames (for playback).
 **/
 int slurp() {
-	FILE * input_stream = fopen(input_path, "rb");
+	FILE * input_stream = fopen(input_file, "rb");
 	if (input_stream == NULL) {
 		return error(INPUT_ACCESS_PROBLEM);
 	}
 	int result = 0;
 	while (TRUE) {
-		unsigned int duration;
-		int input;
-		int subresult = fread(&duration, sizeof (int), 1, input_stream);
-		subresult += fread(&input, sizeof (int), 1, input_stream);
+		int subresult = 0;
+		int duration;
+		int value;
+		subresult += fread(&duration, sizeof (duration), 1, input_stream);
+		subresult += fread(&value, sizeof (value), 1, input_stream);
 		if (subresult == 0) break;
-		frame_add(duration == 0, duration, input, input);//really bad
+		add_frame(duration, value);
 	}
 	if (feof(input_stream)) /*error*/;
 	clearerr(input_stream);
@@ -132,40 +242,6 @@ int printsrl() {
 	}
 	fclose(random_stream);
 	return result;
-}
-
-/*
-Returns the key code of a key number.
-The key code is from one to three characters long.
-@param code The key code to return.
-@param key The key number.
-*/
-void key_code(char * code, const int key) {
-	#define key_code_RETURN(str) {\
-			strcpy(code, str);\
-			return;\
-		}
-	#define key_code_RETURNF(format, str) {\
-			sprintf(code, format, str);\
-			return;\
-		}
-	if (key == '\\') key_code_RETURN("\\\\");//backslash
-	if (key == KEY_UP) key_code_RETURN("\\U");//Up
-	if (key == KEY_DOWN) key_code_RETURN("\\D");//Down
-	if (key == KEY_LEFT) key_code_RETURN("\\L");//Left
-	if (key == KEY_RIGHT) key_code_RETURN("\\R");//Right
-	if (key == ' ') key_code_RETURN("\\S");//Space
-	if (key == 0x1b) key_code_RETURN("\\M");//Meta (Alt or Esc)
-	if (key == 0x7f) key_code_RETURN("\\C_");//Delete
-	if (key == KEY_A1) key_code_RETURN("\\H");//keypad Home
-	if (key == KEY_A3) key_code_RETURN("\\+");//keypad PageUp
-	if (key == KEY_B2) key_code_RETURN("\\.");//keypad center
-	if (key == KEY_C1) key_code_RETURN("\\E");//keypad End
-	if (key == KEY_C3) key_code_RETURN("\\-");//keypad PageDown
-	if (key >= 0x00 && key < 0x1f) key_code_RETURNF("\\C%c", (char )(0x60+key));//control keys
-	if (key >= KEY_F(1) && key <= KEY_F(64)) key_code_RETURNF("\\%d", key-KEY_F(0));//function keys
-	if (key > 0x20 && key < 0x80) key_code_RETURNF("%c", (char )key);//printable keys
-	key_code_RETURN("\\?");//nonprintable keys
 }
 
 /**
@@ -358,6 +434,11 @@ int initialize() {
 			warning(OUTPUT_OVERWRITE_PROBLEM);
 		}
 	}
+	note(LOG_CHANGE_PROBLEM);
+	input_file = malloc(strlen(input_path)+1);
+	strcpy(input_file, input_path);
+	output_file = malloc(strlen(output_path)+1);
+	strcpy(output_file, output_path);
 
 	/*
 	Opens the log streams.
@@ -476,6 +557,13 @@ int initialize() {
 		call_stream = new_call_stream;
 	}
 
+	/*
+	Unloads the configuration file.
+
+	The memory allocated by <code>config_lookup_string</code> calls is automatically deallocated.
+	*/
+	config_destroy(&config);
+
 	//crap follows
 	real_unlink("/dev/shm/adom-tas");//What is portable code?
 	shmup();
@@ -508,13 +596,6 @@ int initialize() {
 		memcpy(location, instructions, sizeof (instructions));//TODO make sure it's patching the right instructions
 	else fprintfl(note_stream, ":(");
 
-	/*
-	Unloads the configuration file.
-
-	The memory allocated by <code>config_lookup_string</code> calls is automatically deallocated.
-	*/
-	config_destroy(&config);
-
 	if (signal(SIGWINCH, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "No no resizing!");
 
 	initialized = TRUE;
@@ -522,11 +603,26 @@ int initialize() {
 }
 
 void uninitialize() {
+	/*
+	Deallocates things.
+	*/
+	free(input_file);
+	free(output_file);
+
+	/*
+	Closes the log streams.
+	*/
 	fclose(error_stream);
 	fclose(warning_stream);
 	fclose(note_stream);
 	fclose(call_stream);
+
+	/*
+	Closes the shm.
+	*/
 	close(shm_fd);
+
+	exit(0);
 }
 
 bool tired = TRUE;
@@ -593,6 +689,8 @@ The first call loads the libraries.
 //#define OVERLOAD if (!initialized) initialized = initialize();
 #define OVERLOAD if (!initialized) initialize();
 
+short pairs = 0;
+
 /**
 Overloads wgetch with a simple log wrapper.
 **/
@@ -605,61 +703,71 @@ char codeins[7];
 int wgetch(WINDOW * win) { OVERLOAD//bloat
 	call("wgetch(0x%08x).", (unsigned int )win);
 	if (playbacking) {
-		if (playback_frame != NULL) {//TODO move this all
-			struct timespec req;
-			bool out_of_variable_names = FALSE;
-			if (playback_frame->duration >= 16) out_of_variable_names = TRUE;
-			req.tv_sec = (time_t )(out_of_variable_names ? playback_frame->duration : 0);
-			req.tv_nsec = out_of_variable_names ? 0l : 1000000000l/16l*playback_frame->duration;
-			nanosleep(&req, NULL);
-			int yield = playback_frame->input;
-			playback_frame = playback_frame->next;
-			return yield;
+		if (playback_frame != NULL) {//TODO move this
+			if (playback_frame->duration == 0) {
+				current_time += playback_frame->value;
+				playback_frame = playback_frame->next;
+				return 0;
+			}
+			else {
+				struct timespec req;
+				bool out_of_variable_names = FALSE;
+				if (playback_frame->duration >= 16) out_of_variable_names = TRUE;
+				req.tv_sec = (time_t )(out_of_variable_names ? playback_frame->duration : 0);
+				req.tv_nsec = out_of_variable_names ? 0l : 1000000000l/16*playback_frame->duration;
+				nanosleep(&req, NULL);
+				const int yield = playback_frame->value;
+				playback_frame = playback_frame->next;
+				return yield;
+			}
 		}
 	}
 	int key = real_wgetch(win);
 	if (key == 0x110) {
-		if (frame == 0) {//move to playback
+		if (frame_count == 0) {//move to playback
 			slurp();
 			playbacking = TRUE;
-			playback_frame = get_first_frame();
+			playback_frame = first_frame;
 		}
 		else condensed = !condensed;
 		wrefresh(win);
 		return 0;
 	}
-	else if (key == 0x111) {
+	else if (key == KEY_F(9)) {//saves
 		save(globstate);
 		wrefresh(win);
 		return 0;
 	}
-	else if (key == 0x112) {
+	else if (key == KEY_F(10)) {//loads
 		load(globstate);
 		wrefresh(win);
 		return 0;//redundant
 	}
-	else if (key == 0x113) {
-		globstate = globstate%9+1;
+	else if (key == KEY_F(36)) {//changes the state (Ctrl F12 now)
+		globstate = globstate%(10-1)+1;//++
+		//globstate = (globstate-2)%(10-1)+1;//--
 		wrefresh(win);
-		seed(now);
-		barf();//TODO move these
+		return 0;
+	}
+	else if (key == KEY_F(11)) {//changes the time
+		current_time++;
+		wrefresh(win);
+		return 0;
+	}
+	else if (key == KEY_F(12)) {//saves the seed frame (later S)
+		seed(current_time);//TODO fix
+		add_seed_frame(current_time);
+		wrefresh(win);
+		return 0;
+	}
+	else if (key == '_') {//dumps everything
+		barf();//TODO move
 		printrl();
 		printsrl();
 		return 0;
 	}
-	else if (key == 0x114) {
-		now++;
-		wrefresh(win);
-		return 0;
-	}
-	else if (key == '_') {//bad
-		seed(now);//TODO fix
-		frame_add(TRUE, 0, 0, now);
-		wrefresh(win);
-		return 0;
-	}
-	else if (key == -12) {//worse
-		seed(now);//a failed attempt to simulate game loading
+	else if (key == -12) {//a failed attempt to simulate the executable initializing the random number genrator
+		seed(current_time);
 		for (int i = 0; i < 0xffff; i++) {
 			for (int j = 0; j < 4; j++) arc4();
 			if (harc4(arc4_s) == harc4(ARC4_S)) {
@@ -687,10 +795,9 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		was_meta = FALSE;
 		key_code(code, key);
 		strcat(codeins, code);//TODO turn this into a macro
-		frame++;
 	}
 	unsigned int duration = 8;
-	frame_add(FALSE, duration, key, 0);//meta, colon and w are undisplayed but still recorded (for now)
+	add_key_frame(duration, key);//meta, colon and w are undisplayed but still recorded (for now)
 	//wrefresh(win);
 	return key;
 }
@@ -716,6 +823,7 @@ Overloads init_pair with a simple log wrapper.
 **/
 int init_pair(short pair, short f, short b) { OVERLOAD
 	call("init_pair(%d, %d, %d).", pair, f, b);
+	pairs++;
 	return real_init_pair(pair, f, b);
 }
 
@@ -724,7 +832,7 @@ Overloads time with a simple log wrapper.
 **/
 time_t time(time_t * t) { OVERLOAD
 	call("time(0x%08x).", (unsigned int )t);
-	const time_t n = (time_t )now;
+	const time_t n = (time_t )current_time;
 	if (t != NULL) *t = n;
 	return n;
 }
@@ -744,12 +852,12 @@ int wrefresh(WINDOW * win) { OVERLOAD
 	call("wrefresh(0x%08x).", (unsigned int )win);
 
 	int x, y;
-	attr_t attrs; attr_t * _attrs = &attrs;//prevents a warning about a curses bug
+	attr_t attrs; attr_t * _attrs = &attrs;//suppresses a warning caused by a curses bug
 	short pair; short * _pair = &pair;
 	getyx(win, y, x);
 	wattr_get(win, _attrs, _pair, NULL);
 
-	short ws_pair = PAIRS;
+	short ws_pair = pairs;
 	#define ws_INIT_PAIR(b) \
 		real_init_pair(ws_pair, COLOR_BLACK, b);\
 		ws_pair++;
@@ -771,10 +879,10 @@ int wrefresh(WINDOW * win) { OVERLOAD
 		mvaddnstr(ws_y, ws_x, ws_buf, TERM_COL-ws_x);\
 		ws_x--;
 	ws_ADDSTR("S: %d", 4, globstate);
-	ws_ADDSTR("T: 0x%08x", 13, (unsigned int )now);
+	ws_ADDSTR("T: 0x%08x", 13, (unsigned int )current_time);
 	ws_ADDSTR("R: 0x%08x", 13, harc4(ARC4_S));
 	ws_ADDSTR("G: %d", 13, TURNS);
-	ws_ADDSTR("F: %d", 13, frame);
+	ws_ADDSTR("F: %d", 13, frame_count);
 	ws_ADDSTR("I: %s", 9, codeins);
 
 	char some[TERM_COL];//a hack
