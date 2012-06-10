@@ -15,15 +15,19 @@ ADoM TAS is only for Linux since it relies on injecting assembly instructions to
 
 The following examples are for installing it from source on (a freshly installed) Arch Linux.
 
-Install build tools:
+Install the tools to build things with:
 
 	[user@arch ~]$ pacman -S gcc make
+
+Install the tools to build the documentation with if you feel like it:
+
+	[user@arch ~]$ pacman -S doxygen
 
 Install the dependencies (not libcurses or libconfig++) using your package manager of choice:
 
 	[user@arch ~]$ pacman -S libc libncurses libconfig
 
-Install tools to clone the repository:
+Install the tools to clone the repository:
 
 	[user@arch ~]$ pacman -S ssh git
 
@@ -36,15 +40,19 @@ Build the files:
 	[user@arch ~]$ cd adom-tas
 	[user@arch adom-tas]$ make
 
-Run to generate a template configuration file:
+Build the documentation if you feel like it:
+
+	[user@arch adom-tas]$ doxygen
+
+Run the launcher to generate a template configuration file:
 
 	[user@arch adom-tas]$ bin/adom-tas
 
-Edit the configuration file:
+Edit the configuration file (more about it later):
 
 	[user@arch adom-tas]$ nano adom-tas.cfg
 
-Run normally:
+Run the launcher normally:
 
 	[user@arch adom-tas]$ bin/adom-tas
 
@@ -52,14 +60,15 @@ If you want to encode video files you'll need extra packages:
 
 	[user@arch ~]$ pacman -S ttyrec ffmpeg
 
-Recording is managed by Bash scripts:
+Recording is managed by scripts:
 
-	[user@arch ~]$ res/ttyrec.sh
-	[user@arch ~]$ res/ffmpeg.sh
+	[user@arch ~]$ bin/ttyrec.sh
+	[user@arch ~]$ bin/ffmpeg.sh
 
 Installing the whole thing from the binaries will eventually be possible:
 
-	[user@arch ~]$ wget adom-tas.so adom-tas
+	[user@arch ~]$ wget adom-tas.tar.gz
+	[user@arch ~]$ tar -x -f adom-tas.tar.gz
 
 Configuration
 -------------
