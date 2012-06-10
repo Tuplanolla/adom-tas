@@ -759,7 +759,7 @@ Converts a <code>time_t</code> to a broken-down <code>struct tm</code>.
 
 Replaces <code>localtime</code> with <code>gmtime</code> and disregards timezones.
 
-@param The <code>time_t</code> to convert.
+@param timep The <code>time_t</code> to convert.
 @return The <code>struct tm</code>.
 **/
 struct tm * localtime(const time_t * timep) { OVERLOAD

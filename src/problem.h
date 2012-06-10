@@ -63,7 +63,7 @@ typedef enum problem_e problem_t;
 /**
 Converts an error code to an error message.
 
-@param error The error code.
+@param code The error code.
 @return The error message.
 **/
 inline char * problem_message(const problem_t code) {
