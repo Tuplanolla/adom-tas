@@ -1,5 +1,5 @@
 /**
-Provides default values for configuration variables.
+Contains the default values of configuration variables.
 **/
 #ifndef CONFIG_H
 #define CONFIG_H
@@ -13,20 +13,20 @@ const char * const process_file = ".adom.prc";
 
 const char * const config_path = "adom-tas.cfg";
 const char * const config_str =
-		"exec       = \"/var/games/adom\"//required"
-		"data       = \"/root/.adom.data\"//required"
-		"libc       = \"/lib/libc.so.5\"//required"
-		"libncurses = \"/usr/lib/libncurses.so.5\"//required"
-		"ld_preload = \"/root/adom-tas/bin/adom-tas.so\"//required"
-		"input      = \"/root/adom-tas/input.tas\""
-		"output     = \"/root/adom-tas/output.tas\""
-		"error      = \"/var/log/adom-tas.log\""
-		"warning    = \"/var/log/adom-tas.log\""
-		"note       = \"/var/log/adom-tas.log\""
-		"call       = \"/dev/null\""
-		"states     = 10"
-		"rows       = 25"
-		"cols       = 80"
+		"exec       = \"/var/games/adom\"//required\n"//TODO autodetect file or folder
+		"data       = \"/root/.adom.data\"//required\n"
+		"libc       = \"/lib/libc.so.5\"//required\n"
+		"libncurses = \"/usr/lib/libncurses.so.5\"//required\n"
+		"ld_preload = \"/root/adom-tas/bin/adom-tas.so\"//required\n"
+		"input      = \"/root/adom-tas/input.tas\"\n"
+		"output     = \"/root/adom-tas/output.tas\"\n"
+		"error      = \"/var/log/adom-tas.log\"\n"
+		"warning    = \"/var/log/adom-tas.log\"\n"
+		"note       = \"/var/log/adom-tas.log\"\n"
+		"call       = \"/dev/null\"\n"
+		"rows       = 25\n"
+		"cols       = 80\n"
+		"states     = 10\n"
 	;
 
 /**

@@ -1,5 +1,5 @@
 /**
-Serves as wrapper for the executable.
+Launches the executable.
 **/
 #ifndef WRAPPER_C
 #define WRAPPER_C
@@ -8,10 +8,11 @@ Serves as wrapper for the executable.
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <curses.h>
-#include <libconfig.h>
 #include <unistd.h>
 #include <sys/stat.h>
+
+#include <curses.h>
+#include <libconfig.h>
 
 #include "util.h"
 #include "problem.h"
@@ -20,8 +21,10 @@ Serves as wrapper for the executable.
 #include "config.h"
 #include "loader.h"
 
-TIME real_time = time;//TODO the rest
-LOCALTIME real_localtime = localtime;
+char * exec_file;
+
+TIME um_time = time;//TODO the rest
+LOCALTIME um_localtime = localtime;
 
 FILE * error_stream;
 FILE * warning_stream;
@@ -38,6 +41,9 @@ Runs the executable.
 int main(int argc, char ** argv) {
 	struct stat buf;
 
+	/*
+	Sets the streams to their default values.
+	*/
 	error_stream = stderr;
 	warning_stream = stderr;
 	note_stream = stderr;
@@ -108,6 +114,8 @@ int main(int argc, char ** argv) {
 	if (buf.st_size != file_size) {
 		return error(EXEC_SIZE_PROBLEM);
 	}
+	exec_file = malloc(strlen(exec_path)+1);
+	strcpy(exec_file, exec_path);
 
 	/*
 	Finds the data path of the executable.
@@ -169,9 +177,17 @@ int main(int argc, char ** argv) {
 	}
 
 	/*
+	Unloads the configuration file.
+
+	The memory allocated by the <code>config_lookup_</code> calls is automatically deallocated.
+	However the memory allocated for <code>exec_file</code> is leaked.
+	*/
+	config_destroy(&config);
+
+	/*
 	Reports good news.
 	*/
-	note(NO_PROBLEM);
+	printf("Loading...\n");
 	sleep(1);
 
 	/*
@@ -180,17 +196,8 @@ int main(int argc, char ** argv) {
 	This process is replaced by the executable.
 	*/
 	argc--; argv++;//removes the first argument
-	if (execvp(exec_path, argv) == 0) return NO_PROBLEM;//never returns
+	if (execvp(exec_file, argv) == 0) return NO_PROBLEM;//never returns
 	return error(EXEC_PROBLEM);
-
-	/*
-	The configuration file is automatically unloaded.
-
-	The memory allocated by the <code>config_init</code> call could be deallocated manually if the <code>execvp</code> call returned:
-	<pre>
-	config_destroy(&config);
-	</pre>
-	*/
 }
 
 #endif

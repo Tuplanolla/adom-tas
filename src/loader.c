@@ -1,23 +1,24 @@
 /**
-Serves as a loader for the executable.
+Modifies the executable.
 **/
 #ifndef LOADER_C
 #define LOADER_C
 
 #include <stdlib.h>//TODO get rid of the unnecessary
 #include <stdio.h>
-#include <curses.h>
+#include <stdarg.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <signal.h>
-#include <stdarg.h>
-#include <string.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <time.h>
-#include <unistd.h>
+
+#include <curses.h>
 #include <libconfig.h>
 
 #include "util.h"
@@ -40,21 +41,15 @@ FILE * call_stream;
 /**
 Declares the unmodified versions of the functions that are overloaded.
 **/
-INIT_PAIR real_init_pair;//TODO get rid of the unnecessary
-WCLEAR real_wclear;
-WREFRESH real_wrefresh; 
-WMOVE real_wmove;
-WADDCH real_waddch;
-WADDNSTR real_waddnstr;
-WINCH real_winch;
-WGETCH real_wgetch;
-WGETNSTR real_wgetnstr;
-UNLINK real_unlink;
-TIME real_time;
-LOCALTIME real_localtime;
-RANDOM real_random;
-SRANDOM real_srandom;
-IOCTL real_ioctl;
+UNLINK um_unlink = unlink;
+IOCTL um_ioctl;
+TIME um_time;
+LOCALTIME um_localtime;
+SRANDOM um_srandom;
+RANDOM um_random;
+INIT_PAIR um_init_pair;
+WREFRESH um_wrefresh;
+WGETCH um_wgetch;
 
 /**
 Very important temporary variables.
@@ -89,7 +84,7 @@ struct frame_s {
 };
 typedef struct frame_s frame_t;
 </pre>
-Since <code>time_t</code> can be treated as an <code>int</code> or a <code>long</code>,
+Since a <code>time_t</code> can be treated as an <code>int</code> or a <code>long</code>,
 only <code>KEY_INPUT</code> inputs are visible and
 <code>TIME_INPUT</code> is only used with the next <code>SEED_INPUT</code>
 the struct can be condensed:
@@ -116,6 +111,10 @@ unsigned int frame_count = 0;
 
 /**
 Adds a frame.
+
+@param duration The input or the duration of the frame.
+@param value The key or the time difference of the frame.
+@return The new frame.
 **/
 frame_t * add_frame(int duration, int value) {
 	frame_t * new_frame = malloc(sizeof (frame_t));
@@ -147,33 +146,42 @@ void remove_frames() {
 	}
 }
 
-time_t last_time;
+time_t previous_time;
 
 /**
 Adds a <code>KEY_INPUT</code> frame.
+
+@param duration The duration of the frame.
+@param key The key of the frame.
+@return The new frame.
 **/
-frame_t * add_key_frame(unsigned int duration, int input) {
-	return add_frame((int )duration, input);
+frame_t * add_key_frame(unsigned int duration, int key) {
+	return add_frame((int )duration, key);
 }
 
 /**
 Adds a <code>TIME_INPUT</code> and <code>SEED_INPUT</code> frame.
+
+@param time The time of the frame.
+@return The new frame.
 **/
 frame_t * add_seed_frame(time_t time) {
 	if (first_frame == NULL) {
-		last_time = current_time;
+		previous_time = current_time;
 	}
-	const time_t step_time = current_time-last_time;
-	last_time = current_time;
+	const time_t step_time = current_time-previous_time;
+	previous_time = current_time;
 	return add_frame(0, (int )step_time);
 }
 
 /**
-Called from injected Assembly (details arrive later).
+Redirects calls from injected instructions.
 **/
 void internal() {
 	fprintfl(note_stream, ":)");
 }
+
+//---- BADNESS LINE ----
 
 /**
 Outputs the frames (for recording).
@@ -249,16 +257,16 @@ Seeds the ARC4 of the executable.
 
 Seeding can be simulated:
 <pre>
-real_srandom(time(NULL));
-sarc4(real_random());
+um_srandom(time(NULL));
+sarc4(um_random());
 </pre>
 **/
-void seed(const int seed) {
+void seed(const int seed) {//simulated only (for now)
 	//SARC4_TIME();
 	arc4_i = 0;
 	arc4_j = 0;
-	real_srandom(seed);
-	sarc4(real_random());
+	um_srandom(seed);
+	sarc4(um_random());
 	//memcpy(ARC4_S, arc4_s, sizeof (arc4_s));
 }
 
@@ -312,6 +320,11 @@ bool initialized = FALSE;
 int initialize() {
 	struct stat buf;
 
+	/*
+	Sets the streams to their default values.
+
+	The default values are used until the initialization finishes.
+	*/
 	error_stream = stderr;
 	warning_stream = stderr;
 	note_stream = stderr;
@@ -363,29 +376,23 @@ int initialize() {
 		if (handle == NULL) {
 			exit(error(LIBC_PROBLEM));
 		}
-		real_unlink = (UNLINK )dlsym(handle, "unlink");
-		real_time = (TIME )dlsym(handle, "time");
-		real_localtime = (LOCALTIME )dlsym(handle, "localtime");
-		real_random = (RANDOM )dlsym(handle, "random");
-		real_srandom = (SRANDOM )dlsym(handle, "srandom");
-		real_ioctl = (IOCTL )dlsym(handle, "ioctl");
-		//dlclose(handle);
+		um_unlink = (UNLINK )dlsym(handle, "unlink");
+		um_time = (TIME )dlsym(handle, "time");
+		um_localtime = (LOCALTIME )dlsym(handle, "localtime");
+		um_srandom = (SRANDOM )dlsym(handle, "srandom");
+		um_random = (RANDOM )dlsym(handle, "random");
+		um_ioctl = (IOCTL )dlsym(handle, "ioctl");
+		dlclose(handle);
 	}
 	{
 		void * handle = dlopen(libncurses_path, RTLD_LAZY);
 		if (handle == NULL) {
 			exit(error(LIBNCURSES_PROBLEM));
 		}
-		real_init_pair = (INIT_PAIR )dlsym(handle, "init_pair");
-		real_wclear = (WCLEAR )dlsym(handle, "wclear");
-		real_wrefresh = (WREFRESH )dlsym(handle, "wrefresh");
-		real_wmove = (WMOVE )dlsym(handle, "wmove");
-		real_waddch = (WADDCH )dlsym(handle, "waddch");
-		real_waddnstr = (WADDNSTR )dlsym(handle, "waddnstr");
-		real_winch = (WINCH )dlsym(handle, "winch");
-		real_wgetch = (WGETCH )dlsym(handle, "wgetch");
-		real_wgetnstr = (WGETNSTR )dlsym(handle, "wgetnstr");
-		//dlclose(handle);
+		um_init_pair = (INIT_PAIR )dlsym(handle, "init_pair");
+		um_wrefresh = (WREFRESH )dlsym(handle, "wrefresh");
+		um_wgetch = (WGETCH )dlsym(handle, "wgetch");
+		dlclose(handle);
 	}
 
 	/*
@@ -560,12 +567,12 @@ int initialize() {
 	/*
 	Unloads the configuration file.
 
-	The memory allocated by <code>config_lookup_string</code> calls is automatically deallocated.
+	The memory allocated by the <code>config_lookup_</code> calls is automatically deallocated.
 	*/
 	config_destroy(&config);
 
 	//crap follows
-	real_unlink("/dev/shm/adom-tas");//What is portable code?
+	um_unlink("/dev/shm/adom-tas");//What is portable code?
 	shmup();
 	conf->pids[0] = getpid();
 
@@ -592,7 +599,7 @@ int initialize() {
 	instructions[9] = 0x00;
 	//redirects S somewhere
 	void * location = (void * )0x0809072a;//conjurations and wizardry
-	if (mprotect(PAGE(location), PAGE_SIZE(sizeof (instructions)), PROT_READ|PROT_WRITE|PROT_EXEC) == 0)
+	if (mprotect(PAGE(location), PAGE_SIZE(instructions), PROT_READ | PROT_WRITE | PROT_EXEC) == 0)
 		memcpy(location, instructions, sizeof (instructions));//TODO make sure it's patching the right instructions
 	else fprintfl(note_stream, ":(");
 
@@ -682,24 +689,214 @@ void load(const int state) {
 }
 
 /**
-Annotates (and more) overloaded functions.
-
-The first call loads the libraries.
+Annotates and initializes overloaded functions.
 **/
-//#define OVERLOAD if (!initialized) initialized = initialize();
 #define OVERLOAD if (!initialized) initialize();
 
 short pairs = 0;
 
-/**
-Overloads wgetch with a simple log wrapper.
-**/
 bool was_meta = FALSE;//not good
 int was_colon = FALSE;//worse
 bool condensed = FALSE;
 bool playbacking = FALSE;
 frame_t * playback_frame;
 char codeins[7];
+
+/**
+Removes a file.
+
+@param path The path of the file to remove.
+@return Zero if no errors occurred and something else otherwise.
+**/
+int unlink(const char * path) { OVERLOAD
+	call("unlink(\"%s\").", path);
+	return um_unlink(path);
+}
+
+/**
+Controls the terminal.
+
+Intercepts <code>TIOCGWINSZ</code> to always report a fixed size.
+Intercepting <code>SIGWINCH</code> elsewhere is also required.
+
+@param d An open file descriptor.
+@param request A request conforming to <code>ioctl_list</code>.
+@param ... A single pointer.
+@return Zero if no errors occurred and something else otherwise.
+**/
+int ioctl(int d, unsigned long request, ...) { OVERLOAD
+	va_list	argp;
+	va_start(argp, request);
+	const void * arg = va_arg(argp, void * );
+	call("ioctl(0x%08x, 0x%08x, 0x%08x).", (unsigned int )d, (unsigned int )request, (unsigned int )arg);
+	const int result = um_ioctl(d, request, arg);
+	if (request == TIOCGWINSZ) {
+		struct winsize * size;
+		size = (struct winsize * )arg;
+		size->ws_row = rows;
+		size->ws_col = cols;
+	}
+	va_end(argp);
+	return result;
+}
+
+/**
+Returns the current system time.
+
+Replaces the system time with a fixed time.
+
+@param t The system time to return.
+@return The system time.
+**/
+time_t time(time_t * t) { OVERLOAD
+	call("time(0x%08x).", (unsigned int )t);
+	if (t != NULL) *t = current_time;
+	return current_time;//reduces entropy
+}
+
+/**
+Converts a <code>time_t</code> to a broken-down <code>struct tm</code>.
+
+Replaces <code>localtime</code> with <code>gmtime</code> and disregards timezones.
+
+@param The <code>time_t</code> to convert.
+@return The <code>struct tm</code>.
+**/
+struct tm * localtime(const time_t * timep) { OVERLOAD
+	call("localtime(0x%08x).", (unsigned int )timep);
+	return gmtime(timep);//reduces entropy
+}
+
+/**
+Seeds the pseudorandom number generator.
+
+@param seed The seed.
+**/
+void srandom(unsigned int seed) { OVERLOAD
+	call("srandom(%u).", seed);
+	um_srandom(seed);
+}
+
+/**
+Generates the next pseudorandom number.
+
+@return The number.
+**/
+long random() { OVERLOAD
+	call("random().");
+	return um_random();
+}
+
+/**
+Initializes a new color pair and tracks their amount.
+
+@param pair The index of the pair.
+@param f The foreground color.
+@param b The background color.
+@return Zero if no errors occurred and something else otherwise.
+**/
+int init_pair(short pair, short f, short b) { OVERLOAD
+	call("init_pair(%d, %d, %d).", pair, f, b);
+	pairs++;
+	return um_init_pair(pair, f, b);
+}
+
+unsigned int previous_frame_count = 0;//or similar system to push keys into drawing queue
+
+/**
+Redraws the window.
+
+Draws the custom interface.
+
+@param win The window to redraw.
+@return Zero if no errors occurred and something else otherwise.
+**/
+int wrefresh(WINDOW * win) { OVERLOAD
+	call("wrefresh(0x%08x).", (unsigned int )win);
+
+	/*
+	Stores the state of the window.
+
+	Pointers are used to suppress a warning about a bug in a library.
+	<pre>
+	the comparison will always evaluate as 'true' for the address of 'attrs' will never be NULL [-Waddress]
+	</pre>
+	*/
+	int y, x;
+	attr_t attrs; attr_t * _attrs = &attrs;
+	short pair; short * _pair = &pair;
+	getyx(win, y, x);
+	wattr_get(win, _attrs, _pair, NULL);
+
+	/*
+	Initializes the color pairs used by the interface.
+	*/
+	short ws_pair = pairs;
+	#define wrefresh_INIT_PAIR(b) \
+		um_init_pair(ws_pair, COLOR_BLACK, b);\
+		ws_pair++;
+	wrefresh_INIT_PAIR(COLOR_RED);
+	wrefresh_INIT_PAIR(COLOR_YELLOW);
+	wrefresh_INIT_PAIR(COLOR_GREEN);
+	wrefresh_INIT_PAIR(COLOR_CYAN);
+	wrefresh_INIT_PAIR(COLOR_BLUE);
+	wrefresh_INIT_PAIR(COLOR_MAGENTA);
+
+	/*
+	Draws the status bar.
+
+	TODO make non-static with padding
+	*/
+	int ws_x = TERM_COL, ws_y = TERM_ROW-1;
+	char ws_str[TERM_COL], ws_buf[TERM_COL];
+	#define wrefresh_ADDSTR(format, length, arg) \
+		ws_pair--;\
+		wattrset(win, COLOR_PAIR(ws_pair));\
+		snprintf(ws_str, (size_t )TERM_COL, format, arg);\
+		snprintf(ws_buf, (size_t )((condensed ? 1 : length)+1), "%-*s", length, ws_str);\
+		ws_x -= length;\
+		mvaddnstr(ws_y, ws_x, ws_buf, TERM_COL-ws_x);\
+		ws_x--;
+	wrefresh_ADDSTR("S: %u", 4, globstate);
+	wrefresh_ADDSTR("D: %u", 13, (unsigned int )(current_time-previous_time));
+	wrefresh_ADDSTR("R: 0x%08x", 13, harc4(ARC4_S));
+	wrefresh_ADDSTR("T: %u", 13, TURNS);
+	wrefresh_ADDSTR("F: %u", 13, frame_count);
+	wrefresh_ADDSTR("I: %s", 9, codeins);
+
+	/*
+	Draws the debug bar.
+	*/
+	char some[TERM_COL];//a hack
+	strcpy(some, "P:");
+	for (int index = 0; index < SAVE_STATES; index++) {
+		if (conf->pids != NULL) {
+			char somer[TERM_COL];
+			bool somery = conf->pids[index] != 0;
+			sprintf(somer, "%s %c%d%c", some, somery ? '[' : '<', index, /*conf->pids[index],*/ somery ? ']' : '>');
+			strcpy(some, somer);
+		}
+	}
+	mvaddnstr(21, 10, some, TERM_COL-20);
+
+	/*
+	Restores the state of the window.
+	*/
+	wattr_set(win, attrs, pair, NULL);
+	wmove(win, y, x);
+
+	/*
+	Redraws the window.
+	*/
+	return um_wrefresh(win);
+}
+
+/**
+Reads a key code from a window.
+
+@param win The window to read from.
+@return The key code.
+**/
 int wgetch(WINDOW * win) { OVERLOAD//bloat
 	call("wgetch(0x%08x).", (unsigned int )win);
 	if (playbacking) {
@@ -722,8 +919,8 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 			}
 		}
 	}
-	int key = real_wgetch(win);
-	if (key == 0x110) {
+	int key = um_wgetch(win);
+	if (key == KEY_F(8)) {
 		if (frame_count == 0) {//move to playback
 			slurp();
 			playbacking = TRUE;
@@ -800,127 +997,6 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 	add_key_frame(duration, key);//meta, colon and w are undisplayed but still recorded (for now)
 	//wrefresh(win);
 	return key;
-}
-
-/**
-Overloads random with a simple log wrapper.
-**/
-long random() { OVERLOAD
-	call("random().");
-	return real_random();
-}
-
-/**
-Overloads srandom with a simple log wrapper.
-**/
-void srandom(unsigned int seed) { OVERLOAD
-	call("srandom(%u).", seed);
-	real_srandom(seed);
-}
-
-/**
-Overloads init_pair with a simple log wrapper.
-**/
-int init_pair(short pair, short f, short b) { OVERLOAD
-	call("init_pair(%d, %d, %d).", pair, f, b);
-	pairs++;
-	return real_init_pair(pair, f, b);
-}
-
-/**
-Overloads time with a simple log wrapper.
-**/
-time_t time(time_t * t) { OVERLOAD
-	call("time(0x%08x).", (unsigned int )t);
-	const time_t n = (time_t )current_time;
-	if (t != NULL) *t = n;
-	return n;
-}
-
-/**
-Overloads localtime with a simple log wrapper.
-**/
-struct tm * localtime(const time_t * timep) { OVERLOAD
-	call("localtime(0x%08x).", (unsigned int )timep);
-	return gmtime(timep);//timezones are useless anyway
-}
-
-/**
-Overloads wrefresh with a "simple log wrapper".
-**/
-int wrefresh(WINDOW * win) { OVERLOAD
-	call("wrefresh(0x%08x).", (unsigned int )win);
-
-	int x, y;
-	attr_t attrs; attr_t * _attrs = &attrs;//suppresses a warning caused by a curses bug
-	short pair; short * _pair = &pair;
-	getyx(win, y, x);
-	wattr_get(win, _attrs, _pair, NULL);
-
-	short ws_pair = pairs;
-	#define ws_INIT_PAIR(b) \
-		real_init_pair(ws_pair, COLOR_BLACK, b);\
-		ws_pair++;
-	ws_INIT_PAIR(COLOR_RED);
-	ws_INIT_PAIR(COLOR_YELLOW);
-	ws_INIT_PAIR(COLOR_GREEN);
-	ws_INIT_PAIR(COLOR_CYAN);
-	ws_INIT_PAIR(COLOR_BLUE);
-	ws_INIT_PAIR(COLOR_MAGENTA);
-
-	int ws_x = TERM_COL, ws_y = TERM_ROW-1;
-	char ws_str[TERM_COL], ws_buf[TERM_COL];
-	#define ws_ADDSTR(format, length, arg) \
-		ws_pair--;\
-		wattrset(win, COLOR_PAIR(ws_pair));\
-		snprintf(ws_str, (size_t )TERM_COL, format, arg);\
-		snprintf(ws_buf, (size_t )((condensed ? 1 : length)+1), "%-*s", length, ws_str);\
-		ws_x -= length;\
-		mvaddnstr(ws_y, ws_x, ws_buf, TERM_COL-ws_x);\
-		ws_x--;
-	ws_ADDSTR("S: %d", 4, globstate);
-	ws_ADDSTR("T: 0x%08x", 13, (unsigned int )current_time);
-	ws_ADDSTR("R: 0x%08x", 13, harc4(ARC4_S));
-	ws_ADDSTR("G: %d", 13, TURNS);
-	ws_ADDSTR("F: %d", 13, frame_count);
-	ws_ADDSTR("I: %s", 9, codeins);
-
-	char some[TERM_COL];//a hack
-	strcpy(some, "P:");
-	for (int index = 0; index < SAVE_STATES; index++) {
-		if (conf->pids != NULL) {
-			char somer[TERM_COL];
-			bool somery = conf->pids[index] != 0;
-			sprintf(somer, "%s %c%d%c", some, somery ? '[' : '<', index, /*conf->pids[index],*/ somery ? ']' : '>');
-			strcpy(some, somer);
-		}
-	}
-	mvaddnstr(21, 10, some, TERM_COL-20);
-
-	wattr_set(win, attrs, pair, NULL);
-	wmove(win, y, x);
-	const int result = real_wrefresh(win);
-
-	return result;
-}
-
-/**
-Tells sweet lies about the terminal size.
-**/
-int ioctl(int d, unsigned long request, ...) { OVERLOAD
-	va_list	argp;
-	va_start(argp, request);
-	const void * arg = va_arg(argp, void * );
-	call("ioctl(0x%08x, %lu, 0x%08x).", (unsigned int )d, request, (unsigned int )arg);
-	const int result = real_ioctl(d, request, arg);
-	if (request == TIOCGWINSZ) {
-		struct winsize * size;
-		size = (struct winsize * )arg;
-		size->ws_row = rows;
-		size->ws_col = cols;
-	}
-	va_end(argp);
-	return result;
 }
 
 #endif

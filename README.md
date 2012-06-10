@@ -19,7 +19,7 @@ Install build tools:
 
 	[user@arch ~]$ pacman -S gcc make
 
-Install the dependencies using your package manager of choice:
+Install the dependencies (not libcurses or libconfig++) using your package manager of choice:
 
 	[user@arch ~]$ pacman -S libc libncurses libconfig
 
@@ -112,7 +112,7 @@ Checklist
 		[ ] Implement slow save (memory-file)
 		[ ] Implement slow load (file-memory)
 		[ ] Refine sloppy implementations
-	[ ] Implement recording tools
+	[X] Implement recording tools
 		[X] Find the input handler
 		[X] Redirect the input handler to the recorder and back again
 		[X] Implement saving to a file each frame
@@ -123,8 +123,7 @@ Checklist
 		[X] Implement playing back a recording
 		[X] Implement dumping a ttyrec
 		[X] Implement dumping an avi
-		[ ] Synchronize dumping with playback
-		[ ] Refine sloppy implementations
+		[X] Refine sloppy implementations
 	[ ] Implement analysis tools
 		[X] Find the turn count variable
 		[X] Find a way to get around overloading macros
@@ -140,7 +139,7 @@ Checklist
 		[ ] Implement cheats that disable the recording
 		[X] Refine sloppy implementations
 	[ ] Document
-		[ ] Documentation
+		[X] Documentation
 		[ ] Executable
 		[ ] Emulation tools
 		[ ] Recording tools

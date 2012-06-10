@@ -1,8 +1,11 @@
 /**
-Provides logs.
+Logs events.
 **/
 #ifndef LOG_H
 #define LOG_H
+
+#include <stdio.h>
+#include <stdarg.h>
 
 extern FILE * error_stream;
 extern FILE * warning_stream;

@@ -1,12 +1,13 @@
 RM = /bin/rm -f
 MKDIR = /bin/mkdir -p
+CP = /bin/cp -u
 GCC = /usr/bin/gcc -std=gnu99 -ldl -lrt -lconfig -O3 -Wall -g
 BIN = bin
 OBJ = obj
 SRC = src
 NAME = adom-tas
 
-all: $(BIN)/$(NAME).so $(BIN)/$(NAME)
+all: $(BIN)/$(NAME).so $(BIN)/$(NAME) sh
 
 clean:
 	$(RM) $(OBJ)/* $(BIN)/*
@@ -14,6 +15,9 @@ clean:
 prepare:
 	$(MKDIR) $(OBJ)
 	$(MKDIR) $(BIN)
+
+sh:
+	$(CP) $(SRC)/*.sh $(BIN)
 
 $(OBJ)/%.o: $(SRC)/%.c
 	$(GCC) -fpic -c -o $@ $<

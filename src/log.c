@@ -1,5 +1,5 @@
 /**
-Provides logs.
+Logs events.
 **/
 #ifndef LOG_C
 #define LOG_C
@@ -14,8 +14,8 @@ Provides logs.
 #include "log.h"
 #include "loader.h"
 
-TIME real_time;
-LOCALTIME real_localtime;
+TIME um_time;
+LOCALTIME um_localtime;
 
 FILE * error_stream;
 FILE * warning_stream;
@@ -38,9 +38,9 @@ Formats and logs a message.
 **/
 int vfprintfl(FILE * stream, const char * fmt, va_list ap) {
 	int result = 0;
-	if (real_time != NULL && real_localtime != NULL) {
-		const time_t timep = real_time(NULL);
-		struct tm * tm = real_localtime(&timep);
+	if (um_time != NULL && um_localtime != NULL) {
+		const time_t timep = um_time(NULL);
+		struct tm * tm = um_localtime(&timep);
 		result += fprintf(stream, "%02d:%02d:%02d - ", tm->tm_hour, tm->tm_min, tm->tm_sec);
 	}
 	result += vfprintf(stream, fmt, ap);

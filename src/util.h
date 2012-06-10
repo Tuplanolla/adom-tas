@@ -4,6 +4,8 @@ Provides general-purpose utilities.
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <string.h>
+
 /**
 Lists the boolean values.
 **/
@@ -71,16 +73,16 @@ Returns the page boundary of a pointer.
 @return A pointer to the page boundary.
 **/
 #undef PAGE
-#define PAGE(pointer) ((void * )(((int )pointer)-((int )pointer)%getpagesize()))
+#define PAGE(pointer) ((void * )(((int )(pointer))-((int )(pointer))%getpagesize()))
 
 /**
 Returns the page size of an object.
 
-@param size The size of the object.
+@param object The object.
 @return The page size of the object.
 **/
 #undef PAGE_SIZE
-#define PAGE_SIZE(size) ((size_t )((1+(sizeof (size)-1)/getpagesize())*getpagesize()))
+#define PAGE_SIZE(object) ((size_t )((1+(sizeof (object)-1)/getpagesize())*getpagesize()))
 
 /**
 Swaps two variables.
