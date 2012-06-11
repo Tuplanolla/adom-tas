@@ -31,6 +31,8 @@ Modifies the executable.
 
 int rows;
 int cols;
+int states;
+char * shm_file;
 char * input_file;
 char * output_file;
 FILE * error_stream;
@@ -274,41 +276,44 @@ void seed(const int seed) {//simulated only (for now)
 Shares memory or something.
 **/
 struct shm_s {
-	int term;//if needed to fix detaching
+	int streams[3];
 	int pids[SAVE_STATES];
 };
 typedef struct shm_s shm_t;
 int shm_fd;
-shm_t * conf;
+shm_t * shm;
 void shmup() {
 	bool first = TRUE;
 
 	fprintfl(note_stream, "Started to map shared memory.");
-	shm_fd = shm_open(SHM_PATH, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+	shm_fd = shm_open(shm_file, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
 	if (shm_fd < 0) {
 		first = FALSE;
 	}
-	shm_fd = shm_open(SHM_PATH, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+	shm_fd = shm_open(shm_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 	if (shm_fd < 0) {
 		fprintfl(note_stream, "Failed to map shared memory.");
 		return;//error here
 	}
 
-	ftruncate(shm_fd, (off_t )sizeof (shm_t));
+	ftruncate(shm_fd, sizeof (shm_t));
 
-	conf = (shm_t * )mmap(NULL, sizeof (shm_t), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
-	if (conf == MAP_FAILED) {
+	shm = (shm_t * )mmap(NULL, sizeof (shm_t), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+	if (shm == MAP_FAILED) {
 		fprintfl(note_stream, "Failed to map shared memory.");
 		return;//error here
 	}
 
 	if (first) {
-		for (int index = 0; index < SAVE_STATES; index++) conf->pids[index] = 0;
+		for (int index = 0; index < SAVE_STATES; index++) shm->pids[index] = 0;
 		fprintfl(note_stream, "Mapped shared memory.");
 	}
 	else fprintfl(note_stream, "Remapped shared memory.");
 }
 
+/**
+Catches signals or something.
+**/
 void dreamcatcher(const int signo) {
 	fprintfl(note_stream, "Somehow caught \"%s\".", strsignal(signo));
 }
@@ -317,7 +322,7 @@ void dreamcatcher(const int signo) {
 Initializes this process.
 **/
 bool initialized = FALSE;
-int initialize() {
+int init() {
 	struct stat buf;
 
 	/*
@@ -335,7 +340,7 @@ int initialize() {
 	*/
 	config_t config;
 	config_init(&config);
-	if (config_read_file(&config, config_path) == 0) {
+	if (config_read_file(&config, default_config_name) == 0) {
 		config_destroy(&config);
 		return error(CONFIG_PROBLEM);
 	}
@@ -403,6 +408,21 @@ int initialize() {
 	}
 
 	/*
+	Finds the location of the shared memory (in /dev/shm).
+	*/
+	const char * shm_path;
+	if (config_lookup_string(&config, "shm", &shm_path) == 0) {
+		warning(CONFIG_SHM_PROBLEM);
+		const size_t size = 1+strlen(default_shm_name)+1;
+		shm_file = malloc(size);
+		snprintf(shm_file, size, "/%s", default_shm_name);
+	}
+	else {
+		shm_file = malloc(strlen(shm_path)+1);
+		strcpy(shm_file, shm_path);
+	}
+
+	/*
 	Finds the size of the terminal.
 
 	The configuration file is first parsed and
@@ -410,11 +430,22 @@ int initialize() {
 	*/
 	if (config_lookup_int(&config, "rows", &rows) == 0) {
 		warning(CONFIG_ROW_PROBLEM);
-		rows = 25;
+		rows = default_rows;
 	}
 	if (config_lookup_int(&config, "cols", &cols) == 0) {
 		warning(CONFIG_COL_PROBLEM);
-		cols = 80;
+		cols = default_cols;
+	}
+
+	/*
+	Finds the amount of save states.
+
+	The configuration file is first parsed and
+	the default size is then guessed.
+	*/
+	if (config_lookup_int(&config, "states", &states) == 0) {
+		warning(CONFIG_STATE_PROBLEM);
+		states = default_states;
 	}
 
 	/*
@@ -462,15 +493,10 @@ int initialize() {
 	const char * error_path;
 	if (config_lookup_string(&config, "errors", &error_path) == 0) {
 		warning(CONFIG_ERROR_LOG_PROBLEM);
-		new_error_stream = stderr;
+		STDSTR(new_error_stream, default_error_name);
 	}
 	else {
-		if (strcmp(error_path, "stdout") == 0) {
-			new_error_stream = stdout;
-		}
-		else if (strcmp(error_path, "stderr") == 0) {
-			new_error_stream = stderr;
-		}
+		STDSTR(new_error_stream, error_path)//!
 		else {
 			if (stat(error_path, &buf) == 0) {
 				note(ERROR_LOG_OVERWRITE_PROBLEM);
@@ -478,22 +504,17 @@ int initialize() {
 			new_error_stream = fopen(error_path, "w");
 			if (new_error_stream == NULL) {
 				warning(ERROR_LOG_ACCESS_PROBLEM);
-				new_error_stream = stderr;
+				STDSTR(new_error_stream, default_error_name);
 			}
 		}
 	}
 	const char * warning_path;
 	if (config_lookup_string(&config, "warnings", &warning_path) == 0) {
 		warning(CONFIG_WARNING_LOG_PROBLEM);
-		new_warning_stream = stderr;
+		STDSTR(new_warning_stream, default_warning_name);
 	}
 	else {
-		if (strcmp(warning_path, "stdout") == 0) {
-			new_warning_stream = stdout;
-		}
-		else if (strcmp(warning_path, "stderr") == 0) {
-			new_warning_stream = stderr;
-		}
+		STDSTR(new_warning_stream, warning_path)//!
 		else {
 			if (stat(warning_path, &buf) == 0) {
 				note(WARNING_LOG_OVERWRITE_PROBLEM);
@@ -501,22 +522,17 @@ int initialize() {
 			new_warning_stream = fopen(warning_path, "w");
 			if (new_warning_stream == NULL) {
 				warning(WARNING_LOG_ACCESS_PROBLEM);
-				new_warning_stream = stderr;
+				STDSTR(new_warning_stream, default_warning_name);
 			}
 		}
 	}
 	const char * note_path;
 	if (config_lookup_string(&config, "notes", &note_path) == 0) {
-		new_note_stream = stderr;
 		warning(CONFIG_NOTE_LOG_PROBLEM);
+		STDSTR(new_note_stream, default_note_name);
 	}
 	else {
-		if (strcmp(note_path, "stdout") == 0) {
-			new_note_stream = stdout;
-		}
-		else if (strcmp(note_path, "stderr") == 0) {
-			new_note_stream = stderr;
-		}
+		STDSTR(new_note_stream, note_path)//!
 		else {
 			if (stat(note_path, &buf) == 0) {
 				note(NOTE_LOG_OVERWRITE_PROBLEM);
@@ -524,22 +540,17 @@ int initialize() {
 			new_note_stream = fopen(note_path, "w");
 			if (new_note_stream == NULL) {
 				warning(NOTE_LOG_ACCESS_PROBLEM);
-				new_note_stream = stderr;
+				STDSTR(new_note_stream, default_note_name);
 			}
 		}
 	}
 	const char * call_path;
 	if (config_lookup_string(&config, "calls", &call_path) == 0) {
 		warning(CONFIG_CALL_LOG_PROBLEM);
-		new_call_stream = NULL;
+		STDSTR(new_call_stream, default_call_name);
 	}
 	else {
-		if (strcmp(call_path, "stdout") == 0) {
-			new_call_stream = stdout;
-		}
-		else if (strcmp(call_path, "stderr") == 0) {
-			new_call_stream = stderr;
-		}
+		STDSTR(new_call_stream, call_path)//!
 		else {
 			if (stat(call_path, &buf) == 0) {
 				note(CALL_LOG_OVERWRITE_PROBLEM);
@@ -547,6 +558,7 @@ int initialize() {
 			new_call_stream = fopen(call_path, "w");
 			if (new_call_stream == NULL) {
 				warning(CALL_LOG_ACCESS_PROBLEM);
+				STDSTR(new_call_stream, default_call_name);
 			}
 		}
 		if (new_call_stream != NULL) {
@@ -574,7 +586,7 @@ int initialize() {
 	//crap follows
 	um_unlink("/dev/shm/adom-tas");//What is portable code?
 	shmup();
-	conf->pids[0] = getpid();
+	shm->pids[0] = getpid();
 
 	void * CHEESE_MAGIC = (void * )0x08090733;
 	/*
@@ -609,10 +621,19 @@ int initialize() {
 	return 0;//Why?
 }
 
-void uninitialize() {
+/**
+Uninitializes this process.
+**/
+void uninit() {
 	/*
-	Deallocates things.
+	Deallocates the shared memory.
 	*/
+	close(shm_fd);
+
+	/*
+	Deallocates the file paths.
+	*/
+	free(shm_file);
 	free(input_file);
 	free(output_file);
 
@@ -624,18 +645,13 @@ void uninitialize() {
 	fclose(note_stream);
 	fclose(call_stream);
 
-	/*
-	Closes the shm.
-	*/
-	close(shm_fd);
-
 	exit(0);
 }
 
 bool tired = TRUE;
 void continuator(const int signo) {
 	if (signo == SIGCONT) {
-		fprintfl(note_stream, "Caught CONT.");
+		fprintf(stdout, "[%04x::catch()]", (unsigned short )getpid()); fflush(stdout);
 		tired = FALSE;
 	}
 }
@@ -644,32 +660,37 @@ void continuator(const int signo) {
 Saves the game to memory.
 **/
 void save(const int state) {
+	fprintf(stdout, "[%04x::fork()]", (unsigned short )getpid()); fflush(stdout);
 	pid_t pid = fork();//returns 0 in child, process id of child in parent, -1 on error
 	shmup();
 	if (signal(SIGTERM, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
-	if (signal(SIGINT, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 	if (signal(SIGHUP, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 	if (signal(SIGQUIT, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 	if (signal(SIGTRAP, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 	if (signal(SIGABRT, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 	if (signal(SIGSTOP, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 	if (signal(SIGTTOU, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
+	if (signal(SIGCHLD, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 	if (pid != (pid_t )NULL) {//parent
-		if (conf->pids[state] != 0) {//removes an old save
-			kill(conf->pids[state], SIGKILL);//kills the parent of another process and causes weird problems
+		if (shm->pids[state] != 0) {
+			fprintf(stdout, "[%04x::kill(%04x)]", (unsigned short )getpid(), (unsigned short )shm->pids[state]); fflush(stdout);
+			kill(shm->pids[state], SIGKILL);
 		}
-		conf->pids[state] = getpid();
+		shm->pids[state] = getpid();
 		if (signal(SIGCONT, continuator) == SIG_ERR) fprintfl(note_stream, "Can't catch CONT.");
-		//printf("<%d fell asleep>", (int )getpid()); fflush(stdout);
+		fprintf(stdout, "[%04x::stop()]", (unsigned short )getpid()); fflush(stdout);
+
+		//kill(getpid(), SIGSTOP);
 		struct timespec req;
 		req.tv_sec = (time_t )0;
 		req.tv_nsec = 1000000000l/16l;//extern this
 		while (tired) nanosleep(&req, NULL);
-		//printf("<%d woke up>", (int )getpid()); fflush(stdout);
+
+		fprintf(stdout, "[%04x::continue()]", (unsigned short )getpid()); fflush(stdout);
 	}
 	else {//child
-		//printf("<%d is ready>", (int )getpid()); fflush(stdout);
-		conf->pids[0] = getpid();
+		fprintf(stdout, "[%04x::born(%04x)]", (unsigned short )getpid(), (unsigned short )getppid()); fflush(stdout);
+		shm->pids[0] = getpid();
 	}
 }
 
@@ -677,13 +698,13 @@ void save(const int state) {
 Loads the game from memory.
 **/
 void load(const int state) {
-	//printf("<%d poked %d>", (int )getpid(), (int )conf->pids[state]); fflush(stdout);
-	if (conf->pids[state] != 0) {
-		kill(conf->pids[state], SIGCONT);
-		//printf("<%d killed %d>", (int )getpid(), (int )conf->pids[0]); fflush(stdout);
-		const int zorg = conf->pids[0];
-		conf->pids[0] = conf->pids[state];
-		conf->pids[state] = 0;
+	if (shm->pids[state] != 0) {
+		fprintf(stdout, "[%04x::signal(%04x)]", (unsigned short )getpid(), (unsigned short )shm->pids[state]); fflush(stdout);
+		kill(shm->pids[state], SIGCONT);
+		const int zorg = shm->pids[0];
+		shm->pids[0] = shm->pids[state];
+		shm->pids[state] = 0;
+		fprintf(stdout, "[%04x::kill(%04x)]", (unsigned short )getpid(), (unsigned short )zorg); fflush(stdout);
 		kill(zorg, SIGKILL);
 	}
 }
@@ -691,9 +712,7 @@ void load(const int state) {
 /**
 Annotates and initializes overloaded functions.
 **/
-#define OVERLOAD if (!initialized) initialize();
-
-short pairs = 0;
+#define OVERLOAD if (!initialized) init();
 
 bool was_meta = FALSE;//not good
 int was_colon = FALSE;//worse
@@ -708,8 +727,13 @@ Removes a file.
 @param path The path of the file to remove.
 @return Zero if no errors occurred and something else otherwise.
 **/
+bool first= TRUE;
 int unlink(const char * path) { OVERLOAD
 	call("unlink(\"%s\").", path);
+	if (strcmp(path, "ADOM.DBG") == 0) {
+		sleep(1);
+		return 0;
+	}
 	return um_unlink(path);
 }
 
@@ -787,6 +811,8 @@ long random() { OVERLOAD
 	return um_random();
 }
 
+short pairs = 0;
+
 /**
 Initializes a new color pair and tracks their amount.
 
@@ -857,11 +883,11 @@ int wrefresh(WINDOW * win) { OVERLOAD
 		ws_x -= length;\
 		mvaddnstr(ws_y, ws_x, ws_buf, TERM_COL-ws_x);\
 		ws_x--;
-	wrefresh_ADDSTR("S: %u", 4, globstate);
+	wrefresh_ADDSTR("S: %u/?", 4, globstate);
 	wrefresh_ADDSTR("D: %u", 13, (unsigned int )(current_time-previous_time));
 	wrefresh_ADDSTR("R: 0x%08x", 13, harc4(ARC4_S));
-	wrefresh_ADDSTR("T: %u", 13, TURNS);
-	wrefresh_ADDSTR("F: %u", 13, frame_count);
+	wrefresh_ADDSTR("T: ?/%u", 13, TURNS);
+	wrefresh_ADDSTR("F: ?/%u", 13, frame_count);
 	wrefresh_ADDSTR("I: %s", 9, codeins);
 
 	/*
@@ -869,11 +895,11 @@ int wrefresh(WINDOW * win) { OVERLOAD
 	*/
 	char some[TERM_COL];//a hack
 	strcpy(some, "P:");
-	for (int index = 0; index < SAVE_STATES; index++) {
-		if (conf->pids != NULL) {
+	for (int index = 0; index < states; index++) {
+		if (shm->pids != NULL) {
 			char somer[TERM_COL];
-			bool somery = conf->pids[index] != 0;
-			sprintf(somer, "%s %c%d%c", some, somery ? '[' : '<', index, /*conf->pids[index],*/ somery ? ']' : '>');
+			bool somery = shm->pids[index] != 0;
+			sprintf(somer, "%s %c%04x%c", some, somery ? '[' : ' ', (unsigned short )shm->pids[index], somery ? ']' : ' ');
 			strcpy(some, somer);
 		}
 	}
@@ -941,8 +967,8 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		return 0;//redundant
 	}
 	else if (key == KEY_F(36)) {//changes the state (Ctrl F12 now)
-		globstate = globstate%(10-1)+1;//++
-		//globstate = (globstate-2)%(10-1)+1;//--
+		globstate = globstate%(states-1)+1;//++
+		//globstate = (globstate-2)%(states-1)+1;//--
 		wrefresh(win);
 		return 0;
 	}

@@ -99,4 +99,19 @@ Swaps two variables.
 		memcpy(&x, SWAP_z, sizeof (x));\
 	}
 
+/**
+Converts a string to a standard stream.
+
+An additional <code>else</code> can be appended.
+
+@param str The string to convert.
+@return The standard stream.
+**/
+#undef STDSTR
+#define STDSTR(stream, str) \
+	if (strcmp(str, "null") == 0) stream = NULL;\
+	else if (strcmp(str, "stdin") == 0) stream = stdin;\
+	else if (strcmp(str, "stdout") == 0) stream = stdout;\
+	else if (strcmp(str, "stderr") == 0) stream = stderr;
+
 #endif

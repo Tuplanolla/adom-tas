@@ -20,6 +20,7 @@ enum problem_e {
 	LD_PRELOAD_SET_PROBLEM,
 	CONFIG_EXEC_PROBLEM,
 	EXEC_FIND_PROBLEM,
+	EXEC_TYPE_PROBLEM,
 	EXEC_ACCESS_PROBLEM,
 	EXEC_SIZE_PROBLEM,
 	CONFIG_DATA_PROBLEM,
@@ -35,8 +36,10 @@ enum problem_e {
 	LIBC_PROBLEM,
 	LIBNCURSES_PROBLEM,
 	LD_PRELOAD_UNSET_PROBLEM,
+	CONFIG_SHM_PROBLEM,
 	CONFIG_ROW_PROBLEM,
 	CONFIG_COL_PROBLEM,
+	CONFIG_STATE_PROBLEM,
 	CONFIG_INPUT_PROBLEM,
 	INPUT_FIND_PROBLEM,
 	INPUT_ACCESS_PROBLEM,
@@ -75,6 +78,7 @@ inline char * problem_message(const problem_t code) {
 	if (code == LD_PRELOAD_SET_PROBLEM) return "Setting the library to preload failed.";
 	if (code == CONFIG_EXEC_PROBLEM) return "Finding the location of the executable \"exec\" in the configuration file failed.";
 	if (code == EXEC_FIND_PROBLEM) return "Finding the executable failed.";
+	if (code == EXEC_TYPE_PROBLEM) return "Ensuring the executable is a file failed.";
 	if (code == EXEC_ACCESS_PROBLEM) return "Accessing the executable failed.";
 	if (code == EXEC_SIZE_PROBLEM) return "Verifying the size of the executable failed.";
 	if (code == CONFIG_DATA_PROBLEM) return "Finding the location of the executable's data \"data\" in the configuration file failed.";
@@ -90,8 +94,10 @@ inline char * problem_message(const problem_t code) {
 	if (code == LIBC_PROBLEM) return "Loading the C standard library failed.";
 	if (code == LIBNCURSES_PROBLEM) return "Loading the New Cursor Optimization library failed.";
 	if (code == LD_PRELOAD_UNSET_PROBLEM) return "Unsetting the library to preload failed.";
+	if (code == CONFIG_SHM_PROBLEM) return "Finding the location of the shared memory \"shm\" in the configuration file failed. The default location will be assumed.";
 	if (code == CONFIG_ROW_PROBLEM) return "Finding the height of the terminal \"rows\" in the configuration file failed. The default height will be assumed.";
 	if (code == CONFIG_COL_PROBLEM) return "Finding the width of the terminal \"cols\" in the configuration file failed. The default width will be assumed.";
+	if (code == CONFIG_STATE_PROBLEM) return "Finding the amount of save states \"states\" in the configuration file failed. The default amount will be assumed.";
 	if (code == CONFIG_INPUT_PROBLEM) return "Finding the location of the input file \"input\" in the configuration file failed.";
 	if (code == INPUT_FIND_PROBLEM) return "Finding the input file failed.";
 	if (code == INPUT_ACCESS_PROBLEM) return "Accessing the input file failed.";

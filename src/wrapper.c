@@ -58,15 +58,15 @@ int main(int argc, char ** argv) {
 	otherwise
 		the configuration file is parsed.
 	*/
-	if (stat(config_path, &buf) != 0) {
-		FILE * stream = fopen(config_path, "w");
-		fprintf(stream, config_str);
+	if (stat(default_config_name, &buf) != 0) {
+		FILE * stream = fopen(default_config_name, "w");
+		fprintf(stream, default_config_str);
 		fclose(stream);
 		return error(CONFIG_FIND_PROBLEM);
 	}
 	config_t config;
 	config_init(&config);
-	if (config_read_file(&config, config_path) == 0) {
+	if (config_read_file(&config, default_config_name) == 0) {
 		config_destroy(&config);
 		return error(CONFIG_PROBLEM);
 	}
@@ -98,7 +98,8 @@ int main(int argc, char ** argv) {
 
 	The configuration file is first searched,
 	the existence of the file is then checked,
-	the permissions of the file are then checked,
+	the type of the file is then checked,
+	the special permissions of the file are then checked and
 	the size of the file is finally verified.
 	*/
 	const char * exec_path;
@@ -108,7 +109,10 @@ int main(int argc, char ** argv) {
 	if (stat(exec_path, &buf) != 0) {
 		return error(EXEC_FIND_PROBLEM);
 	}
-	if (buf.st_mode & (S_ISUID | S_ISGID)) {
+	if (S_ISDIR(buf.st_mode)) {
+		return error(EXEC_TYPE_PROBLEM);
+	}
+	if ((buf.st_mode & (S_ISUID | S_ISGID)) != 0) {
 		return error(EXEC_ACCESS_PROBLEM);
 	}
 	if (buf.st_size != file_size) {
@@ -139,7 +143,7 @@ int main(int argc, char ** argv) {
 	the version is finally verified.
 	*/
 	{
-		size_t size = strlen(data_path)+1+strlen(version_file)+1;
+		const size_t size = strlen(data_path)+1+strlen(version_file)+1;
 		char * version_path = malloc(size);
 		snprintf(version_path, size, "%s/%s", data_path, version_file);
 		FILE * stream = fopen(version_path, "r");
@@ -165,11 +169,11 @@ int main(int argc, char ** argv) {
 	the process file is finally removed.
 	*/
 	{
-		size_t size = strlen(data_path)+1+strlen(process_file)+1;
+		const size_t size = strlen(data_path)+1+strlen(process_file)+1;
 		char * process_path = malloc(size);
 		snprintf(process_path, size, "%s/%s", data_path, process_file);
 		if (stat(process_path, &buf) == 0) {
-			if (unlink(process_path) == 0) {
+			if (unlink(process_path) != 0) {
 				return error(PROCESS_PROBLEM);
 			}
 		}
