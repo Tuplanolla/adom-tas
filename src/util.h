@@ -102,7 +102,7 @@ Swaps two variables.
 /**
 Converts a string to a standard stream.
 
-An additional <code>else</code> can be appended.
+An additional <code>else</code> can be appended. Not a very good idea.
 
 @param str The string to convert.
 @return The standard stream.

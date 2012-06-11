@@ -9,13 +9,10 @@ Logs events.
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
+#include <sys/time.h>
 
 #include "problem.h"
 #include "log.h"
-#include "loader.h"
-
-TIME um_time;
-LOCALTIME um_localtime;
 
 FILE * error_stream;
 FILE * warning_stream;
@@ -37,12 +34,16 @@ Formats and logs a message.
 @return The amount of characters written.
 **/
 int vfprintfl(FILE * stream, const char * fmt, va_list ap) {
+	/*
+	Creativity is required since <code>time</code> and <code>localtime</code> are unavailable.
+	*/
 	int result = 0;
-	if (um_time != NULL && um_localtime != NULL) {
-		const time_t timep = um_time(NULL);
-		struct tm * tm = um_localtime(&timep);
-		result += fprintf(stream, "%02d:%02d:%02d - ", tm->tm_hour, tm->tm_min, tm->tm_sec);
-	}
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	const time_t timep = tv.tv_sec;
+	struct tm tm;
+	localtime_r(&timep, &tm);
+	result += fprintf(stream, "%02d:%02d:%02d - ", tm.tm_hour, tm.tm_min, tm.tm_sec);
 	result += vfprintf(stream, fmt, ap);
 	result += fprintf(stream, "\n");
 	fflush(stream);

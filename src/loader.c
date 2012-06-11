@@ -40,18 +40,15 @@ FILE * warning_stream;
 FILE * note_stream;
 FILE * call_stream;
 
-/**
-Declares the unmodified versions of the functions that are overloaded.
-**/
-UNLINK um_unlink = unlink;
-IOCTL um_ioctl;
-TIME um_time;
-LOCALTIME um_localtime;
-SRANDOM um_srandom;
-RANDOM um_random;
-INIT_PAIR um_init_pair;
-WREFRESH um_wrefresh;
-WGETCH um_wgetch;
+UNLINK um_unlink = NULL;
+IOCTL um_ioctl = NULL;
+TIME um_time = NULL;
+LOCALTIME um_localtime = NULL;
+SRANDOM um_srandom = NULL;
+RANDOM um_random = NULL;
+INIT_PAIR um_init_pair = NULL;
+WREFRESH um_wrefresh = NULL;
+WGETCH um_wgetch = NULL;
 
 /**
 Very important temporary variables.
@@ -321,8 +318,10 @@ void dreamcatcher(const int signo) {
 /**
 Initializes this process.
 **/
-bool initialized = FALSE;
-int init() {
+bool initialized = FALSE, actually_initialized = FALSE;
+problem_t init() {
+	initialized = TRUE;
+
 	struct stat buf;
 
 	/*
@@ -330,10 +329,10 @@ int init() {
 
 	The default values are used until the initialization finishes.
 	*/
-	error_stream = stderr;
-	warning_stream = stderr;
-	note_stream = stderr;
-	call_stream = NULL;
+	STDSTR(error_stream, default_error_name);
+	STDSTR(warning_stream, default_warning_name);
+	STDSTR(note_stream, default_note_name);
+	STDSTR(call_stream, default_call_name);
 
 	/*
 	Loads the configuration file.
@@ -379,7 +378,7 @@ int init() {
 	{
 		void * handle = dlopen(libc_path, RTLD_LAZY);//requires either RTLD_LAZY or RTLD_NOW
 		if (handle == NULL) {
-			exit(error(LIBC_PROBLEM));
+			return error(LIBC_PROBLEM);
 		}
 		um_unlink = (UNLINK )dlsym(handle, "unlink");
 		um_time = (TIME )dlsym(handle, "time");
@@ -392,7 +391,7 @@ int init() {
 	{
 		void * handle = dlopen(libncurses_path, RTLD_LAZY);
 		if (handle == NULL) {
-			exit(error(LIBNCURSES_PROBLEM));
+			return error(LIBNCURSES_PROBLEM);
 		}
 		um_init_pair = (INIT_PAIR )dlsym(handle, "init_pair");
 		um_wrefresh = (WREFRESH )dlsym(handle, "wrefresh");
@@ -472,7 +471,6 @@ int init() {
 			warning(OUTPUT_OVERWRITE_PROBLEM);
 		}
 	}
-	note(LOG_CHANGE_PROBLEM);
 	input_file = malloc(strlen(input_path)+1);
 	strcpy(input_file, input_path);
 	output_file = malloc(strlen(output_path)+1);
@@ -617,8 +615,8 @@ int init() {
 
 	if (signal(SIGWINCH, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "No no resizing!");
 
-	initialized = TRUE;
-	return 0;//Why?
+	actually_initialized = TRUE;
+	return NO_PROBLEM;
 }
 
 /**
@@ -640,11 +638,14 @@ void uninit() {
 	/*
 	Closes the log streams.
 	*/
-	fclose(error_stream);
-	fclose(warning_stream);
-	fclose(note_stream);
-	fclose(call_stream);
+	if (error_stream != NULL) fclose(error_stream);
+	if (warning_stream != NULL) fclose(warning_stream);
+	if (note_stream != NULL) fclose(note_stream);
+	if (call_stream != NULL) fclose(call_stream);
 
+	/*
+	Exits (not gracefully).
+	*/
 	exit(0);
 }
 
@@ -686,11 +687,15 @@ void save(const int state) {
 		req.tv_nsec = 1000000000l/16l;//extern this
 		while (tired) nanosleep(&req, NULL);
 
+		//tcsetpgrp(..., getpid());?
+
 		fprintf(stdout, "[%04x::continue()]", (unsigned short )getpid()); fflush(stdout);
 	}
 	else {//child
 		fprintf(stdout, "[%04x::born(%04x)]", (unsigned short )getpid(), (unsigned short )getppid()); fflush(stdout);
 		shm->pids[0] = getpid();
+
+		//setsid();
 	}
 }
 
@@ -712,7 +717,7 @@ void load(const int state) {
 /**
 Annotates and initializes overloaded functions.
 **/
-#define OVERLOAD if (!initialized) init();
+#define OVERLOAD if (!initialized) if (init() != NO_PROBLEM) uninit();
 
 bool was_meta = FALSE;//not good
 int was_colon = FALSE;//worse
@@ -731,7 +736,7 @@ bool first= TRUE;
 int unlink(const char * path) { OVERLOAD
 	call("unlink(\"%s\").", path);
 	if (strcmp(path, "ADOM.DBG") == 0) {
-		sleep(1);
+		//sleep(1);
 		return 0;
 	}
 	return um_unlink(path);
@@ -769,8 +774,8 @@ Returns the current system time.
 
 Replaces the system time with a fixed time.
 
-@param t The system time to return.
-@return The system time.
+@param t The fixed time to return.
+@return The fixed time.
 **/
 time_t time(time_t * t) { OVERLOAD
 	call("time(0x%08x).", (unsigned int )t);

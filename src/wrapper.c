@@ -10,6 +10,7 @@ Launches the executable.
 #include <time.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/ioctl.h>
 
 #include <curses.h>
 #include <libconfig.h>
@@ -19,13 +20,8 @@ Launches the executable.
 #include "log.h"
 #include "put.h"
 #include "config.h"
-#include "loader.h"
 
 char * exec_file;
-
-TIME um_time = time;//TODO the rest
-LOCALTIME um_localtime = localtime;
-
 FILE * error_stream;
 FILE * warning_stream;
 FILE * note_stream;
@@ -44,9 +40,10 @@ int main(int argc, char ** argv) {
 	/*
 	Sets the streams to their default values.
 	*/
-	error_stream = stderr;
-	warning_stream = stderr;
-	note_stream = stderr;
+	STDSTR(error_stream, default_error_name);
+	STDSTR(warning_stream, default_warning_name);
+	STDSTR(note_stream, default_note_name);
+	STDSTR(call_stream, default_call_name);
 
 	/*
 	Prepares the configuration file.

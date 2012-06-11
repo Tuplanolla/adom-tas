@@ -73,7 +73,7 @@ Installing the whole thing from the binaries will eventually be possible:
 Configuration
 -------------
 
-Edit `adom-tas.cfg` for maximum efficiency.
+Edit `adom-tas.cfg` for maximum efficiency, but don't touch the optional fields yet.
 Documentation on how will be written later.
 
 Schedule
@@ -120,6 +120,7 @@ Checklist
 		[X] Implement fast load (memory-memory)
 		[ ] Implement slow save (memory-file)
 		[ ] Implement slow load (file-memory)
+		[ ] Stop processes from passing out when their parents are killed
 		[ ] Refine sloppy implementations
 	[X] Implement recording tools
 		[X] Find the input handler
