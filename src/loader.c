@@ -273,6 +273,7 @@ void seed(const int seed) {//simulated only (for now)
 Shares memory or something.
 **/
 struct shm_s {
+	int root;
 	int pids[STATES_MAX];//TODO allocate dynamically
 };
 typedef struct shm_s shm_t;
@@ -297,6 +298,11 @@ problem_t shmup(const bool first) {
 	}
 	return NO_PROBLEM;
 }
+problem_t shmdown(const bool last) {
+	munmap(shm, sizeof (shm_t));
+	if (last) close(shm_fd);
+	return NO_PROBLEM;
+}
 
 /**
 Catches signals or something.
@@ -306,10 +312,57 @@ void dreamcatcher(const int signo) {
 }
 
 /**
+Uninitializes this process.
+
+Contains unnecessary checks.
+**/
+void uninit(problem_t code) {
+	if (getpid() == shm->root) shmdown(TRUE);
+	else shmdown(FALSE);
+
+	/*
+	Deallocates the file paths.
+	*/
+	if (shm_file != NULL) free(shm_file);
+	if (input_file != NULL) free(input_file);
+	if (output_file != NULL) free(output_file);
+
+	/*
+	Closes the log streams.
+	*/
+	if (error_stream != NULL) fclose(error_stream);
+	if (warning_stream != NULL) fclose(warning_stream);
+	if (note_stream != NULL) fclose(note_stream);
+	if (call_stream != NULL) fclose(call_stream);
+
+	/*
+	Exits (not gracefully).
+	*/
+	exit(code);
+}
+
+/**
+Catches signals or something.
+**/
+bool tired = TRUE;
+void continuator(const int signo) {
+	if (signo == SIGCONT) {
+		fprintfl(warning_stream, "[%06d::catch(CONT)]", (unsigned short )getpid()); fflush(stdout);
+		tired = FALSE;
+	}
+}
+void terminator(const int signo) {
+	if (signo == SIGTERM) {
+		fprintfl(warning_stream, "[%06d::catch(TERM)]", (unsigned short )getpid()); fflush(stdout);
+		uninit(NO_PROBLEM);
+	}
+}
+
+/**
 Initializes this process.
 **/
 bool initialized = FALSE, actually_initialized = FALSE;
-problem_t init() {
+void init() {
 	initialized = TRUE;
 
 	struct stat buf;
@@ -331,7 +384,7 @@ problem_t init() {
 	config_init(&config);
 	if (config_read_file(&config, default_config_name) == 0) {
 		config_destroy(&config);
-		return error(CONFIG_PROBLEM);
+		uninit(error(CONFIG_PROBLEM));
 	}
 
 	/*
@@ -345,21 +398,21 @@ problem_t init() {
 	if (config_lookup_string(&config, "libc", &libc_path) == 0) {
 		libc_path = getenv("LIBC");
 		if (libc_path == NULL) {
-			return error(LIBC_FIND_PROBLEM);
+			uninit(error(LIBC_FIND_PROBLEM));
 		}
 	}
 	if (stat(libc_path, &buf) != 0) {
-		return error(LIBC_ACCESS_PROBLEM);
+		uninit(error(LIBC_ACCESS_PROBLEM));
 	}
 	const char * libncurses_path;
 	if (config_lookup_string(&config, "libncurses", &libncurses_path) == 0) {
 		libncurses_path = getenv("LIBNCURSES");
 		if (libncurses_path == NULL) {
-			return error(LIBNCURSES_FIND_PROBLEM);
+			uninit(error(LIBNCURSES_FIND_PROBLEM));
 		}
 	}
 	if (stat(libncurses_path, &buf) != 0) {
-		return error(LIBNCURSES_ACCESS_PROBLEM);
+		uninit(error(LIBNCURSES_ACCESS_PROBLEM));
 	}
 
 	/*
@@ -368,7 +421,7 @@ problem_t init() {
 	{
 		void * handle = dlopen(libc_path, RTLD_LAZY);//requires either RTLD_LAZY or RTLD_NOW
 		if (handle == NULL) {
-			return error(LIBC_PROBLEM);
+			uninit(error(LIBC_PROBLEM));
 		}
 		um_unlink = (UNLINK )dlsym(handle, "unlink");
 		um_time = (TIME )dlsym(handle, "time");
@@ -381,7 +434,7 @@ problem_t init() {
 	{
 		void * handle = dlopen(libncurses_path, RTLD_LAZY);
 		if (handle == NULL) {
-			return error(LIBNCURSES_PROBLEM);
+			uninit(error(LIBNCURSES_PROBLEM));
 		}
 		um_init_pair = (INIT_PAIR )dlsym(handle, "init_pair");
 		um_wrefresh = (WREFRESH )dlsym(handle, "wrefresh");
@@ -578,11 +631,7 @@ problem_t init() {
 	*/
 	config_destroy(&config);
 
-	//crap follows
-	um_unlink("/dev/shm/adom-tas");//What is portable code?
-	const problem_t p = shmup(TRUE);
-	if (p != NO_PROBLEM) return p;
-	shm->pids[0] = getpid();
+	//---- CRAP LINE ----
 
 	void * CHEESE_MAGIC = (void * )0x08090733;
 	/*
@@ -614,45 +663,25 @@ problem_t init() {
 	if (signal(SIGWINCH, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "No no resizing!");
 
 	actually_initialized = TRUE;
-	return NO_PROBLEM;
-}
 
-/**
-Uninitializes this process.
-**/
-void uninit() {
-	/*
-	Deallocates the shared memory.
-	*/
-	munmap(shm, sizeof (shm_t));
-	close(shm_fd);
+	const problem_t p = shmup(TRUE);
+	if (p != NO_PROBLEM) uninit(p);
+	shm->pids[0] = getpid();
 
-	/*
-	Deallocates the file paths.
-	*/
-	free(shm_file);
-	free(input_file);
-	free(output_file);
+	if (signal(SIGCONT, continuator) == SIG_ERR) fprintfl(note_stream, "Can't catch CONT.");
+	if (signal(SIGTERM, terminator) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 
-	/*
-	Closes the log streams.
-	*/
-	if (error_stream != NULL) fclose(error_stream);
-	if (warning_stream != NULL) fclose(warning_stream);
-	if (note_stream != NULL) fclose(note_stream);
-	if (call_stream != NULL) fclose(call_stream);
-
-	/*
-	Exits (not gracefully).
-	*/
-	exit(0);
-}
-
-bool tired = TRUE;
-void continuator(const int signo) {
-	if (signo == SIGCONT) {
-		fprintf(stdout, "[%04x::catch()]", (unsigned short )getpid()); fflush(stdout);
-		tired = FALSE;
+	pid_t pid = fork();//returns 0 in child, process id of child in parent, -1 on error
+	shmup(FALSE);
+	if (pid != 0) {//parent
+		shm->root = getpid();
+		if (signal(SIGCONT, continuator) == SIG_ERR) fprintfl(note_stream, "Can't catch CONT.");
+		struct timespec req;
+		req.tv_sec = (time_t )0;
+		req.tv_nsec = 1000000000l/16l;//extern this
+		while (tired) nanosleep(&req, NULL);
+	}
+	else {//child
 	}
 }
 
@@ -660,25 +689,19 @@ void continuator(const int signo) {
 Saves the game to memory.
 **/
 void save(const int state) {
-	fprintf(stdout, "[%04x::fork()]", (unsigned short )getpid()); fflush(stdout);
+	fprintfl(warning_stream, "[%06d::fork()]", (unsigned short )getpid()); fflush(stdout);
 	pid_t pid = fork();//returns 0 in child, process id of child in parent, -1 on error
 	shmup(FALSE);
-	if (signal(SIGTERM, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
-	if (signal(SIGHUP, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
-	if (signal(SIGQUIT, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
-	if (signal(SIGTRAP, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
-	if (signal(SIGABRT, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
-	if (signal(SIGSTOP, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
-	if (signal(SIGTTOU, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
+	if (signal(SIGCONT, continuator) == SIG_ERR) fprintfl(note_stream, "Can't catch CONT.");
+	if (signal(SIGTERM, terminator) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 	if (signal(SIGCHLD, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 	if (pid != (pid_t )NULL) {//parent
 		if (shm->pids[state] != 0) {
-			fprintf(stdout, "[%04x::kill(%04x)]", (unsigned short )getpid(), (unsigned short )shm->pids[state]); fflush(stdout);
+			fprintfl(warning_stream, "[%06d::kill(%06d)]", (unsigned short )getpid(), (unsigned short )shm->pids[state]); fflush(stdout);
 			kill(shm->pids[state], SIGKILL);
 		}
 		shm->pids[state] = getpid();
-		if (signal(SIGCONT, continuator) == SIG_ERR) fprintfl(note_stream, "Can't catch CONT.");
-		fprintf(stdout, "[%04x::stop()]", (unsigned short )getpid()); fflush(stdout);
+		fprintfl(warning_stream, "[%06d::stop()]", (unsigned short )getpid()); fflush(stdout);
 
 		//kill(getpid(), SIGSTOP);
 		struct timespec req;
@@ -688,10 +711,10 @@ void save(const int state) {
 
 		//tcsetpgrp(..., getpid());?
 
-		fprintf(stdout, "[%04x::continue()]", (unsigned short )getpid()); fflush(stdout);
+		fprintfl(warning_stream, "[%06d::continue()]", (unsigned short )getpid()); fflush(stdout);
 	}
 	else {//child
-		fprintf(stdout, "[%04x::born(%04x)]", (unsigned short )getpid(), (unsigned short )getppid()); fflush(stdout);
+		fprintfl(warning_stream, "[%06d::born(%06d)]", (unsigned short )getpid(), (unsigned short )getppid()); fflush(stdout);
 		shm->pids[0] = getpid();
 
 		//setsid();
@@ -703,12 +726,12 @@ Loads the game from memory.
 **/
 void load(const int state) {
 	if (shm->pids[state] != 0) {
-		fprintf(stdout, "[%04x::signal(%04x)]", (unsigned short )getpid(), (unsigned short )shm->pids[state]); fflush(stdout);
+		fprintfl(warning_stream, "[%06d::signal(%06d)]", (unsigned short )getpid(), (unsigned short )shm->pids[state]); fflush(stdout);
 		kill(shm->pids[state], SIGCONT);
 		const int zorg = shm->pids[0];
 		shm->pids[0] = shm->pids[state];
 		shm->pids[state] = 0;
-		fprintf(stdout, "[%04x::kill(%04x)]", (unsigned short )getpid(), (unsigned short )zorg); fflush(stdout);
+		fprintfl(warning_stream, "[%06d::kill(%06d)]", (unsigned short )getpid(), (unsigned short )zorg); fflush(stdout);
 		kill(zorg, SIGKILL);
 	}
 }
@@ -716,7 +739,7 @@ void load(const int state) {
 /**
 Annotates and initializes overloaded functions.
 **/
-#define OVERLOAD if (!initialized) if (init() != NO_PROBLEM) uninit();
+#define OVERLOAD if (!initialized) init();
 
 bool was_meta = FALSE;//not good
 int was_colon = FALSE;//worse
@@ -879,15 +902,15 @@ int wrefresh(WINDOW * win) { OVERLOAD
 	*/
 	int ws_x = TERM_COL, ws_y = TERM_ROW-1;
 	char ws_str[TERM_COL], ws_buf[TERM_COL];
-	#define wrefresh_ADDSTR(format, length, arg) \
+	#define wrefresh_ADDSTR(format, length, ...) \
 		ws_pair--;\
 		wattrset(win, COLOR_PAIR(ws_pair));\
-		snprintf(ws_str, (size_t )TERM_COL, format, arg);\
+		snprintf(ws_str, (size_t )TERM_COL, format, __VA_ARGS__);\
 		snprintf(ws_buf, (size_t )((condensed ? 1 : length)+1), "%-*s", length, ws_str);\
 		ws_x -= length;\
 		mvaddnstr(ws_y, ws_x, ws_buf, TERM_COL-ws_x);\
 		ws_x--;
-	wrefresh_ADDSTR("S: %u/?", 4, globstate);
+	wrefresh_ADDSTR("S: %u/%u", 4, globstate, states);
 	wrefresh_ADDSTR("D: %u", 13, (unsigned int )(current_time-previous_time));
 	wrefresh_ADDSTR("R: 0x%08x", 13, harc4(ARC4_S));
 	wrefresh_ADDSTR("T: ?/%u", 13, TURNS);
@@ -903,7 +926,7 @@ int wrefresh(WINDOW * win) { OVERLOAD
 		if (shm->pids != NULL) {
 			char somer[TERM_COL];
 			bool somery = shm->pids[index] != 0;
-			sprintf(somer, "%s %c%04x%c", some, somery ? '[' : ' ', (unsigned short )shm->pids[index], somery ? ']' : ' ');
+			sprintf(somer, "%s %c%06d%c", some, somery ? '[' : ' ', (unsigned short )shm->pids[index], somery ? ']' : ' ');
 			strcpy(some, somer);
 		}
 	}
@@ -993,6 +1016,18 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		printsrl();
 		return 0;
 	}
+	else if (key == 'Q') {//quits everything
+		fprintfl(warning_stream, "[%06d::send(TERM)]", (unsigned short )getpid());
+		for (int index = 0; index < states; index++) {
+			if (shm->pids[index] != 0 && shm->pids[index] != getpid()) {
+				kill(shm->pids[index], SIGTERM);
+				shm->pids[index] = 0;
+			}
+		}
+		kill(shm->root, SIGTERM);
+		kill(getpid(), SIGTERM);
+		return 0;
+	}
 	else if (key == -12) {//a failed attempt to simulate the executable initializing the random number genrator
 		seed(current_time);
 		for (int i = 0; i < 0xffff; i++) {
@@ -1029,4 +1064,4 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 	return key;
 }
 
-#endif
+#endif//over 1024 is too much

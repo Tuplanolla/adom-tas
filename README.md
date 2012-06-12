@@ -125,7 +125,7 @@ Checklist
 		[X] Implement fast load (memory-memory)
 		[ ] Implement slow save (memory-file)
 		[ ] Implement slow load (file-memory)
-		[ ] Stop processes from passing out when their parents are killed
+		[X] Make processes independent
 		[ ] Refine sloppy implementations
 	[X] Implement recording tools
 		[X] Find the input handler
@@ -223,9 +223,9 @@ The user interface deserves a mention here since it's so intuitive.
 The status bar looks like
 
 <pre>
-Coward    <span style="background-color: #d58080; color: #000000;">I: \M\Cf </span> <span style="background-color: #d5d580; color: #000000;">F: 21        </span> <span style="background-color: #80d580; color: #000000;">G: 7         </span> <span style="background-color: #8080d5; color: #000000;">R: 0xe87de001</span> <span style="background-color: #80d5d5; color: #000000;">T: 0x7fe81780</span> <span style="background-color: #d580d5; color: #000000;">S: 2</span>
+Coward                  I: \M\Cf  F: 2/21  T: 0/7  D: 15  R: 0xe87de001  S: 2/9
 </pre>
 
-and contains the last input (Alt Ctrl F), the number of the last recorded frame (#21), the number of the last played turn (#7), the current hash of the random number generator's state, the current system time (2038-01-01 00:00:00) and the currently selected save state (#2).
+and contains the last recorded inputs (`Alt` `Ctrl` `F`), the amount of the last recorded frames (2) and the amount of all frames (21), the amount of the last elapsed turns (0) and the amount of all turns (7), the time elapsed since the last frame (15 seconds), the current hash of the random number generator's state and the currently selected save state (#2) and the amount of all save states (9).
 
-The keys to save, load and control the statusbar are currently undefined.
+The currently defined keys are F8 to play a recording (only on frame 0), F9 to save, F10 to load, F11 to change the system time, F12 to simulate actual save and load, Ctrl F12 to change the currently selected save state and _ to save a recording (and other unnecessary details).
