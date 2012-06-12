@@ -273,39 +273,29 @@ void seed(const int seed) {//simulated only (for now)
 Shares memory or something.
 **/
 struct shm_s {
-	int streams[3];
-	int pids[SAVE_STATES];
+	int pids[STATES_MAX];//TODO allocate dynamically
 };
 typedef struct shm_s shm_t;
 int shm_fd;
 shm_t * shm;
-void shmup() {
-	bool first = TRUE;
-
-	fprintfl(note_stream, "Started to map shared memory.");
-	shm_fd = shm_open(shm_file, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
-	if (shm_fd < 0) {
-		first = FALSE;
-	}
+problem_t shmup(const bool first) {
 	shm_fd = shm_open(shm_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 	if (shm_fd < 0) {
-		fprintfl(note_stream, "Failed to map shared memory.");
-		return;//error here
+		return error(SHM_OPEN_PROBLEM);
 	}
-
-	ftruncate(shm_fd, sizeof (shm_t));
-
+	if (ftruncate(shm_fd, sizeof (shm_t)) != 0) {
+		return error(SHM_TRUNCATE_PROBLEM);
+	}
 	shm = (shm_t * )mmap(NULL, sizeof (shm_t), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
 	if (shm == MAP_FAILED) {
-		fprintfl(note_stream, "Failed to map shared memory.");
-		return;//error here
+		return error(SHM_MAP_PROBLEM);
 	}
-
 	if (first) {
-		for (int index = 0; index < SAVE_STATES; index++) shm->pids[index] = 0;
-		fprintfl(note_stream, "Mapped shared memory.");
+		for (int index = 0; index < states; index++) {
+			shm->pids[index] = 0;
+		}
 	}
-	else fprintfl(note_stream, "Remapped shared memory.");
+	return NO_PROBLEM;
 }
 
 /**
@@ -408,6 +398,9 @@ problem_t init() {
 
 	/*
 	Finds the location of the shared memory (in /dev/shm).
+
+	The configuration file is first parsed and
+	the default location is then guessed.
 	*/
 	const char * shm_path;
 	if (config_lookup_string(&config, "shm", &shm_path) == 0) {
@@ -435,6 +428,8 @@ problem_t init() {
 		warning(CONFIG_COL_PROBLEM);
 		cols = default_cols;
 	}
+	rows = MIN(MAX(ROWS_MIN, rows), ROWS_MAX);
+	cols = MIN(MAX(COLS_MIN, cols), COLS_MAX);
 
 	/*
 	Finds the amount of save states.
@@ -446,6 +441,8 @@ problem_t init() {
 		warning(CONFIG_STATE_PROBLEM);
 		states = default_states;
 	}
+	states = MIN(MAX(STATES_MIN, states), STATES_MAX);
+	states++;
 
 	/*
 	Opens the put streams.
@@ -583,7 +580,8 @@ problem_t init() {
 
 	//crap follows
 	um_unlink("/dev/shm/adom-tas");//What is portable code?
-	shmup();
+	const problem_t p = shmup(TRUE);
+	if (p != NO_PROBLEM) return p;
 	shm->pids[0] = getpid();
 
 	void * CHEESE_MAGIC = (void * )0x08090733;
@@ -626,6 +624,7 @@ void uninit() {
 	/*
 	Deallocates the shared memory.
 	*/
+	munmap(shm, sizeof (shm_t));
 	close(shm_fd);
 
 	/*
@@ -663,7 +662,7 @@ Saves the game to memory.
 void save(const int state) {
 	fprintf(stdout, "[%04x::fork()]", (unsigned short )getpid()); fflush(stdout);
 	pid_t pid = fork();//returns 0 in child, process id of child in parent, -1 on error
-	shmup();
+	shmup(FALSE);
 	if (signal(SIGTERM, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 	if (signal(SIGHUP, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 	if (signal(SIGQUIT, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");

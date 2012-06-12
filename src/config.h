@@ -15,7 +15,7 @@ const char * const default_warning_name = "stderr";
 const char * const default_note_name = "stderr";
 const char * const default_call_name = "null";
 const int default_rows = 25;
-const int default_cols = 80;
+const int default_cols = 77;
 const int default_states = 9;
 const char * const default_shm_name = "adom-tas";
 const char * const default_config_name = "adom-tas.cfg";
@@ -35,9 +35,15 @@ const char * const default_config_str =
 		"note       = \"/var/log/adom-tas.log\"\n"
 		"call       = \"null\"\n"
 		"rows       = 25\n"
-		"cols       = 80\n"
+		"cols       = 77\n"
 		"states     = 9\n"
 	;
+
+/**
+Sets the minimum and maximum amount of save states.
+**/
+#define STATES_MIN 1
+#define STATES_MAX 256
 
 /**
 Sets the default locations of (all kinds of things).
@@ -45,11 +51,6 @@ Sets the default locations of (all kinds of things).
 #define TEMPORARY_HOME "/home/user"
 #define TEMPORARY_ACTUAL_PATH TEMPORARY_HOME"/adom-tas/actual_state.log"
 #define TEMPORARY_SIM_PATH TEMPORARY_HOME"/adom-tas/simulated_state.log"
-
-/**
-Sets the amount of save states.
-**/
-#define SAVE_STATES 10
 
 /**
 Sets the size of the terminal.

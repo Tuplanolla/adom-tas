@@ -19,9 +19,12 @@ Points to the random number generator of the executable.
 #define SARC4_TIME() (((void ( *)() )0x08125d10)())//srandom(time(NULL)); SARC4(random());
 
 /**
-Points to the amount of initialized pairs.
+Sets the minimum and maximum sizes of the terminal.
 **/
-#define PAIRS 32//TODO automate
+#define ROWS_MIN 25
+#define COLS_MIN 77
+#define ROWS_MAX 127
+#define COLS_MAX 127
 
 extern unsigned char arc4_s[0x100];
 extern unsigned char arc4_i;

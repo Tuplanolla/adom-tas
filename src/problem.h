@@ -37,6 +37,9 @@ enum problem_e {
 	LIBNCURSES_PROBLEM,
 	LD_PRELOAD_UNSET_PROBLEM,
 	CONFIG_SHM_PROBLEM,
+	SHM_OPEN_PROBLEM,
+	SHM_TRUNCATE_PROBLEM,
+	SHM_MAP_PROBLEM,
 	CONFIG_ROW_PROBLEM,
 	CONFIG_COL_PROBLEM,
 	CONFIG_STATE_PROBLEM,
@@ -95,6 +98,9 @@ inline char * problem_message(const problem_t code) {
 	if (code == LIBNCURSES_PROBLEM) return "Loading the New Cursor Optimization library failed.";
 	if (code == LD_PRELOAD_UNSET_PROBLEM) return "Unsetting the library to preload failed.";
 	if (code == CONFIG_SHM_PROBLEM) return "Finding the location of the shared memory \"shm\" in the configuration file failed. The default location will be assumed.";
+	if (code == SHM_OPEN_PROBLEM) return "Opening the shared memory failed.";
+	if (code == SHM_TRUNCATE_PROBLEM) return "Truncating the shared memory failed.";
+	if (code == SHM_MAP_PROBLEM) return "Mapping the shared memory failed.";
 	if (code == CONFIG_ROW_PROBLEM) return "Finding the height of the terminal \"rows\" in the configuration file failed. The default height will be assumed.";
 	if (code == CONFIG_COL_PROBLEM) return "Finding the width of the terminal \"cols\" in the configuration file failed. The default width will be assumed.";
 	if (code == CONFIG_STATE_PROBLEM) return "Finding the amount of save states \"states\" in the configuration file failed. The default amount will be assumed.";
@@ -102,7 +108,7 @@ inline char * problem_message(const problem_t code) {
 	if (code == INPUT_FIND_PROBLEM) return "Finding the input file failed.";
 	if (code == INPUT_ACCESS_PROBLEM) return "Accessing the input file failed.";
 	if (code == CONFIG_OUTPUT_PROBLEM) return "Finding the location of the output file \"output\" in the configuration file failed.";
-	if (code == OUTPUT_OVERWRITE_PROBLEM) return "The output file already exists and will be overwritten.";
+	if (code == OUTPUT_OVERWRITE_PROBLEM) return "The output file already exists and may be overwritten.";
 	if (code == OUTPUT_ACCESS_PROBLEM) return "Accessing the output file failed.";
 	if (code == CONFIG_ERROR_LOG_PROBLEM) return "Finding the location of the error log \"errors\" in the configuration file failed. Errors will be logged to the standard error stream \"stderr\" instead.";
 	if (code == ERROR_LOG_OVERWRITE_PROBLEM) return "The error log already exists and will be overwritten.";
