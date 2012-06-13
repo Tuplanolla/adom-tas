@@ -949,6 +949,7 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		if (playback_frame != NULL) {//TODO move this
 			if (playback_frame->duration == 0) {
 				current_time += playback_frame->value;
+				seed(current_time);
 				playback_frame = playback_frame->next;
 				return 0;
 			}

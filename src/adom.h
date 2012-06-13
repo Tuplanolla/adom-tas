@@ -7,7 +7,7 @@ Provides direct access to the executable.
 /**
 Points to the turn count of the executable.
 **/
-#define TURNS (* ((unsigned int * )0x082b16e0))
+#define TURNS (*((unsigned int * )0x082b16e0))
 
 /**
 Points to the random number generator of the executable.
@@ -15,8 +15,8 @@ Points to the random number generator of the executable.
 #define ARC4_S ((unsigned char * )0x082ada40)
 #define ARC4_I ((unsigned char * )0x082adb40)
 #define ARC4_J ((unsigned char * )0x082adb41)
-#define SARC4(seed) (((void ( *)(int) )0x08125ea0)(seed))
-#define SARC4_TIME() (((void ( *)() )0x08125d10)())//srandom(time(NULL)); SARC4(random());
+#define SARC4(seed) (((void (*)(int) )0x08125ea0)(seed))
+#define SARC4_TIME() (((void (*)() )0x08125d10)())//srandom(time(NULL)); SARC4(random());
 #define ARC4_CALLS_MENU 4856//note divisibility by 4
 #define ARC4_CALLS_AUTO_LOAD 5676//in-game after loading it automatically
 #define ARC4_CALLS_MANUAL_LOAD 6492//in-game after loading it manually
