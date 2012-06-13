@@ -60,7 +60,7 @@ If you want to encode video files you'll need extra packages:
 
 	[user@arch ~]$ pacman -S ttyrec ffmpeg
 
-Recording is managed by scripts:
+Recording is managed by scripts (the arguments are command to run and the output file):
 
 	[user@arch ~]$ bin/ttyrec.sh bin/adom-tas output.tty
 	[user@arch ~]$ bin/ffmpeg.sh "ttyplay output.tty" output.avi
@@ -118,8 +118,8 @@ Checklist
 		[ ] Disable the actual quit function
 		[X] Find the random number generator's seed function
 		[X] Redirect the seed function to the recorder and back again
-		[ ] Find the random number generator's reseed function
-		[ ] Simulate the reseed function
+		[X] Find the random number generator's reseed function
+		[X] Simulate the reseed function
 		[X] Implement save state selector
 		[X] Implement fast save (memory-memory)
 		[X] Implement fast load (memory-memory)
@@ -220,12 +220,12 @@ User Interface
 
 The user interface deserves a mention here since it's so intuitive.
 
-The status bar looks like
+The status bar will look like
 
 <pre>
 Coward                  I: \M\Cf  F: 2/21  T: 0/7  D: 15  R: 0xe87de001  S: 2/9
 </pre>
 
-and contains the last recorded inputs (`Alt` `Ctrl` `F`), the amount of the last recorded frames (2) and the amount of all frames (21), the amount of the last elapsed turns (0) and the amount of all turns (7), the time elapsed since the last frame (15 seconds), the current hash of the random number generator's state and the currently selected save state (#2) and the amount of all save states (9).
+and contains the last recorded inputs (Alt Ctrl F), the amount of the last recorded frames (2) and the amount of all frames (21), the amount of the last elapsed turns (0) and the amount of all turns (7), the time elapsed since the last frame (15 seconds), the current hash of the random number generator's state and the currently selected save state (#2) and the amount of all save states (9).
 
 The currently defined keys are F8 to play a recording (only on frame 0), F9 to save, F10 to load, F11 to change the system time, F12 to simulate actual save and load, Ctrl F12 to change the currently selected save state and _ to save a recording (and other unnecessary details).

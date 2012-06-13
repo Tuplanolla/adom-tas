@@ -261,12 +261,12 @@ sarc4(um_random());
 </pre>
 **/
 void seed(const int seed) {//simulated only (for now)
-	//SARC4_TIME();
 	arc4_i = 0;
 	arc4_j = 0;
 	um_srandom(seed);
 	sarc4(um_random());
-	//memcpy(ARC4_S, arc4_s, sizeof (arc4_s));
+	for (unsigned int i = 0; i < ARC4_CALLS_AUTO_LOAD; i++) arc4();
+	memcpy(ARC4_S, arc4_s, sizeof (arc4_s));
 }
 
 /**
@@ -632,14 +632,9 @@ void init() {
 	config_destroy(&config);
 
 	//---- CRAP LINE ----
-
+	bool inject = FALSE;
+	if (!inject) goto hell;
 	void * CHEESE_MAGIC = (void * )0x08090733;
-	/*
-	This was an attempt to test the system on an x64.
-	*/
-	/*void * handle = dlopen(LIBRARY_PATH, RTLD_LAZY);//hopefully unnecessary
-	if (handle == NULL) exit(error(DLOPEN_LIBC_ERROR));
-	void * internal_address = dlsym(handle, "internal");*/
 	unsigned int f = (unsigned int )&internal-(unsigned int )CHEESE_MAGIC;
 	fprintfl(note_stream, "Somehow found 0x%08x-0x%08x = 0x%08x.", (unsigned int )&internal, 0x08090733, f);
 	internal();
@@ -659,20 +654,18 @@ void init() {
 	if (mprotect(PAGE(location), PAGE_SIZE(instructions), PROT_READ | PROT_WRITE | PROT_EXEC) == 0)
 		memcpy(location, instructions, sizeof (instructions));//TODO make sure it's patching the right instructions
 	else fprintfl(note_stream, ":(");
+	hell:
 
 	if (signal(SIGWINCH, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "No no resizing!");
 
 	actually_initialized = TRUE;
 
-	const problem_t p = shmup(TRUE);
-	if (p != NO_PROBLEM) uninit(p);
-	shm->pids[0] = getpid();
-
 	if (signal(SIGCONT, continuator) == SIG_ERR) fprintfl(note_stream, "Can't catch CONT.");
 	if (signal(SIGTERM, terminator) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 
+	shmup(TRUE);
 	pid_t pid = fork();//returns 0 in child, process id of child in parent, -1 on error
-	shmup(FALSE);
+	if (pid == -1) exit(-1);
 	if (pid != 0) {//parent
 		shm->root = getpid();
 		if (signal(SIGCONT, continuator) == SIG_ERR) fprintfl(note_stream, "Can't catch CONT.");
@@ -682,6 +675,9 @@ void init() {
 		while (tired) nanosleep(&req, NULL);
 	}
 	else {//child
+		const problem_t p = shmup(FALSE);
+		if (p != NO_PROBLEM) uninit(p);
+		shm->pids[0] = getpid();
 	}
 }
 
@@ -703,21 +699,17 @@ void save(const int state) {
 		shm->pids[state] = getpid();
 		fprintfl(warning_stream, "[%06d::stop()]", (unsigned short )getpid()); fflush(stdout);
 
-		//kill(getpid(), SIGSTOP);
+		//kill(getpid(), SIGSLURP);
 		struct timespec req;
 		req.tv_sec = (time_t )0;
 		req.tv_nsec = 1000000000l/16l;//extern this
 		while (tired) nanosleep(&req, NULL);
-
-		//tcsetpgrp(..., getpid());?
 
 		fprintfl(warning_stream, "[%06d::continue()]", (unsigned short )getpid()); fflush(stdout);
 	}
 	else {//child
 		fprintfl(warning_stream, "[%06d::born(%06d)]", (unsigned short )getpid(), (unsigned short )getppid()); fflush(stdout);
 		shm->pids[0] = getpid();
-
-		//setsid();
 	}
 }
 
@@ -908,6 +900,7 @@ int wrefresh(WINDOW * win) { OVERLOAD
 		snprintf(ws_str, (size_t )TERM_COL, format, __VA_ARGS__);\
 		snprintf(ws_buf, (size_t )((condensed ? 1 : length)+1), "%-*s", length, ws_str);\
 		ws_x -= length;\
+		/*ws_x--;*/\
 		mvaddnstr(ws_y, ws_x, ws_buf, TERM_COL-ws_x);\
 		ws_x--;
 	wrefresh_ADDSTR("S: %u/%u", 4, globstate, states);
@@ -1016,7 +1009,7 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		printsrl();
 		return 0;
 	}
-	else if (key == 'Q') {//quits everything
+	/*else if (key == 'Q') {//quits everything (stupid idea or implementation)
 		fprintfl(warning_stream, "[%06d::send(TERM)]", (unsigned short )getpid());
 		for (int index = 0; index < states; index++) {
 			if (shm->pids[index] != 0 && shm->pids[index] != getpid()) {
@@ -1027,7 +1020,7 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		kill(shm->root, SIGTERM);
 		kill(getpid(), SIGTERM);
 		return 0;
-	}
+	}*/
 	else if (key == -12) {//a failed attempt to simulate the executable initializing the random number genrator
 		seed(current_time);
 		for (int i = 0; i < 0xffff; i++) {

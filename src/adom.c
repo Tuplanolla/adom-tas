@@ -10,34 +10,46 @@ Provides direct access to the executable.
 #include "util.h"
 #include "adom.h"
 
-/**
+/*
 Simulates the ARC4 of the executable.
+*/
+
+/**
+The state S.
 **/
 unsigned char arc4_s[0x100];
+
+/**
+The first iterator i.
+**/
 unsigned char arc4_i = 0x00;
+
+/**
+The second iterator j.
+**/
 unsigned char arc4_j = 0x00;
 
 /**
-Hashes the state <i>S</i>.
+Returns the hash of a state.
 
-@param s The state <i>S</i>.
-@return The hash.
+@param s The state S.
+@return The hash h.
 **/
 int harc4(unsigned char * s) {
 	const int prime = 0x0000001f;
 	int result = 0x00000001;
 	unsigned char i = 0x00;
 	do {
-		result = prime*result+(int )arc4_s[i];
+		result = prime*result+(int )s[i];
 		i++;
 	} while(i != 0x00);
 	return result;
 }
 
 /**
-Seeds the state <i>S</i>.
+Seeds the current state.
 
-@param seed The seed.
+@param seed The seed k to seed the state S with.
 **/
 void sarc4(const int seed) {
 	unsigned char i = 0x00, j = 0x00;
@@ -53,15 +65,19 @@ void sarc4(const int seed) {
 }
 
 /**
-Generates a byte.
+Generates a byte (and changes the current state).
 
-@return The byte.
+The order of operations is wrong to replicate the behavior of the executable.
+
+@return The byte r.
 **/
 unsigned char arc4() {
+	arc4_j += arc4_s[arc4_i];//should be at point A
+	SWAP(arc4_s[arc4_i], arc4_s[arc4_j]);//should be at point B
 	arc4_i++;
-	arc4_j += arc4_s[arc4_i];
-	SWAP(arc4_s[arc4_i], arc4_s[arc4_j]);
-	return arc4_s[(int )(arc4_s[arc4_i]+arc4_s[arc4_j])];
+	//point A
+	//point B
+	return arc4_s[(unsigned char )(arc4_s[arc4_i]+arc4_s[arc4_j])];
 }
 
 /*
