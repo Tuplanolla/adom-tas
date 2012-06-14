@@ -672,7 +672,10 @@ void init() {
 		struct timespec req;
 		req.tv_sec = (time_t )0;
 		req.tv_nsec = 1000000000l/16l;//extern this
-		while (tired) nanosleep(&req, NULL);
+		fprintf(stderr, "Use Ctrl C to quit properly.\n");
+		while (tired) {
+			nanosleep(&req, NULL);
+		}
 	}
 	else {//child
 		const problem_t p = shmup(FALSE);
@@ -684,6 +687,7 @@ void init() {
 /**
 Saves the game to memory.
 **/
+chtype ** screen;
 void save(const int state) {
 	fprintfl(warning_stream, "[%06d::fork()]", (unsigned short )getpid()); fflush(stdout);
 	pid_t pid = fork();//returns 0 in child, process id of child in parent, -1 on error
@@ -699,6 +703,20 @@ void save(const int state) {
 		shm->pids[state] = getpid();
 		fprintfl(warning_stream, "[%06d::stop()]", (unsigned short )getpid()); fflush(stdout);
 
+		int y, x;
+		attr_t attrs; attr_t * _attrs = &attrs;
+		short pair; short * _pair = &pair;
+		getyx(stdscr, y, x);
+		wattr_get(stdscr, _attrs, _pair, NULL);
+		screen = malloc(rows*sizeof (chtype *));
+		for (int row = 0; row < rows; row++) {
+			chtype * subscreen = malloc(cols*sizeof (chtype));
+			for (int col = 0; col < cols; col++) {
+				subscreen[col] = mvinch(row, col);
+			}
+			screen[row] = subscreen;
+		}
+
 		//kill(getpid(), SIGSLURP);
 		struct timespec req;
 		req.tv_sec = (time_t )0;
@@ -706,6 +724,18 @@ void save(const int state) {
 		while (tired) nanosleep(&req, NULL);
 
 		fprintfl(warning_stream, "[%06d::continue()]", (unsigned short )getpid()); fflush(stdout);
+
+		clear();
+		for (int row = 0; row < rows; row++) {
+			for (int col = 0; col < cols; col++) {
+				mvaddch(row, col, screen[row][col]);
+			}
+			free(screen[row]);
+		}
+		free(screen);
+		wattr_set(stdscr, attrs, pair, NULL);
+		wmove(stdscr, y, x);
+		refresh();
 	}
 	else {//child
 		fprintfl(warning_stream, "[%06d::born(%06d)]", (unsigned short )getpid(), (unsigned short )getppid()); fflush(stdout);
