@@ -24,10 +24,10 @@ Modifies the executable.
 #include "util.h"
 #include "problem.h"
 #include "log.h"
-#include "put.h"
 #include "config.h"
+#include "put.h"
 #include "adom.h"
-#include "loader.h"
+#include "record.h"
 
 int rows;
 int cols;
@@ -39,6 +39,16 @@ FILE * error_stream;
 FILE * warning_stream;
 FILE * note_stream;
 FILE * call_stream;
+
+typedef int (* UNLINK)(const char * path);
+typedef int (* IOCTL)(int d, unsigned long request, ...);
+typedef time_t (* TIME)(time_t * timer);
+typedef struct tm * (* LOCALTIME)(const time_t * timep);
+typedef void (* SRANDOM)(unsigned int seed);
+typedef long (* RANDOM)();
+typedef int (* INIT_PAIR)(short pair, short f, short b);
+typedef int (* WREFRESH)(WINDOW * win);
+typedef int (* WGETCH)(WINDOW * win);
 
 UNLINK um_unlink = NULL;
 IOCTL um_ioctl = NULL;
@@ -57,199 +67,13 @@ int globstate = 1;
 time_t current_time = 0;//0x7fe81780
 
 /**
-Represents a recorded frame.
-
-Three kinds of inputs exist:
-<pre>
-enum input_e {
-	NO_INPUT,
-	KEY_INPUT,
-	TIME_INPUT,
-	SEED_INPUT
-};
-typedef enum input_e input_t;
-</pre>
-<code>KEY_INPUT</code> represents pressing a key,
-<code>TIME_INPUT</code> represents changing the system time and
-<code>SEED_INPUT</code> represents reseeding the random number generator.
-The variables required to represent a frame depend on the inputs:
-<pre>
-struct frame_s {
-	input_t input;
-	int key;
-	time_t time;
-	unsigned char duration;
-	struct frame_s * next;
-};
-typedef struct frame_s frame_t;
-</pre>
-Since a <code>time_t</code> can be treated as an <code>int</code> or a <code>long</code>,
-only <code>KEY_INPUT</code> inputs are visible and
-<code>TIME_INPUT</code> is only used with the next <code>SEED_INPUT</code>
-the struct can be condensed:
-<pre>
-struct frame_s {
-	int duration;//duration == 0 ? input = KEY_INPUT : input = SEED_INPUT
-	int value;//duration != 0 ? key = value : time += value
-	struct frame_s * next;
-};
-typedef struct frame_s frame_t;
-</pre>
-Thus only two <code>int</code>s are needed.
-**/
-struct frame_s {
-	int duration;
-	int value;
-	struct frame_s * next;
-};
-typedef struct frame_s frame_t;
-
-frame_t * first_frame = NULL;
-frame_t * last_frame = NULL;
-unsigned int frame_count = 0;
-
-/**
-Adds a frame.
-
-@param duration The input or the duration of the frame.
-@param value The key or the time difference of the frame.
-@return The new frame.
-**/
-frame_t * add_frame(int duration, int value) {
-	frame_t * new_frame = malloc(sizeof (frame_t));
-	new_frame->duration = duration;
-	new_frame->value = value;
-	new_frame->next = NULL;
-	if (first_frame == NULL) {//the first
-		first_frame = new_frame;
-	}
-	else {//the rest
-		last_frame->next = new_frame;
-	}
-	last_frame = new_frame;
-	frame_count++;
-	return new_frame;
-}
-
-/**
-Removes all frames.
-**/
-void remove_frames() {
-	frame_t * current_frame = first_frame;
-	first_frame = NULL;
-	last_frame = NULL;
-	while (current_frame != NULL) {
-		frame_t * old_frame = current_frame;
-		current_frame = current_frame->next;
-		free(old_frame);
-	}
-}
-
-time_t previous_time;
-
-/**
-Adds a <code>KEY_INPUT</code> frame.
-
-@param duration The duration of the frame.
-@param key The key of the frame.
-@return The new frame.
-**/
-frame_t * add_key_frame(unsigned int duration, int key) {
-	return add_frame((int )duration, key);
-}
-
-/**
-Adds a <code>TIME_INPUT</code> and <code>SEED_INPUT</code> frame.
-
-@param time The time of the frame.
-@return The new frame.
-**/
-frame_t * add_seed_frame(time_t time) {
-	if (first_frame == NULL) {
-		previous_time = current_time;
-	}
-	const time_t step_time = current_time-previous_time;
-	previous_time = current_time;
-	return add_frame(0, (int )step_time);
-}
-
-/**
 Redirects calls from injected instructions.
 **/
 void internal() {
 	fprintfl(note_stream, ":)");
 }
 
-//---- BADNESS LINE ----
-
-/**
-Outputs the frames (for recording).
-**/
-int barf() {
-	FILE * output_stream = fopen(output_file, "wb");
-	if (output_stream == NULL) {
-		return error(OUTPUT_ACCESS_PROBLEM);
-	}
-	int result = 0;
-	frame_t * current_frame = first_frame;
-	while (current_frame != NULL) {
-		result += fwrite(&current_frame->duration, sizeof (current_frame->duration), 1, output_stream);
-		result += fwrite(&current_frame->value, sizeof (current_frame->value), 1, output_stream);
-		current_frame = current_frame->next;
-	}
-	fclose(output_stream);
-	return result;
-}
-
-/**
-Inputs the frames (for playback).
-**/
-int slurp() {
-	FILE * input_stream = fopen(input_file, "rb");
-	if (input_stream == NULL) {
-		return error(INPUT_ACCESS_PROBLEM);
-	}
-	int result = 0;
-	while (TRUE) {
-		int subresult = 0;
-		int duration;
-		int value;
-		subresult += fread(&duration, sizeof (duration), 1, input_stream);
-		subresult += fread(&value, sizeof (value), 1, input_stream);
-		if (subresult == 0) break;
-		add_frame(duration, value);
-	}
-	if (feof(input_stream)) /*error*/;
-	clearerr(input_stream);
-	fclose(input_stream);
-	return result;
-}
-
-/**
-Logs the ARC4 status.
-**/
-int printrl() {
-	FILE * random_stream = fopen(TEMPORARY_ACTUAL_PATH, "wb");
-	int result = 0;
-	if (random_stream != NULL) {
-		result += fwrite(ARC4_S, sizeof (unsigned char), 0x100, random_stream);
-		result += fwrite(ARC4_I, sizeof (unsigned char), 1, random_stream);
-		result += fwrite(ARC4_J, sizeof (unsigned char), 1, random_stream);
-	}
-	fclose(random_stream);
-	return result;
-}
-int printsrl() {
-	FILE * random_stream = fopen(TEMPORARY_SIM_PATH, "wb");
-	int result = 0;
-	if (random_stream != NULL) {
-		result += fwrite(arc4_s, sizeof (unsigned char), 0x100, random_stream);
-		result += fwrite(&arc4_i, sizeof (unsigned char), 1, random_stream);
-		result += fwrite(&arc4_j, sizeof (unsigned char), 1, random_stream);
-	}
-	fclose(random_stream);
-	return result;
-}
+record_t record;
 
 /**
 Seeds the ARC4 of the executable.
@@ -270,11 +94,25 @@ void seed(const int seed) {//simulated only (for now)
 }
 
 /**
-Shares memory or something.
+Holds pointers to the shared memory.
+
+The contents come after the pointers:
+<pre>
+           ,--------->---------.
+[ ppid ][ * pids ][ ** scrs ][ pid[0] pid[1] ... pid[states] ][ * scr[0] * scr[1] ... * scr[states] ]
+                      `------------------->--------------------´
+</pre>
+
+It might be smart to use a shared memory <i>segment</i> instead.
+
+@var ppid The process identifier of the parent process.
+@var pids A pointer to the process identifiers of the child processes.
+@var screens A pointer to the screens of the child processes.
 **/
 struct shm_s {
-	int root;
-	int pids[STATES_MAX];//TODO allocate dynamically
+	int ppid;
+	int * pids;
+	chtype ** scrs;
 };
 typedef struct shm_s shm_t;
 int shm_fd;
@@ -284,14 +122,18 @@ problem_t shmup(const bool first) {
 	if (shm_fd < 0) {
 		return error(SHM_OPEN_PROBLEM);
 	}
-	if (ftruncate(shm_fd, sizeof (shm_t)) != 0) {
+	const size_t size = sizeof (*shm)+states*sizeof (*shm->pids)+states*rows*cols*sizeof (**shm->scrs);
+	if (ftruncate(shm_fd, size) != 0) {
 		return error(SHM_TRUNCATE_PROBLEM);
 	}
-	shm = (shm_t * )mmap(NULL, sizeof (shm_t), PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
-	if (shm == MAP_FAILED) {
+	shm = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
+	if (shm < 0) {
 		return error(SHM_MAP_PROBLEM);
 	}
+	shm->pids = (int * )((int )shm+sizeof (*shm));
+	shm->scrs = (chtype ** )((int )shm+sizeof (*shm)+states*sizeof (*shm->pids));
 	if (first) {
+		shm->ppid = 0;
 		for (int index = 0; index < states; index++) {
 			shm->pids[index] = 0;
 		}
@@ -317,7 +159,7 @@ Uninitializes this process.
 Contains unnecessary checks.
 **/
 void uninit(problem_t code) {
-	if (getpid() == shm->root) shmdown(TRUE);
+	if (getpid() == shm->ppid) shmdown(TRUE);
 	else shmdown(FALSE);
 
 	/*
@@ -346,7 +188,7 @@ Catches signals or something.
 **/
 bool tired = TRUE;
 void continuator(const int signo) {
-	if (signo == SIGCONT) {
+	if (signo == SIGCONT || signo == SIGINT) {
 		fprintfl(warning_stream, "[%06d::catch(CONT)]", (unsigned short )getpid()); fflush(stdout);
 		tired = FALSE;
 	}
@@ -494,8 +336,11 @@ void init() {
 		warning(CONFIG_STATE_PROBLEM);
 		states = default_states;
 	}
-	states = MIN(MAX(STATES_MIN, states), STATES_MAX);
-	states++;
+	if (states < 1) {
+		warning(STATE_AMOUNT_PROBLEM);
+		states = 1;
+	}
+	states++;//reserves space for the zero state
 
 	/*
 	Opens the put streams.
@@ -631,13 +476,16 @@ void init() {
 	*/
 	config_destroy(&config);
 
-	//---- CRAP LINE ----
+	init_record(&record);
+
+	/*
+	Injects Assembly instructions to disable the save function of the executable.
+	*/
 	bool inject = FALSE;
 	if (!inject) goto hell;
 	void * CHEESE_MAGIC = (void * )0x08090733;
 	unsigned int f = (unsigned int )&internal-(unsigned int )CHEESE_MAGIC;
 	fprintfl(note_stream, "Somehow found 0x%08x-0x%08x = 0x%08x.", (unsigned int )&internal, 0x08090733, f);
-	internal();
 	unsigned char instructions[10];//TODO document
 	instructions[0] = 0xe8;//CALL internal() 0x08090733->&internal
 	instructions[1] = (unsigned char )((f>>0x00)&0xff);
@@ -645,37 +493,38 @@ void init() {
 	instructions[3] = (unsigned char )((f>>0x10)&0xff);
 	instructions[4] = (unsigned char )((f>>0x18)&0xff);
 	instructions[5] = 0xe9;//JMP out of here
-	instructions[6] = 0xf3;
+	instructions[6] = 0xf3;//points to RET
 	instructions[7] = 0x00;
 	instructions[8] = 0x00;
 	instructions[9] = 0x00;
-	//redirects S somewhere
 	void * location = (void * )0x0809072a;//conjurations and wizardry
 	if (mprotect(PAGE(location), PAGE_SIZE(instructions), PROT_READ | PROT_WRITE | PROT_EXEC) == 0)
 		memcpy(location, instructions, sizeof (instructions));//TODO make sure it's patching the right instructions
 	else fprintfl(note_stream, ":(");
 	hell:
 
-	if (signal(SIGWINCH, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "No no resizing!");
-
 	actually_initialized = TRUE;
 
+	if (signal(SIGWINCH, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "No no resizing!");
 	if (signal(SIGCONT, continuator) == SIG_ERR) fprintfl(note_stream, "Can't catch CONT.");
+	if (signal(SIGINT, continuator) == SIG_ERR) fprintfl(note_stream, "Can't stop!");
 	if (signal(SIGTERM, terminator) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 
 	shmup(TRUE);
 	pid_t pid = fork();//returns 0 in child, process id of child in parent, -1 on error
 	if (pid == -1) exit(-1);
 	if (pid != 0) {//parent
-		shm->root = getpid();
+		shm->ppid = getpid();
 		if (signal(SIGCONT, continuator) == SIG_ERR) fprintfl(note_stream, "Can't catch CONT.");
 		struct timespec req;
 		req.tv_sec = (time_t )0;
-		req.tv_nsec = 1000000000l/16l;//extern this
-		fprintf(stderr, "Use Ctrl C to quit properly.\n");
+		req.tv_nsec = 1000000000l/fps;//extern this
+		fprintf(stderr, "The parent process seems to have fallen asleep. Use Ctrl C to wake it up.\n");
 		while (tired) {
 			nanosleep(&req, NULL);
 		}
+		fprintf(stderr, "Quitting...\n");
+		uninit(NO_PROBLEM/*_MATE*/);
 	}
 	else {//child
 		const problem_t p = shmup(FALSE);
@@ -689,6 +538,19 @@ Saves the game to memory.
 **/
 chtype ** screen;
 void save(const int state) {
+	int y, x;
+	attr_t attrs; attr_t * _attrs = &attrs;
+	short pair; short * _pair = &pair;
+	getyx(stdscr, y, x);
+	wattr_get(stdscr, _attrs, _pair, NULL);
+	screen = malloc(rows*sizeof (chtype *));
+	for (int row = 0; row < rows; row++) {
+		chtype * subscreen = malloc(cols*sizeof (chtype));
+		for (int col = 0; col < cols; col++) {
+			subscreen[col] = mvinch(row, col);
+		}
+		screen[row] = subscreen;
+	}
 	fprintfl(warning_stream, "[%06d::fork()]", (unsigned short )getpid()); fflush(stdout);
 	pid_t pid = fork();//returns 0 in child, process id of child in parent, -1 on error
 	shmup(FALSE);
@@ -703,29 +565,15 @@ void save(const int state) {
 		shm->pids[state] = getpid();
 		fprintfl(warning_stream, "[%06d::stop()]", (unsigned short )getpid()); fflush(stdout);
 
-		int y, x;
-		attr_t attrs; attr_t * _attrs = &attrs;
-		short pair; short * _pair = &pair;
-		getyx(stdscr, y, x);
-		wattr_get(stdscr, _attrs, _pair, NULL);
-		screen = malloc(rows*sizeof (chtype *));
-		for (int row = 0; row < rows; row++) {
-			chtype * subscreen = malloc(cols*sizeof (chtype));
-			for (int col = 0; col < cols; col++) {
-				subscreen[col] = mvinch(row, col);
-			}
-			screen[row] = subscreen;
-		}
-
 		//kill(getpid(), SIGSLURP);
 		struct timespec req;
 		req.tv_sec = (time_t )0;
-		req.tv_nsec = 1000000000l/16l;//extern this
+		req.tv_nsec = 1000000000l/fps;//extern this
 		while (tired) nanosleep(&req, NULL);
+		shmup(FALSE);
 
 		fprintfl(warning_stream, "[%06d::continue()]", (unsigned short )getpid()); fflush(stdout);
 
-		clear();
 		for (int row = 0; row < rows; row++) {
 			for (int col = 0; col < cols; col++) {
 				mvaddch(row, col, screen[row][col]);
@@ -735,7 +583,7 @@ void save(const int state) {
 		free(screen);
 		wattr_set(stdscr, attrs, pair, NULL);
 		wmove(stdscr, y, x);
-		refresh();
+		um_wrefresh(stdscr);
 	}
 	else {//child
 		fprintfl(warning_stream, "[%06d::born(%06d)]", (unsigned short )getpid(), (unsigned short )getppid()); fflush(stdout);
@@ -933,11 +781,11 @@ int wrefresh(WINDOW * win) { OVERLOAD
 		/*ws_x--;*/\
 		mvaddnstr(ws_y, ws_x, ws_buf, TERM_COL-ws_x);\
 		ws_x--;
-	wrefresh_ADDSTR("S: %u/%u", 4, globstate, states);
-	wrefresh_ADDSTR("D: %u", 13, (unsigned int )(current_time-previous_time));
+	wrefresh_ADDSTR("S: %u/%u", 6, globstate, states-1);
+	wrefresh_ADDSTR("D: %u", 13, (unsigned int )(current_time-record.time));
 	wrefresh_ADDSTR("R: 0x%08x", 13, harc4(ARC4_S));
 	wrefresh_ADDSTR("T: ?/%u", 13, TURNS);
-	wrefresh_ADDSTR("F: ?/%u", 13, frame_count);
+	wrefresh_ADDSTR("F: ?/%u", 13, record.count);
 	wrefresh_ADDSTR("I: %s", 9, codeins);
 
 	/*
@@ -954,6 +802,14 @@ int wrefresh(WINDOW * win) { OVERLOAD
 		}
 	}
 	mvaddnstr(21, 10, some, TERM_COL-20);
+
+	/*
+	Tries something.
+	*/
+	/*WINDOW * subwin = newwin(1, 16, 8, 8);
+	waddstr(subwin, "Hooray.");
+	um_wrefresh(subwin);
+	delwin(subwin);*/
 
 	/*
 	Restores the state of the window.
@@ -986,9 +842,9 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 			else {
 				struct timespec req;
 				bool out_of_variable_names = FALSE;
-				if (playback_frame->duration >= 16) out_of_variable_names = TRUE;
+				if (playback_frame->duration >= fps) out_of_variable_names = TRUE;
 				req.tv_sec = (time_t )(out_of_variable_names ? playback_frame->duration : 0);
-				req.tv_nsec = out_of_variable_names ? 0l : 1000000000l/16*playback_frame->duration;
+				req.tv_nsec = out_of_variable_names ? 0l : 1000000000l/fps*playback_frame->duration;
 				nanosleep(&req, NULL);
 				const int yield = playback_frame->value;
 				playback_frame = playback_frame->next;
@@ -998,10 +854,10 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 	}
 	int key = um_wgetch(win);
 	if (key == KEY_F(8)) {
-		if (frame_count == 0) {//move to playback
-			slurp();
+		if (record.count == 0) {//move to playback
+			freadp(&record, input_file);
 			playbacking = TRUE;
-			playback_frame = first_frame;
+			playback_frame = record.first;
 		}
 		else condensed = !condensed;
 		wrefresh(win);
@@ -1030,14 +886,12 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 	}
 	else if (key == KEY_F(12)) {//saves the seed frame (later S)
 		seed(current_time);//TODO fix
-		add_seed_frame(current_time);
+		add_seed_frame(&record, current_time);
 		wrefresh(win);
 		return 0;
 	}
 	else if (key == '_') {//dumps everything
-		barf();//TODO move
-		printrl();
-		printsrl();
+		fwritep(&record, output_file);//TODO move
 		return 0;
 	}
 	/*else if (key == 'Q') {//quits everything (stupid idea or implementation)
@@ -1048,22 +902,10 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 				shm->pids[index] = 0;
 			}
 		}
-		kill(shm->root, SIGTERM);
+		kill(shm->ppid, SIGTERM);
 		kill(getpid(), SIGTERM);
 		return 0;
 	}*/
-	else if (key == -12) {//a failed attempt to simulate the executable initializing the random number genrator
-		seed(current_time);
-		for (int i = 0; i < 0xffff; i++) {
-			for (int j = 0; j < 4; j++) arc4();
-			if (harc4(arc4_s) == harc4(ARC4_S)) {
-				fprintfl(note_stream, "Built the hash %d:0x%08x.", i, harc4());
-				break;
-			}
-		}
-		wrefresh(win);
-		return 0;
-	}
 	if (!was_meta && !was_colon && (key == 0x3a || key == 'w')) was_colon = key == 0x3a ? 1 : 2;//booleans are fun like that
 	else if (!was_meta && key == 0x1b) was_meta = TRUE;
 	else {
@@ -1082,10 +924,10 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		key_code(code, key);
 		strcat(codeins, code);//TODO turn this into a macro
 	}
-	unsigned int duration = 8;
-	add_key_frame(duration, key);//meta, colon and w are undisplayed but still recorded (for now)
+	unsigned char duration = fps/2;
+	add_key_frame(&record, duration, key);//meta, colon and w are undisplayed but still recorded (for now)
 	//wrefresh(win);
 	return key;
 }
 
-#endif//over 1024 is too much
+#endif

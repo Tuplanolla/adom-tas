@@ -22,11 +22,11 @@ sh:
 $(OBJ)/%.o: $(SRC)/%.c
 	$(GCC) -fpic -c -o $@ $<
 
-$(BIN)/$(NAME).so: prepare $(OBJ)/loader.o $(OBJ)/log.o $(OBJ)/adom.o
-	$(GCC) -fpic -shared -o $(BIN)/$(NAME).so $(OBJ)/loader.o $(OBJ)/log.o $(OBJ)/adom.o
+$(BIN)/$(NAME).so: prepare $(OBJ)/loader.o $(OBJ)/log.o $(OBJ)/adom.o $(OBJ)/record.o $(OBJ)/put.o
+	$(GCC) -fpic -shared -o $(BIN)/$(NAME).so $(OBJ)/loader.o $(OBJ)/log.o $(OBJ)/adom.o $(OBJ)/record.o $(OBJ)/put.o
 
-$(BIN)/$(NAME): prepare $(OBJ)/wrapper.o $(OBJ)/log.o $(OBJ)/adom.o
-	$(GCC) -lncurses -o $(BIN)/$(NAME) $(OBJ)/wrapper.o $(OBJ)/log.o $(OBJ)/adom.o
+$(BIN)/$(NAME): prepare $(OBJ)/launcher.o $(OBJ)/log.o $(OBJ)/adom.o
+	$(GCC) -lncurses -o $(BIN)/$(NAME) $(OBJ)/launcher.o $(OBJ)/log.o $(OBJ)/adom.o
 
 run: all
 	$(BIN)/$(NAME)

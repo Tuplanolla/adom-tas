@@ -1,8 +1,8 @@
 /**
 Launches the executable.
 **/
-#ifndef WRAPPER_C
-#define WRAPPER_C
+#ifndef LAUNCHER_C
+#define LAUNCHER_C
 
 #include <stdlib.h>
 #include <stdio.h>

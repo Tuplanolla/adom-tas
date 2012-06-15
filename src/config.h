@@ -40,22 +40,16 @@ const char * const default_config_str =
 	;
 
 /**
-Sets the minimum and maximum amount of save states.
-**/
-#define STATES_MIN 1
-#define STATES_MAX 256
+Sets the frame rate.
 
-/**
-Sets the default locations of (all kinds of things).
+The shortest and longest possible frames are 1/16 and 16 seconds respectively.
 **/
-#define TEMPORARY_HOME "/home/user"
-#define TEMPORARY_ACTUAL_PATH TEMPORARY_HOME"/adom-tas/actual_state.log"
-#define TEMPORARY_SIM_PATH TEMPORARY_HOME"/adom-tas/simulated_state.log"
+const unsigned char fps = 16;//sqrt(256)
 
 /**
 Sets the size of the terminal.
 **/
 #define TERM_ROW 25
-#define TERM_COL 80
+#define TERM_COL 77
 
 #endif

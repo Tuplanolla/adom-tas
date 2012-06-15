@@ -43,6 +43,7 @@ enum problem_e {
 	CONFIG_ROW_PROBLEM,
 	CONFIG_COL_PROBLEM,
 	CONFIG_STATE_PROBLEM,
+	STATE_AMOUNT_PROBLEM,
 	CONFIG_INPUT_PROBLEM,
 	INPUT_FIND_PROBLEM,
 	INPUT_ACCESS_PROBLEM,
@@ -104,6 +105,7 @@ inline char * problem_message(const problem_t code) {
 	if (code == CONFIG_ROW_PROBLEM) return "Finding the height of the terminal \"rows\" in the configuration file failed. The default height will be assumed.";
 	if (code == CONFIG_COL_PROBLEM) return "Finding the width of the terminal \"cols\" in the configuration file failed. The default width will be assumed.";
 	if (code == CONFIG_STATE_PROBLEM) return "Finding the amount of save states \"states\" in the configuration file failed. The default amount will be assumed.";
+	if (code == STATE_AMOUNT_PROBLEM) return "The amount of save states must be positive. The minimum amount will be assumed.";
 	if (code == CONFIG_INPUT_PROBLEM) return "Finding the location of the input file \"input\" in the configuration file failed.";
 	if (code == INPUT_FIND_PROBLEM) return "Finding the input file failed.";
 	if (code == INPUT_ACCESS_PROBLEM) return "Accessing the input file failed.";

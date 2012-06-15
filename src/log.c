@@ -10,6 +10,7 @@ Logs events.
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 #include "problem.h"
 #include "log.h"
@@ -19,7 +20,7 @@ FILE * warning_stream;
 FILE * note_stream;
 FILE * call_stream;
 
-const char * const problem_fmt = "%s: %s";
+const char * const separator = " - ";
 const char * const error_str = "Error";
 const char * const warning_str = "Warning";
 const char * const note_str = "Note";
@@ -43,7 +44,7 @@ int vfprintfl(FILE * stream, const char * fmt, va_list ap) {
 	const time_t timep = tv.tv_sec;
 	struct tm tm;
 	localtime_r(&timep, &tm);
-	result += fprintf(stream, "%02d:%02d:%02d - ", tm.tm_hour, tm.tm_min, tm.tm_sec);
+	result += fprintf(stream, "%02u:%02u:%02u%s#%u%s", tm.tm_hour, tm.tm_min, tm.tm_sec, separator, getpid(), separator);
 	result += vfprintf(stream, fmt, ap);
 	result += fprintf(stream, "\n");
 	fflush(stream);
@@ -74,7 +75,7 @@ Logs an error message and returns its error code.
 **/
 problem_t error(const problem_t code) {
 	if (error_stream != NULL) {
-		fprintfl(error_stream, problem_fmt, error_str, problem_message(code));
+		fprintfl(error_stream, "%s%s%s", error_str, separator, problem_message(code));
 	}
 	return code;
 }
@@ -87,7 +88,7 @@ Logs a warning message and returns its error code.
 **/
 problem_t warning(const problem_t code) {
 	if (warning_stream != NULL) {
-		fprintfl(warning_stream, problem_fmt, warning_str, problem_message(code));
+		fprintfl(warning_stream, "%s%s%s", warning_str, separator, problem_message(code));
 	}
 	return code;
 }
@@ -100,24 +101,25 @@ Logs a note message and returns its error code.
 **/
 problem_t note(const problem_t code) {
 	if (note_stream != NULL) {
-		fprintfl(note_stream, problem_fmt, note_str, problem_message(code));
+		fprintfl(note_stream, "%s%s%s", note_str, separator, problem_message(code));
 	}
 	return code;
 }
 
 /**
-Logs a call.
+Logs a call and returns its error code.
 
 @param fmt The function name.
 @param ... The function parameters.
+@return The error code.
 **/
 problem_t call(const char * fmt, ...) {
 	if (call_stream != NULL) {
 		va_list	ap;
 		va_start(ap, fmt);
-		size_t size = strlen(call_str)+strlen(problem_fmt)+strlen(fmt)+1;
+		const size_t size = strlen(call_str)+strlen(separator)+strlen(fmt)+1;
 		char * call_fmt = malloc(size);
-		snprintf(call_fmt, size, problem_fmt, call_str, fmt);
+		snprintf(call_fmt, size, "%s%s%s", call_str, separator, fmt);
 		vfprintfl(call_stream, call_fmt, ap);
 		free(call_fmt);
 		va_end(ap);

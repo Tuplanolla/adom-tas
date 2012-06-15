@@ -14,7 +14,7 @@ Lists the boolean values.
 #undef bool
 enum bool_e {
 	FALSE,
-	TRUE,
+	TRUE
 };
 typedef enum bool_e bool;
 
