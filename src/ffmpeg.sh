@@ -1,8 +1,27 @@
-#!/bin/sh
-#ffmpeg.sh -e bin/adom-tas -o output.avi
-#ffmpeg.sh -e bin/adom-tas -r 32 -m 16 -s sd -o output.avi
-usage() {
-	echo "ffmpeg.sh [-h] [-e command] [-r rate] [-m multiple] [-s method] [-o output]
+#! /bin/sh
+
+#Sets the location of logs.
+NOWHERE="/dev/null"
+
+#Lists the error codes.
+NO_PROBLEM="0"
+USAGE_PROBLEM="1"
+OPT_PROBLEM="2"
+COMMAND_PROBLEM="3"
+LIBRARY_PROBLEM="4"
+
+#Parses the command-line options.
+COMMAND=""
+RATE="16"
+QUALITY="5"
+MULTIPLE="2"
+SIZE="cd"
+OUTPUT="output.avi"
+while getopts "he:r:q:m:f:o:" "OPT"
+do
+	case "$OPT" in
+		"h")
+			echo "ffmpeg.sh [-h] -e command [-r rate] [-m multiple] [-s method] [-o output]
 
 -h     Prints this help.
 -e     Executes a command after starting the recording.
@@ -20,153 +39,157 @@ usage() {
        Contracts up and left with the upper left corner fixed.
    pu  Rounds up and pads the intermediate region with black borders.
        Expands equally in all directions with the center fixed.
-       Requires libavfilter to be supported.
+       Requires libavfilter support.
    pd  Rounds down and crops the intermediate region.
        Contracts equally in all directions with the center fixed.
-       Requires libavfilter to be supported.
+       Requires libavfilter support.
    su  Rounds up and scales the intermediate region.
        Expands equally in all directions with the center fixed.
-       Requires libavfilter to be supported.
+       Requires libavfilter support.
    sd  Rounds down and scales the intermediate region.
        Contracts equally in all directions with the center fixed.
-       Requires libavfilter to be supported.
+       Requires libavfilter support.
 -o     Determines the output file.
        The default value is \"output.avi\"."
-}
-XWININFO=$(command -v "xwininfo")
-if [ -z $XWININFO ]
-then
-	echo "Finding \"xwininfo\" failed."
-	exit 4
-fi
-WININFO=$(xwininfo -id "$WINDOWID")
-WIDTH=$(echo "$WININFO" | grep "Width" | cut -d ":" -f 2 | tr -d " ")
-HEIGHT=$(echo "$WININFO" | grep "Height" | cut -d ":" -f 2 | tr -d " ")
-X=$(echo "$WININFO" | grep "Absolute[^:]\+X" | cut -d ":" -f 2 | tr -d " ")
-Y=$(echo "$WININFO" | grep "Absolute[^:]\+Y" | cut -d ":" -f 2 | tr -d " ")
-FFMPEG=$(command -v "ffmpeg")
-if [ -z $FFMPEG ]
-then
-	echo "Finding \"ffmpeg\" failed."
-	exit 4
-fi
-COMMAND=""
-RATE="16"
-QUALITY="5"
-MULTIPLE="2"
-SIZE="cd"
-OUTPUT="output.avi"
-while getopts "he:r:q:m:f:o:" OPT
-do
-	case $OPT in
-		h)
-			usage
-			exit 1
+			exit "$USAGE_PROBLEM"
 			;;
-		e)
+		"e")
 			COMMAND="$OPTARG"
 			;;
-		r)
+		"r")
 			RATE="$OPTARG"
 			;;
-		q)
+		"q")
 			QUALITY="$OPTARG"
 			;;
-		m)
+		"m")
 			MULTIPLE="$OPTARG"
 			;;
-		f)
+		"f")
 			SIZE="$OPTARG"
 			;;
-		o)
+		"o")
 			OUTPUT="$OPTARG"
 			;;
 		*)
 			echo "Parsing the option \"$OPT\" failed."
-			exit 2
+			exit "$OPT_PROBLEM"
 	esac
 done
-FILTERS=$(ffmpeg -filters 2> "/dev/null")
+
+#Finds the dimensions of the window.
+XWININFO=`command -v "xwininfo"`
+if test -z "$XWININFO"
+then
+	echo "Finding \"xwininfo\" failed."
+	exit "$COMMAND_PROBLEM"
+fi
+WININFO=`"$XWININFO" -id "$WINDOWID"`
+WIDTH=`echo "$WININFO" | grep "Width" | cut -d ":" -f "2" | tr -d " "`
+HEIGHT=`echo "$WININFO" | grep "Height" | cut -d ":" -f "2" | tr -d " "`
+X=`echo "$WININFO" | grep "Absolute[^:]\+X" | cut -d ":" -f "2" | tr -d " "`
+Y=`echo "$WININFO" | grep "Absolute[^:]\+Y" | cut -d ":" -f "2" | tr -d " "`
+
+#Checks the existence of the recorder.
+FFMPEG=`command -v "ffmpeg"`
+if test -z "$FFMPEG"
+then
+	echo "Finding \"ffmpeg\" failed."
+	exit "$COMMAND_PROBLEM"
+fi
+
+#Starts the recording.
+FILTERS=`"$FFMPEG" -filters 2> "$NOWHERE"`
 FILTER=""
-case $SIZE in
-	cu)
-		WIDTH=$(expr "$WIDTH" "+" "(" "$MULTIPLE" "-" "$WIDTH" "%" "$MULTIPLE" ")")
-		HEIGHT=$(expr "$HEIGHT" "+" "(" "$MULTIPLE" "-" "$HEIGHT" "%" "$MULTIPLE" ")")
+case "$SIZE" in
+	"cu")
+		WIDTH=`expr "$WIDTH" "+" "(" "$MULTIPLE" "-" "$WIDTH" "%" "$MULTIPLE" ")"`
+		HEIGHT=`expr "$HEIGHT" "+" "(" "$MULTIPLE" "-" "$HEIGHT" "%" "$MULTIPLE" ")"`
 		;;
-	cd)
-		WIDTH=$(expr "$WIDTH" "-" "$WIDTH" "%" "$MULTIPLE")
-		HEIGHT=$(expr "$HEIGHT" "-" "$HEIGHT" "%" "$MULTIPLE")
+	"cd")
+		WIDTH=`expr "$WIDTH" "-" "$WIDTH" "%" "$MULTIPLE"`
+		HEIGHT=`expr "$HEIGHT" "-" "$HEIGHT" "%" "$MULTIPLE"`
 		;;
-	pu)
-		PAD=$(echo "$FILTERS" | grep "^pad\s")
-		if [ -z $PAD ]
+	"pu")
+		PAD=`echo "$FILTERS" | grep "^pad\s"`
+		if test -z "$PAD"
 		then
 			echo "Finding the pad filter failed."
-			exit 3
+			exit "$LIBRARY_PROBLEM"
 		fi
 		FILTER="pad=iw+($MULTIPLE-mod(iw\,$MULTIPLE)):ih+($MULTIPLE-mod(ih\,$MULTIPLE)):(16-mod(iw\,$MULTIPLE))/2:($MULTIPLE-mod(ih\,$MULTIPLE))/2:black"
 		;;
-	pd)
-		CROP=$(echo "$FILTERS" | grep "^crop\s")
-		if [ -z $CROP ]
+	"pd")
+		CROP=`echo "$FILTERS" | grep "^crop\s"`
+		if test -z "$CROP"
 		then
 			echo "Finding the crop filter failed."
-			exit 3
+			exit "$LIBRARY_PROBLEM"
 		fi
 		FILTER="crop=iw-mod(iw\,$MULTIPLE):ih-mod(ih\,$MULTIPLE):mod(iw\,$MULTIPLE)/2:mod(ih\,$MULTIPLE)/2:black"
 		;;
-	su)
-		SCALE=$(echo "$FILTERS" | grep "^scale\s")
-		if [ -z $SCALE ]
+	"su")
+		SCALE=`echo "$FILTERS" | grep "^scale\s"`
+		if test -z "$SCALE"
 		then
 			echo "Finding the scale filter failed."
-			exit 3
+			exit "$LIBRARY_PROBLEM"
 		fi
 		FILTER="scale=iw+($MULTIPLE-mod(iw\,$MULTIPLE)):ih+(16-mod(ih\,$MULTIPLE))"
 		;;
-	sd)
-		SCALE=$(echo "$FILTERS" | grep "^scale\s")
-		if [ -z $SCALE ]
+	"sd")
+		SCALE=`echo "$FILTERS" | grep "^scale\s"`
+		if test -z "$SCALE"
 		then
 			echo "Finding the scale filter failed."
-			exit 3
+			exit "$LIBRARY_PROBLEM"
 		fi
 		FILTER="scale=iw-mod(iw\,$MULTIPLE):ih-mod(ih\,$MULTIPLE)"
 		;;
 	*)
 		echo "Parsing the option \"$SIZE\" failed."
-		exit 2
+		exit "$OPT_PROBLEM"
 esac
+
+#Starts the recording.
 echo "Starting \"ffmpeg\"..."
-if [ -z "$FILTER" ]
+if test -z "$FILTER"
 then
-	ffmpeg -y -f x11grab -an -r "$RATE" -s "$WIDTH"x"$HEIGHT" -i "$DISPLAY"+"$X","$Y" -q:v "$QUALITY" "$OUTPUT" &> "/dev/null" &
+	"$FFMPEG" -y -f "x11grab" -an -r "$RATE" -s "$WIDTH"x"$HEIGHT" -i "$DISPLAY"+"$X","$Y" -q:v "$QUALITY" "$OUTPUT" &> "$NOWHERE" &
 else
-	ffmpeg -y -f x11grab -an -r "$RATE" -s "$WIDTH"x"$HEIGHT" -i "$DISPLAY"+"$X","$Y" -q:v "$QUALITY" -vf "$FILTER" "$OUTPUT" &> "/dev/null" &
+	"$FFMPEG" -y -f "x11grab" -an -r "$RATE" -s "$WIDTH"x"$HEIGHT" -i "$DISPLAY"+"$X","$Y" -q:v "$QUALITY" -vf "$FILTER" "$OUTPUT" &> "$NOWHERE" &
 fi
 FFMPEG_PID="$!"
 echo "Starting \"$COMMAND\"..."
 eval "$COMMAND" &
 COMMAND_PID="$!"
+
+#Monitors the recording.
 while true
 do
-	if ! kill -0 "$FFMPEG_PID" &> "/dev/null"
+	sleep 1
+	if ! kill -0 "$FFMPEG_PID" &> "$NOWHERE"
 	then
 		echo "Stopping since \"ffmpeg\" exited..."
 		break
 	fi
-	if ! kill -0 "$COMMAND_PID" &> "/dev/null"
+	if ! kill -0 "$COMMAND_PID" &> "$NOWHERE"
 	then
 		echo "Stopping since \"$COMMAND\" exited..."
 		break
 	fi
-	sleep 1
 done
-if kill -0 "$FFMPEG_PID" &> "/dev/null"
+
+#Stops the recording.
+if kill -0 "$FFMPEG_PID" &> "$NOWHERE"
 then
+	echo "Terminating \"ffmpeg\"..."
 	kill -15 "$FFMPEG_PID"
 fi
-if kill -0 "$COMMAND_PID" &> "/dev/null"
+if kill -0 "$COMMAND_PID" &> "$NOWHERE"
 then
+	echo "Killing \"$COMMAND\"..."
 	kill -9 "$COMMAND_PID"
 fi
+echo "...done!"
+exit "$NO_PROBLEM"

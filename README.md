@@ -62,13 +62,13 @@ If you want to encode video files you'll need extra packages:
 
 Recording is managed by scripts (the arguments are command to run and the output file):
 
-	[user@arch ~]$ bin/ttyrec.sh bin/adom-tas output.tty
-	[user@arch ~]$ bin/ffmpeg.sh "ttyplay output.tty" output.avi
+	[user@arch adom-tas]$ bin/ttyrec.sh -e bin/adom-tas -o output.tty
+	[user@arch adom-tas]$ bin/ffmpeg.sh -e bin/adom-tas -o output.avi
 
-Encoding can be done both unfiltered and filtered:
+More options can be found by using the help switch:
 
-	[user@arch ~]$ bin/ffmpeg.sh bin/adom-tas output.avi
-	[user@arch ~]$ bin/ffmpegf.sh bin/adom-tas output.avi
+	[user@arch adom-tas]$ bin/ffmpeg.sh -h
+	[user@arch adom-tas]$ bin/ffmpeg.sh -e bin/adom-tas -r 32 -m 16 -s sd -o output.avi
 
 Installing the whole thing from the binaries will eventually be possible:
 
