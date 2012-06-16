@@ -21,7 +21,6 @@ Launches the executable.
 #include "put.h"
 #include "config.h"
 
-char * exec_file;
 FILE * error_stream;
 FILE * warning_stream;
 FILE * note_stream;
@@ -96,8 +95,9 @@ int main(int argc, char ** argv) {
 	The configuration file is first searched,
 	the existence of the file is then checked,
 	the type of the file is then checked,
-	the special permissions of the file are then checked and
-	the size of the file is finally verified.
+	the special permissions of the file are then checked,
+	the size of the file is then verified and
+	the hash code of the file is finally verified.
 	*/
 	const char * exec_path;
 	if (config_lookup_string(&config, "exec", &exec_path) == 0) {
@@ -112,10 +112,27 @@ int main(int argc, char ** argv) {
 	if ((buf.st_mode & (S_ISUID | S_ISGID)) != 0) {
 		return error(EXEC_ACCESS_PROBLEM);
 	}
-	if (buf.st_size != file_size) {
-		return error(EXEC_SIZE_PROBLEM);
+	{
+		const size_t exec_size = buf.st_size;
+		if (exec_size != file_size) {
+			return error(EXEC_SIZE_PROBLEM);
+		}
+		FILE * stream = fopen(exec_path, "rb");
+		if (stream == NULL) {
+			return error(EXEC_READ_PROBLEM);
+		}
+		unsigned char * ptr = malloc(exec_size);
+		const size_t size = fread(ptr, 1, exec_size, stream);
+		if (size != exec_size) {
+			return error(EXEC_READ_PROBLEM);
+		}
+		if (hash(ptr, exec_size) != file_hash) {
+			return error(EXEC_HASH_PROBLEM);
+		}
+		free(ptr);
+		fclose(stream);
 	}
-	exec_file = malloc(strlen(exec_path)+1);
+	char * exec_file = malloc(strlen(exec_path)+1);
 	strcpy(exec_file, exec_path);
 
 	/*
@@ -181,7 +198,6 @@ int main(int argc, char ** argv) {
 	Unloads the configuration file.
 
 	The memory allocated by the <code>config_lookup_</code> calls is automatically deallocated.
-	However the memory allocated for <code>exec_file</code> is leaked.
 	*/
 	config_destroy(&config);
 
@@ -198,6 +214,12 @@ int main(int argc, char ** argv) {
 	*/
 	argc--; argv++;//removes the first argument
 	if (execvp(exec_file, argv) == 0) return NO_PROBLEM;//never returns
+
+	/*
+	The memory allocated for <code>exec_file</code> is leaked if <code>execvp</code> is called successfully.
+	*/
+	free(exec_file);
+
 	return error(EXEC_PROBLEM);
 }
 

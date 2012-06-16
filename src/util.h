@@ -5,6 +5,7 @@ Provides general-purpose utilities.
 #define UTIL_H
 
 #include <string.h>
+#include <math.h>
 
 /**
 Lists the boolean values.
@@ -37,14 +38,14 @@ Returns the bits of a byte.
 **/
 #undef BITS
 #define BITS(byte) \
-	byte&0b10000000 ? 1 : 0,\
-	byte&0b01000000 ? 1 : 0,\
-	byte&0b00100000 ? 1 : 0,\
-	byte&0b00010000 ? 1 : 0,\
-	byte&0b00001000 ? 1 : 0,\
-	byte&0b00000100 ? 1 : 0,\
-	byte&0b00000010 ? 1 : 0,\
-	byte&0b00000001 ? 1 : 0
+	byte & 0b10000000 ? 1 : 0,\
+	byte & 0b01000000 ? 1 : 0,\
+	byte & 0b00100000 ? 1 : 0,\
+	byte & 0b00010000 ? 1 : 0,\
+	byte & 0b00001000 ? 1 : 0,\
+	byte & 0b00000100 ? 1 : 0,\
+	byte & 0b00000010 ? 1 : 0,\
+	byte & 0b00000001 ? 1 : 0
 
 /*
 Returns the smaller of two numbers.
@@ -98,6 +99,42 @@ Swaps two variables.
 		memcpy(&y, &x, sizeof (x));\
 		memcpy(&x, SWAP_z, sizeof (x));\
 	}
+
+/**
+Returns the string length of an integer.
+
+@param x The integer.
+@return The string length.
+**/
+inline size_t intlen(int x) {
+	size_t len = 1;
+	if (x < 0) {
+		len++;
+		x = -x;
+	}
+	while (x > 9) {
+		len++;
+		x /= 10;
+	}
+	return len;
+}
+
+/**
+Returns the hash code of a byte array.
+
+@param array The byte array.
+@param size The length of the byte array.
+@return The hash code.
+**/
+inline int hash(const unsigned char * array, const size_t size) {
+	const int prime = 31;
+	int result = 1;
+	for (size_t index = 0; index < size; index++) {
+		result = prime*result+(int )array[index];
+		index++;
+	}
+	return result;
+}
 
 /**
 Converts a string to a standard stream.

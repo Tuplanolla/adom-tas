@@ -8,6 +8,7 @@ Modifies the executable.
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <math.h>
 #include <time.h>
 #include <unistd.h>
 #include <dlfcn.h>
@@ -34,7 +35,7 @@ int cols;
 int states;
 char * shm_file;
 char * input_file;
-char * output_file;
+char ** output_files;
 FILE * error_stream;
 FILE * warning_stream;
 FILE * note_stream;
@@ -167,7 +168,7 @@ void uninit(problem_t code) {
 	*/
 	if (shm_file != NULL) free(shm_file);
 	if (input_file != NULL) free(input_file);
-	if (output_file != NULL) free(output_file);
+	if (output_files[0] != NULL) free(output_files[0]);
 
 	/*
 	Closes the log streams.
@@ -345,12 +346,19 @@ void init() {
 	/*
 	Opens the put streams.
 
-	The configuration file is first parsed and
-	the existence of the put file is then checked.
+	The configuration file is first parsed,
+	the existence of the put file is then checked and
+	the index character is then located,
+	if the index character is not found
+		the file is used only for the currently active save state,
+	otherwise
+		the index character is first replaced with the corresponding save state number and
+		the file is then used for all save states.
 	*/
 	const char * input_path;
 	if (config_lookup_string(&config, "input", &input_path) == 0) {
 		warning(CONFIG_INPUT_PROBLEM);
+		input_path = default_input_name;
 	}
 	else {
 		if (stat(input_path, &buf) == 0) {
@@ -360,6 +368,7 @@ void init() {
 	const char * output_path;
 	if (config_lookup_string(&config, "output", &output_path) == 0) {
 		warning(CONFIG_OUTPUT_PROBLEM);
+		output_path = default_output_name;
 	}
 	else {
 		if (stat(output_path, &buf) == 0) {
@@ -368,8 +377,28 @@ void init() {
 	}
 	input_file = malloc(strlen(input_path)+1);
 	strcpy(input_file, input_path);
-	output_file = malloc(strlen(output_path)+1);
-	strcpy(output_file, output_path);
+	output_files = malloc(states*sizeof (*output_files));
+	const char * output_path_end = strchr(output_path, default_replacement);
+	if (strrchr(output_path, default_replacement) != output_path_end) {
+		warning(OUTPUT_REPLACEMENT_PROBLEM);
+	}
+	if (output_path_end == NULL) {
+		output_files[0] = malloc(strlen(output_path)+1);
+		strcpy(output_files[0], output_path);
+		for (unsigned int index = 1; index < states; index++) {
+			output_files[index] = NULL;
+		}
+	}
+	else {
+		for (unsigned int index = 0; index < states; index++) {
+			const size_t end_distance = output_path_end-output_path;
+			const size_t length = intlen(index);
+			const size_t size = strlen(output_path)-1+length+1;
+			output_files[index] = malloc(size);
+			strncpy(output_files[index], output_path, end_distance);
+			snprintf(output_files[index]+end_distance, size-end_distance, "%u%s", index, output_path_end+1);
+		}
+	}
 
 	/*
 	Opens the log streams.
@@ -783,7 +812,7 @@ int wrefresh(WINDOW * win) { OVERLOAD
 		ws_x--;
 	wrefresh_ADDSTR("S: %u/%u", 6, globstate, states-1);
 	wrefresh_ADDSTR("D: %u", 13, (unsigned int )(current_time-record.time));
-	wrefresh_ADDSTR("R: 0x%08x", 13, harc4(ARC4_S));
+	wrefresh_ADDSTR("R: 0x%08x", 13, hash(ARC4_S, 0x100));
 	wrefresh_ADDSTR("T: ?/%u", 13, TURNS);
 	wrefresh_ADDSTR("F: ?/%u", 13, record.count);
 	wrefresh_ADDSTR("I: %s", 9, codeins);
@@ -885,13 +914,13 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		return 0;
 	}
 	else if (key == KEY_F(12)) {//saves the seed frame (later S)
-		seed(current_time);//TODO fix
+		seed(current_time);
 		add_seed_frame(&record, current_time);
 		wrefresh(win);
 		return 0;
 	}
 	else if (key == '_') {//dumps everything
-		fwritep(&record, output_file);//TODO move
+		fwritep(&record, output_files[0]);//TODO move
 		return 0;
 	}
 	/*else if (key == 'Q') {//quits everything (stupid idea or implementation)

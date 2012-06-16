@@ -341,8 +341,8 @@ Checklist
 		[X] Implement save state selector
 		[X] Implement fast save (memory-memory)
 		[X] Implement fast load (memory-memory)
-		[ ] Implement slow save (memory-file)
-		[ ] Implement slow load (file-memory)
+		[X] Implement slow save (memory-file)
+		[X] Implement slow load (file-memory)
 		[X] Make processes independent
 		[ ] Refine sloppy implementations
 	[X] Implement recording tools
@@ -373,6 +373,7 @@ Checklist
 		[X] Refine sloppy implementations
 	[ ] Document
 		[X] Documentation
+		[ ] Project
 		[ ] Executable
 		[ ] Emulation tools
 		[ ] Recording tools

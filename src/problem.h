@@ -23,6 +23,8 @@ enum problem_e {
 	EXEC_TYPE_PROBLEM,
 	EXEC_ACCESS_PROBLEM,
 	EXEC_SIZE_PROBLEM,
+	EXEC_READ_PROBLEM,
+	EXEC_HASH_PROBLEM,
 	CONFIG_DATA_PROBLEM,
 	DATA_FIND_PROBLEM,
 	VERSION_FIND_PROBLEM,
@@ -49,6 +51,7 @@ enum problem_e {
 	INPUT_ACCESS_PROBLEM,
 	CONFIG_OUTPUT_PROBLEM,
 	OUTPUT_OVERWRITE_PROBLEM,
+	OUTPUT_REPLACEMENT_PROBLEM,
 	OUTPUT_ACCESS_PROBLEM,
 	CONFIG_ERROR_LOG_PROBLEM,
 	ERROR_LOG_OVERWRITE_PROBLEM,
@@ -85,6 +88,8 @@ inline char * problem_message(const problem_t code) {
 	if (code == EXEC_TYPE_PROBLEM) return "Ensuring the executable is a file failed.";
 	if (code == EXEC_ACCESS_PROBLEM) return "Accessing the executable failed.";
 	if (code == EXEC_SIZE_PROBLEM) return "Verifying the size of the executable failed.";
+	if (code == EXEC_READ_PROBLEM) return "Reading the executable failed.";
+	if (code == EXEC_HASH_PROBLEM) return "Verifying the hash code of the executable failed.";
 	if (code == CONFIG_DATA_PROBLEM) return "Finding the location of the executable's data \"data\" in the configuration file failed.";
 	if (code == DATA_FIND_PROBLEM) return "Finding the executable's data failed.";
 	if (code == VERSION_FIND_PROBLEM) return "Finding the version of the executable failed.";
@@ -106,11 +111,12 @@ inline char * problem_message(const problem_t code) {
 	if (code == CONFIG_COL_PROBLEM) return "Finding the width of the terminal \"cols\" in the configuration file failed. The default width will be assumed.";
 	if (code == CONFIG_STATE_PROBLEM) return "Finding the amount of save states \"states\" in the configuration file failed. The default amount will be assumed.";
 	if (code == STATE_AMOUNT_PROBLEM) return "The amount of save states must be positive. The minimum amount will be assumed.";
-	if (code == CONFIG_INPUT_PROBLEM) return "Finding the location of the input file \"input\" in the configuration file failed.";
+	if (code == CONFIG_INPUT_PROBLEM) return "Finding the location of the input file \"input\" in the configuration file failed. The default location will be assumed.";
 	if (code == INPUT_FIND_PROBLEM) return "Finding the input file failed.";
 	if (code == INPUT_ACCESS_PROBLEM) return "Accessing the input file failed.";
-	if (code == CONFIG_OUTPUT_PROBLEM) return "Finding the location of the output file \"output\" in the configuration file failed.";
+	if (code == CONFIG_OUTPUT_PROBLEM) return "Finding the location of the output file \"output\" in the configuration file failed. The default location will be assumed.";
 	if (code == OUTPUT_OVERWRITE_PROBLEM) return "The output file already exists and may be overwritten.";
+	if (code == OUTPUT_REPLACEMENT_PROBLEM) return "The location of the output file contains more than one replacement characters. Only the first one will be replaced.";
 	if (code == OUTPUT_ACCESS_PROBLEM) return "Accessing the output file failed.";
 	if (code == CONFIG_ERROR_LOG_PROBLEM) return "Finding the location of the error log \"errors\" in the configuration file failed. Errors will be logged to the standard error stream \"stderr\" instead.";
 	if (code == ERROR_LOG_OVERWRITE_PROBLEM) return "The error log already exists and will be overwritten.";

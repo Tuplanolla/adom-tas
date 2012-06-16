@@ -30,23 +30,6 @@ The second iterator j.
 unsigned char arc4_j = 0x00;
 
 /**
-Returns the hash of a state.
-
-@param s The state S.
-@return The hash h.
-**/
-int harc4(unsigned char * s) {
-	const int prime = 0x0000001f;
-	int result = 0x00000001;
-	unsigned char i = 0x00;
-	do {
-		result = prime*result+(int )s[i];
-		i++;
-	} while(i != 0x00);
-	return result;
-}
-
-/**
 Seeds the current state.
 
 @param seed The seed k to seed the state S with.
