@@ -110,7 +110,7 @@ int main(int argc, char ** argv) {
 		return error(EXEC_TYPE_PROBLEM);
 	}
 	if ((buf.st_mode & (S_ISUID | S_ISGID)) != 0) {
-		return error(EXEC_ACCESS_PROBLEM);
+		return error(EXEC_ACCESS_PROBLEM);//->PERM
 	}
 	{
 		const size_t exec_size = buf.st_size;
@@ -119,7 +119,7 @@ int main(int argc, char ** argv) {
 		}
 		FILE * stream = fopen(exec_path, "rb");
 		if (stream == NULL) {
-			return error(EXEC_READ_PROBLEM);
+			return error(EXEC_READ_PROBLEM);//->ACCESS
 		}
 		unsigned char * ptr = malloc(exec_size);
 		const size_t size = fread(ptr, 1, exec_size, stream);

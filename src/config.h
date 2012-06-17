@@ -19,9 +19,10 @@ const char default_replacement = '#';
 const int default_rows = 25;
 const int default_cols = 77;
 const int default_states = 9;
+const char * const default_project_name = "adom-tas";
 const char * const default_input_name = "input.tas";
 const char * const default_output_name = "output.tas";
-const char * const default_shm_name = "adom-tas";
+const char * const default_shm_name = "adom-tas.shm";
 const char * const default_config_name = "adom-tas.cfg";
 const char * const default_config_str =
 		"#required\n"
@@ -31,7 +32,8 @@ const char * const default_config_str =
 		"libncurses = \"/usr/lib/libncurses.so.5\"\n"
 		"ld_preload = \"/home/user/adom-tas/bin/adom-tas.so\"\n"
 		"#optional\n"
-		"shm        = /*/dev/shm*/\"/adom-tas\"//deprecated\n"
+		"index      = \"#\"\n"
+		"shm        = \"adom-tas.shm\"\n"
 		"input      = \"input.tas\"\n"
 		"output     = \"output.#.tas\"\n"
 		"error      = \"/var/log/adom-tas.log\"\n"

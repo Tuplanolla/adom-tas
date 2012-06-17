@@ -17,6 +17,8 @@ Modifies the executable.
 #include <sys/ioctl.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
 #include <sys/types.h>
 
 #include <curses.h>
@@ -104,8 +106,6 @@ The contents come after the pointers:
                       `------------------->--------------------´
 </pre>
 
-It might be smart to use a shared memory <i>segment</i> instead.
-
 @var ppid The process identifier of the parent process.
 @var pids A pointer to the process identifiers of the child processes.
 @var screens A pointer to the screens of the child processes.
@@ -116,36 +116,9 @@ struct shm_s {
 	chtype ** scrs;
 };
 typedef struct shm_s shm_t;
-int shm_fd;
+int shmid;
+key_t key;
 shm_t * shm;
-problem_t shmup(const bool first) {
-	shm_fd = shm_open(shm_file, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-	if (shm_fd < 0) {
-		return error(SHM_OPEN_PROBLEM);
-	}
-	const size_t size = sizeof (*shm)+states*sizeof (*shm->pids)+states*rows*cols*sizeof (**shm->scrs);
-	if (ftruncate(shm_fd, size) != 0) {
-		return error(SHM_TRUNCATE_PROBLEM);
-	}
-	shm = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_SHARED, shm_fd, 0);
-	if (shm < 0) {
-		return error(SHM_MAP_PROBLEM);
-	}
-	shm->pids = (int * )((int )shm+sizeof (*shm));
-	shm->scrs = (chtype ** )((int )shm+sizeof (*shm)+states*sizeof (*shm->pids));
-	if (first) {
-		shm->ppid = 0;
-		for (int index = 0; index < states; index++) {
-			shm->pids[index] = 0;
-		}
-	}
-	return NO_PROBLEM;
-}
-problem_t shmdown(const bool last) {
-	munmap(shm, sizeof (shm_t));
-	if (last) close(shm_fd);
-	return NO_PROBLEM;
-}
 
 /**
 Catches signals or something.
@@ -160,15 +133,7 @@ Uninitializes this process.
 Contains unnecessary checks.
 **/
 void uninit(problem_t code) {
-	if (getpid() == shm->ppid) shmdown(TRUE);
-	else shmdown(FALSE);
-
-	/*
-	Deallocates the file paths.
-	*/
-	if (shm_file != NULL) free(shm_file);
-	if (input_file != NULL) free(input_file);
-	if (output_files[0] != NULL) free(output_files[0]);
+	//shmdetach();
 
 	/*
 	Closes the log streams.
@@ -184,12 +149,26 @@ void uninit(problem_t code) {
 	exit(code);
 }
 
+void shmattach() {//these things make the best function names
+	const size_t size = sizeof (*shm)+states*sizeof (*shm->pids)+states*rows*cols*sizeof (**shm->scrs);
+	shmid = shmget(key, size, SHM_R | SHM_W);
+	if (shmid == -1) {
+		uninit(error(NO_PROBLEM));//SHM_GET_ERROR
+	}
+	shm = shmat(shmid, NULL, 0);
+	if (shm == (void * )-1) {
+		uninit(error(NO_PROBLEM));//SHM_AT_ERROR
+	}
+	shm->pids = (int * )((int )shm+sizeof (*shm));
+	shm->scrs = (chtype ** )((int )shm+sizeof (*shm)+states*sizeof (*shm->pids));
+}
+
 /**
 Catches signals or something.
 **/
 bool tired = TRUE;
 void continuator(const int signo) {
-	if (signo == SIGCONT || signo == SIGINT) {
+	if (signo == SIGCONT) {
 		fprintfl(warning_stream, "[%06d::catch(CONT)]", (unsigned short )getpid()); fflush(stdout);
 		tired = FALSE;
 	}
@@ -293,24 +272,6 @@ void init() {
 	}
 
 	/*
-	Finds the location of the shared memory (in /dev/shm).
-
-	The configuration file is first parsed and
-	the default location is then guessed.
-	*/
-	const char * shm_path;
-	if (config_lookup_string(&config, "shm", &shm_path) == 0) {
-		warning(CONFIG_SHM_PROBLEM);
-		const size_t size = 1+strlen(default_shm_name)+1;
-		shm_file = malloc(size);
-		snprintf(shm_file, size, "/%s", default_shm_name);
-	}
-	else {
-		shm_file = malloc(strlen(shm_path)+1);
-		strcpy(shm_file, shm_path);
-	}
-
-	/*
 	Finds the size of the terminal.
 
 	The configuration file is first parsed and
@@ -342,6 +303,22 @@ void init() {
 		states = 1;
 	}
 	states++;//reserves space for the zero state
+
+	/*
+	Finds the replacement character.
+
+	The configuration file is first parsed and
+	the default character is then guessed.
+	*/
+	char replacement;
+	const char * replacement_string;
+	if (config_lookup_string(&config, "index", &replacement_string) == 0) {
+		warning(NO_PROBLEM);//SOME_PROBLEM
+		replacement = default_replacement;
+	}
+	else {
+		replacement = replacement_string[0];
+	}
 
 	/*
 	Opens the put streams.
@@ -378,8 +355,8 @@ void init() {
 	input_file = malloc(strlen(input_path)+1);
 	strcpy(input_file, input_path);
 	output_files = malloc(states*sizeof (*output_files));
-	const char * output_path_end = strchr(output_path, default_replacement);
-	if (strrchr(output_path, default_replacement) != output_path_end) {
+	const char * output_path_end = strchr(output_path, replacement);
+	if (strrchr(output_path, replacement) != output_path_end) {
 		warning(OUTPUT_REPLACEMENT_PROBLEM);
 	}
 	if (output_path_end == NULL) {
@@ -499,6 +476,41 @@ void init() {
 	}
 
 	/*
+	Finds the location of the shared memory segment.
+
+	The configuration file is first parsed and
+	the default location is then guessed.
+	*/
+	const char * shm_path;
+	if (config_lookup_string(&config, "shm", &shm_path) == 0) {
+		warning(CONFIG_SHM_PROBLEM);
+		shm_file = malloc(strlen(default_shm_name)+1);
+		strcpy(shm_file, default_shm_name);
+	}
+	else {
+		shm_file = malloc(strlen(shm_path)+1);
+		strcpy(shm_file, shm_path);
+	}
+	{
+		const size_t size = sizeof (*shm)+states*sizeof (*shm->pids)+states*rows*cols*sizeof (**shm->scrs);
+		key = ftok(shm_path, hash((unsigned char * )default_project_name, strlen(default_project_name)));
+		shmid = shmget(key, size, IPC_CREAT | SHM_R | SHM_W);
+		if (shmid == -1) {
+			uninit(error(NO_PROBLEM));//SHM_GET_ERROR
+		}
+		/*
+		if (shmdt(shm) == -1) {
+			perror("shmdt");
+			exit(1);
+		}
+		if (shmctl(shmid, IPC_RMID, 0) == -1) {
+			perror("shmctl");
+			exit(1);
+		}
+		*/
+	}
+
+	/*
 	Unloads the configuration file.
 
 	The memory allocated by the <code>config_lookup_</code> calls is automatically deallocated.
@@ -535,29 +547,33 @@ void init() {
 	actually_initialized = TRUE;
 
 	if (signal(SIGWINCH, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "No no resizing!");
-	if (signal(SIGCONT, continuator) == SIG_ERR) fprintfl(note_stream, "Can't catch CONT.");
-	if (signal(SIGINT, continuator) == SIG_ERR) fprintfl(note_stream, "Can't stop!");
+	if (signal(SIGCONT, terminator) == SIG_ERR) fprintfl(note_stream, "Can't catch CONT.");
+	if (signal(SIGINT, terminator) == SIG_ERR) fprintfl(note_stream, "Can't stop!");
 	if (signal(SIGTERM, terminator) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
 
-	shmup(TRUE);
+	shmattach();
+	shm->ppid = 0;
+	for (int index = 0; index < states; index++) {
+		shm->pids[index] = 0;
+	}
+
 	pid_t pid = fork();//returns 0 in child, process id of child in parent, -1 on error
 	if (pid == -1) exit(-1);
 	if (pid != 0) {//parent
 		shm->ppid = getpid();
-		if (signal(SIGCONT, continuator) == SIG_ERR) fprintfl(note_stream, "Can't catch CONT.");
-		struct timespec req;
-		req.tv_sec = (time_t )0;
-		req.tv_nsec = 1000000000l/fps;//extern this
+		struct sigaction act;
+		act.sa_handler = continuator;
+		act.sa_flags = 0;
+		if (sigaction(SIGCONT, &act, NULL) != 0) fprintfl(note_stream, "Can't catch CONT.");
 		fprintf(stderr, "The parent process seems to have fallen asleep. Use Ctrl C to wake it up.\n");
-		while (tired) {
-			nanosleep(&req, NULL);
-		}
+		pause();
 		fprintf(stderr, "Quitting...\n");
 		uninit(NO_PROBLEM/*_MATE*/);
 	}
 	else {//child
-		const problem_t p = shmup(FALSE);
-		if (p != NO_PROBLEM) uninit(p);
+		//const problem_t p = shmattach();
+		//if (p != NO_PROBLEM) uninit(p);
+		shmattach();
 		shm->pids[0] = getpid();
 	}
 }
@@ -582,25 +598,20 @@ void save(const int state) {
 	}
 	fprintfl(warning_stream, "[%06d::fork()]", (unsigned short )getpid()); fflush(stdout);
 	pid_t pid = fork();//returns 0 in child, process id of child in parent, -1 on error
-	shmup(FALSE);
-	if (signal(SIGCONT, continuator) == SIG_ERR) fprintfl(note_stream, "Can't catch CONT.");
-	if (signal(SIGTERM, terminator) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
-	if (signal(SIGCHLD, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");
-	if (pid != (pid_t )NULL) {//parent
+	shmattach();
+	struct sigaction act;
+	act.sa_handler = continuator;
+	act.sa_flags = 0;
+	if (sigaction(SIGCONT, &act, NULL) != 0) fprintfl(note_stream, "Can't catch CONT.");
+	if (pid == -1) uninit(error(NO_PROBLEM));
+	if (pid != 0) {//parent
 		if (shm->pids[state] != 0) {
 			fprintfl(warning_stream, "[%06d::kill(%06d)]", (unsigned short )getpid(), (unsigned short )shm->pids[state]); fflush(stdout);
 			kill(shm->pids[state], SIGKILL);
 		}
 		shm->pids[state] = getpid();
 		fprintfl(warning_stream, "[%06d::stop()]", (unsigned short )getpid()); fflush(stdout);
-
-		//kill(getpid(), SIGSLURP);
-		struct timespec req;
-		req.tv_sec = (time_t )0;
-		req.tv_nsec = 1000000000l/fps;//extern this
-		while (tired) nanosleep(&req, NULL);
-		shmup(FALSE);
-
+		pause();
 		fprintfl(warning_stream, "[%06d::continue()]", (unsigned short )getpid()); fflush(stdout);
 
 		for (int row = 0; row < rows; row++) {
@@ -628,10 +639,11 @@ void load(const int state) {
 		fprintfl(warning_stream, "[%06d::signal(%06d)]", (unsigned short )getpid(), (unsigned short )shm->pids[state]); fflush(stdout);
 		kill(shm->pids[state], SIGCONT);
 		const int zorg = shm->pids[0];
+		fprintfl(warning_stream, "spid=%d == gpid=%d?", (unsigned short )getpid(), (unsigned short )shm->pids[0]); fflush(stdout);
 		shm->pids[0] = shm->pids[state];
 		shm->pids[state] = 0;
 		fprintfl(warning_stream, "[%06d::kill(%06d)]", (unsigned short )getpid(), (unsigned short )zorg); fflush(stdout);
-		kill(zorg, SIGKILL);
+		//kill(zorg, SIGKILL);//kills two processes for an unknown reason
 	}
 }
 
@@ -650,10 +662,11 @@ char codeins[7];
 /**
 Removes a file.
 
+Intercepts removing the debug file if it exists.
+
 @param path The path of the file to remove.
 @return Zero if no errors occurred and something else otherwise.
 **/
-bool first= TRUE;
 int unlink(const char * path) { OVERLOAD
 	call("unlink(\"%s\").", path);
 	if (strcmp(path, "ADOM.DBG") == 0) {
@@ -923,18 +936,18 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		fwritep(&record, output_files[0]);//TODO move
 		return 0;
 	}
-	/*else if (key == 'Q') {//quits everything (stupid idea or implementation)
-		fprintfl(warning_stream, "[%06d::send(TERM)]", (unsigned short )getpid());
+	else if (key == 'Q') {//quits everything (stupid idea or implementation)
+		/*fprintfl(warning_stream, "[%06d::send(TERM)]", (unsigned short )getpid());
 		for (int index = 0; index < states; index++) {
 			if (shm->pids[index] != 0 && shm->pids[index] != getpid()) {
 				kill(shm->pids[index], SIGTERM);
 				shm->pids[index] = 0;
 			}
-		}
+		}*/
 		kill(shm->ppid, SIGTERM);
 		kill(getpid(), SIGTERM);
 		return 0;
-	}*/
+	}
 	if (!was_meta && !was_colon && (key == 0x3a || key == 'w')) was_colon = key == 0x3a ? 1 : 2;//booleans are fun like that
 	else if (!was_meta && key == 0x1b) was_meta = TRUE;
 	else {

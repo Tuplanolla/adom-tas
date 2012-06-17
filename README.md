@@ -344,6 +344,7 @@ Checklist
 		[X] Implement slow save (memory-file)
 		[X] Implement slow load (file-memory)
 		[X] Make processes independent
+		[ ] Make processes actually work
 		[ ] Refine sloppy implementations
 	[X] Implement recording tools
 		[X] Find the input handler
