@@ -7,6 +7,9 @@ OBJ = obj
 SRC = src
 NAME = adom-tas
 
+nothing:
+	echo "Don't bother trying."
+
 all: $(BIN)/$(NAME).so $(BIN)/$(NAME) sh
 
 clean:

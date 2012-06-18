@@ -13,32 +13,33 @@ Manages inputs and outputs.
 #include "put.h"
 
 /**
-Outputs the frames (for recording).
+Saves a record.
+
+@param stream The destination stream.
+@param record The record.
+@return The amount of frames written.
 **/
-size_t fwritep(record_t * record, const char * output_file) {
-	FILE * output_stream = fopen(output_file, "wb");
-	if (output_stream == NULL) {
-		return error(OUTPUT_ACCESS_PROBLEM);
-	}
+size_t fwritep(FILE * stream, record_t * record) {
 	size_t result = 0;
-	frame_t * current_frame = record->first;
-	while (current_frame != NULL) {
-		result += fwrite(&current_frame->duration, sizeof (current_frame->duration), 1, output_stream);
-		result += fwrite(&current_frame->value, sizeof (current_frame->value), 1, output_stream);
-		current_frame = current_frame->next;
+	frame_t * frame = record->first;
+	while (frame != NULL) {
+		size_t subresult;
+		subresult += fwrite(&frame->duration, sizeof (frame->duration), 1, stream);
+		subresult += fwrite(&frame->value, sizeof (frame->value), 1, stream);
+		result++;
+		frame = frame->next;
 	}
-	fclose(output_stream);
 	return result;
 }
 
 /**
-Inputs the frames (for playback).
+Loads a record.
+
+@param stream The source stream.
+@param record The record.
+@return The amount of frames read.
 **/
-size_t freadp(record_t * record, const char * input_file) {
-	FILE * input_stream = fopen(input_file, "rb");
-	if (input_stream == NULL) {
-		return error(INPUT_ACCESS_PROBLEM);
-	}
+size_t freadp(FILE * stream, record_t * record) {
 	size_t result = 0;
 	while (TRUE) {
 		int subresult = 0;
@@ -48,10 +49,8 @@ size_t freadp(record_t * record, const char * input_file) {
 		subresult += fread(&value, sizeof (value), 1, input_stream);
 		if (subresult == 0) break;
 		add_frame(record, duration, value);
+		result++;
 	}
-	if (feof(input_stream)) /*error*/;
-	clearerr(input_stream);
-	fclose(input_stream);
 	return result;
 }
 

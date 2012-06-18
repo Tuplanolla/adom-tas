@@ -1,11 +1,19 @@
 /**
 Logs events.
+
+Errors are major problems.
+Warnings are minor problems.
+Notes are not problems.
+
+@author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef LOG_H
 #define LOG_H
 
-#include <stdio.h>
-#include <stdarg.h>
+#include <stdarg.h>//va_list
+#include <stdio.h>//FILE
+
+#include "problem.h"//problem_t
 
 extern FILE * error_stream;
 extern FILE * warning_stream;

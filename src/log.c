@@ -1,30 +1,25 @@
 /**
-Logs events.
+@author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef LOG_C
 #define LOG_C
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <time.h>
-#include <sys/time.h>
-#include <unistd.h>
+#include <stdarg.h>//va_*
+#include <stdlib.h>//*alloc, free, NULL
+#include <stdio.h>//*print*, *flush, FILE
+#include <string.h>//str*
+#include <time.h>//localtime_r, time_t
+#include <sys/time.h>//gettimeofday
+#include <unistd.h>//???
 
-#include "problem.h"
+#include "def.h"//???
+#include "problem.h"//problem_t
 #include "log.h"
 
 FILE * error_stream;
 FILE * warning_stream;
 FILE * note_stream;
 FILE * call_stream;
-
-const char * const separator = " - ";
-const char * const error_str = "Error";
-const char * const warning_str = "Warning";
-const char * const note_str = "Note";
-const char * const call_str = "Call";
 
 /**
 Formats and logs a message.

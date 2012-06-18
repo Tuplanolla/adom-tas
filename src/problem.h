@@ -1,9 +1,7 @@
 /**
 Provides error handling.
 
-Errors are major problems.
-Warnings are minor problems.
-Notes are not problems.
+@author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef PROBLEM_H
 #define PROBLEM_H
@@ -46,6 +44,7 @@ enum problem_e {
 	CONFIG_COL_PROBLEM,
 	CONFIG_STATE_PROBLEM,
 	STATE_AMOUNT_PROBLEM,
+	CONFIG_ITERATOR_PROBLEM,
 	CONFIG_INPUT_PROBLEM,
 	INPUT_FIND_PROBLEM,
 	INPUT_ACCESS_PROBLEM,
@@ -111,6 +110,7 @@ inline char * problem_message(const problem_t code) {
 	if (code == CONFIG_COL_PROBLEM) return "Finding the width of the terminal \"cols\" in the configuration file failed. The default width will be assumed.";
 	if (code == CONFIG_STATE_PROBLEM) return "Finding the amount of save states \"states\" in the configuration file failed. The default amount will be assumed.";
 	if (code == STATE_AMOUNT_PROBLEM) return "The amount of save states must be positive. The minimum amount will be assumed.";
+	if (code == CONFIG_ITERATOR_PROBLEM) return "Finding the iterator string \"iterator\" in the configuration file failed. The default string will be assumed.";
 	if (code == CONFIG_INPUT_PROBLEM) return "Finding the location of the input file \"input\" in the configuration file failed. The default location will be assumed.";
 	if (code == INPUT_FIND_PROBLEM) return "Finding the input file failed.";
 	if (code == INPUT_ACCESS_PROBLEM) return "Accessing the input file failed.";
@@ -134,5 +134,26 @@ inline char * problem_message(const problem_t code) {
 	if (code == LOG_CHANGE_PROBLEM) return "The log streams have changed and will be redirected.";
 	return "Converting an error code to an error message failed.";
 }
+
+/**
+Propagates an error.
+
+Returns the error code of an error if one occurs:
+<pre>
+problem_t method {
+	PROPAGATE(another_method());
+	yet_another_method();
+	return NO_PROBLEM;
+}
+</pre>
+
+@param code The error code.
+@return The error code.
+**/
+#undef PROPAGATE
+#define PROPAGATE(code) {\
+		const problem_t PROPAGATE_code = code;\
+		if (PROPAGATE_code != NO_PROBLEM) return PROPAGATE_code;\
+	}
 
 #endif

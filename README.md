@@ -44,7 +44,7 @@ Build the documentation if you feel like it:
 
 	[user@arch adom-tas]$ doxygen
 
-Run the launcher to generate a template configuration file:
+Run the launcher to generate a template configuration file in the current working directory:
 
 	[user@arch adom-tas]$ bin/adom-tas
 
@@ -52,6 +52,10 @@ Edit the configuration file (more about it later):
 
 	[user@arch adom-tas]$ nano adom-tas.cfg
 
+Make sure all the files exist.
+Both absolute and relative paths work.
+Symbolic links are also resolved.
+The shell variable `~` is recognized too.
 Run the launcher normally:
 
 	[user@arch adom-tas]$ bin/adom-tas
@@ -68,7 +72,9 @@ Recording is managed by scripts (the arguments are command to run and the output
 More options can be found by using the help switch:
 
 	[user@arch adom-tas]$ bin/ffmpeg.sh -h
-	[user@arch adom-tas]$ bin/ffmpeg.sh -e bin/adom-tas -r 32 -m 16 -s sd -o output.avi
+	[user@arch adom-tas]$ bin/ffmpeg.sh -e "ttyplay output.tty" -r 32 -m 16 -s sd -o output.avi
+
+It is currently recommended to first record a `tty` file and then convert it to an `avi` file since `adom-tas` is only synchronized with `nanosleep` and frame times add to processing time.
 
 Installing the whole thing from the binaries will eventually be possible:
 
@@ -317,6 +323,22 @@ More about that and more about fixing what was just written later.
 
 Note that it turned out to not be a proper ARC4; the order of operations was atypical.
 
+Troubleshooting
+---------------
+
+Parsing the configuration file failed with `CONFIG_PARSE_PROBLEM`? Consider
+
+* making sure the syntax is correct with
+	* an equals sign `=` between keys and values and
+	* strings enclosed in quotation marks `"`,
+* updating libconfig,
+* taking care of legacy problems by
+	* adding semicolons `;` to the end of each line and
+	* ensuring the last line ends with a line break `\n`,
+* removing uncommon whitespace characters like no-break spaces `\xa0`,
+* generating a new configuration file or
+* asking for help.
+
 Checklist
 ---------
 
@@ -333,7 +355,6 @@ Checklist
 			[X] ffmpeg
 	[ ] Implement emulation tools
 		[X] Disable the actual save function
-		[ ] Disable the actual quit function
 		[X] Find the random number generator's seed function
 		[X] Redirect the seed function to the recorder and back again
 		[X] Find the random number generator's reseed function
@@ -345,8 +366,8 @@ Checklist
 		[X] Implement slow load (file-memory)
 		[X] Make processes independent
 		[ ] Make processes actually work
-		[ ] Refine sloppy implementations
-	[X] Implement recording tools
+		[X] Refine sloppy implementations
+	[ ] Implement recording tools
 		[X] Find the input handler
 		[X] Redirect the input handler to the recorder and back again
 		[X] Implement saving to a file each frame
@@ -357,6 +378,7 @@ Checklist
 		[X] Implement playing back a recording
 		[X] Implement dumping a ttyrec
 		[X] Implement dumping an avi
+		[ ] Synchronize timing with the processor
 		[X] Refine sloppy implementations
 	[ ] Implement analysis tools
 		[X] Find the turn count variable
@@ -372,6 +394,7 @@ Checklist
 			[X] Random number generator state
 		[ ] Implement cheats that disable the recording
 		[X] Refine sloppy implementations
+	[ ] Refactor everything
 	[ ] Document
 		[X] Documentation
 		[ ] Project
@@ -446,6 +469,6 @@ The status bar will look like
 Coward                  I: \M\Cf  F: 2/21  T: 0/7  D: 15  R: 0xe87de001  S: 2/9
 </pre>
 
-and contains the last recorded inputs (Alt Ctrl F), the amount of the last recorded frames (2) and the amount of all frames (21), the amount of the last elapsed turns (0) and the amount of all turns (7), the time elapsed since the last frame (15 seconds), the current hash of the random number generator's state and the currently selected save state (#2) and the amount of all save states (9).
+and contains the last recorded inputs (Alt Ctrl F), the amount of the last recorded frames (2) and the amount of all frames (21), the amount of the last elapsed turns (0) and the amount of all turns (7 ignoring negative turns), the time elapsed since the last frame (15 seconds), the current hash of the random number generator's state and the currently selected save state (#2) and the amount of all save states (9).
 
 The currently defined keys are F8 to play a recording (only on frame 0), F9 to save, F10 to load, F11 to change the system time, F12 to simulate actual save and load, Ctrl F12 to change the currently selected save state and _ to save a recording (and other unnecessary details).

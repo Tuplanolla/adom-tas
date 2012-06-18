@@ -1,23 +1,47 @@
 /**
 Provides general-purpose utilities.
+
+@author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef UTIL_H
 #define UTIL_H
 
-#include <string.h>
-#include <math.h>
+#include <stdlib.h>//size_t
+#include <string.h>//mem*
+#include <unistd.h>//getpagesize
 
 /**
 Lists the boolean values.
 **/
-#undef TRUE
 #undef FALSE
-#undef bool
+#undef TRUE
 enum bool_e {
 	FALSE,
 	TRUE
 };
+#undef bool
 typedef enum bool_e bool;
+
+size_t intlen(int x);
+int strnchr(char *input, char target);
+int strnstr(char *input, char *target);
+char * astrrep(char *input, char *source, char *target);
+int hash(const unsigned char * array, const size_t size);
+FILE * stdstr(const char * str);
+
+/**
+Defines an alternative <code>NULL</code> for error checking.
+
+Works with special functions:
+<pre>
+shm = shmat(shmid, NULL, 0);
+if (shm == SUBNULL) {
+	return errno;
+}
+</pre>
+**/
+#undef SUBNULL
+#define SUBNULL ((void * )-1)
 
 /**
 Sets the print format of a byte.
@@ -99,56 +123,5 @@ Swaps two variables.
 		memcpy(&y, &x, sizeof (x));\
 		memcpy(&x, SWAP_z, sizeof (x));\
 	}
-
-/**
-Returns the string length of an integer.
-
-@param x The integer.
-@return The string length.
-**/
-inline size_t intlen(int x) {
-	size_t len = 1;
-	if (x < 0) {
-		len++;
-		x = -x;
-	}
-	while (x > 9) {
-		len++;
-		x /= 10;
-	}
-	return len;
-}
-
-/**
-Returns the hash code of a byte array.
-
-@param array The byte array.
-@param size The length of the byte array.
-@return The hash code.
-**/
-inline int hash(const unsigned char * array, const size_t size) {
-	const int prime = 31;
-	int result = 1;
-	for (size_t index = 0; index < size; index++) {
-		result = prime*result+(int )array[index];
-		index++;
-	}
-	return result;
-}
-
-/**
-Converts a string to a standard stream.
-
-An additional <code>else</code> can be appended. Not a very good idea.
-
-@param str The string to convert.
-@return The standard stream.
-**/
-#undef STDSTR
-#define STDSTR(stream, str) \
-	if (strcmp(str, "null") == 0) stream = NULL;\
-	else if (strcmp(str, "stdin") == 0) stream = stdin;\
-	else if (strcmp(str, "stdout") == 0) stream = stdout;\
-	else if (strcmp(str, "stderr") == 0) stream = stderr;
 
 #endif
