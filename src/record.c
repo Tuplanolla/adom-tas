@@ -4,8 +4,8 @@ Provides recording utilities.
 #ifndef RECORD_C
 #define RECORD_C
 
-#include <stdlib.h>
-#include <time.h>
+#include <stdlib.h>//*alloc, free
+#include <time.h>//time_t
 
 #include "record.h"
 
@@ -47,7 +47,7 @@ Adds a frame to a record.
 @param value The key or the time difference of the frame.
 @return The new frame.
 **/
-frame_t * add_frame(record_t * record, const int duration, const int value) {
+frame_t * add_frame(record_t * record, const unsigned char duration, const int value) {
 	frame_t * current = malloc(sizeof (frame_t));
 	current->duration = duration;
 	current->value = value;
@@ -72,7 +72,7 @@ Adds a <code>KEY_INPUT</code> frame to a record.
 @return The new frame.
 **/
 frame_t * add_key_frame(record_t * record, const unsigned char duration, const int key) {
-	return add_frame(record, (int )duration, key);
+	return add_frame(record, duration, key);
 }
 
 /**
@@ -83,7 +83,7 @@ Adds a <code>TIME_INPUT</code> and <code>SEED_INPUT</code> frame to a record.
 @return The new frame.
 **/
 frame_t * add_seed_frame(record_t * record, const time_t time) {
-	const time_t step_time = time-record->time;
+	const time_t step_time = time - record->time;
 	record->time = time;
 	return add_frame(record, 0, (int )step_time);
 }

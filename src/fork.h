@@ -4,7 +4,9 @@ Works like cutlery.
 #ifndef FORK_H
 #define FORK_H
 
-void save(const int state);
-void load(const int state);
+#include "problem.h"//problem_t
+
+problem_t save(const int state);
+problem_t load(const int state);
 
 #endif

@@ -35,11 +35,12 @@ RANDOM um_random = NULL;
 INIT_PAIR um_init_pair = NULL;
 WREFRESH um_wrefresh = NULL;
 WGETCH um_wgetch = NULL;
+EXIT um_exit = NULL;
 
 /**
 Annotates and initializes overloaded functions.
 **/
-#define OVERLOAD if (!initialized) init();
+#define OVERLOAD if (!initialized) init_parent();
 
 bool was_meta = FALSE;//not good
 int was_colon = FALSE;//worse
@@ -273,9 +274,9 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 			else {
 				struct timespec req;
 				bool out_of_variable_names = FALSE;
-				if (playback_frame->duration >= fps) out_of_variable_names = TRUE;
+				if (playback_frame->duration >= frame_rate) out_of_variable_names = TRUE;
 				req.tv_sec = (time_t )(out_of_variable_names ? playback_frame->duration : 0);
-				req.tv_nsec = out_of_variable_names ? 0l : 1000000000l/fps*playback_frame->duration;
+				req.tv_nsec = out_of_variable_names ? 0l : 1000000000l/frame_rate*playback_frame->duration;
 				nanosleep(&req, NULL);
 				const int yield = playback_frame->value;
 				playback_frame = playback_frame->next;
@@ -349,10 +350,23 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		key_code(code, key);
 		strcat(codeins, code);//TODO turn this into a macro
 	}
-	unsigned char duration = fps/2;
+	unsigned char duration = frame_rate/2;
 	add_key_frame(&record, duration, key);//meta, colon and w are undisplayed but still recorded (for now)
 	//wrefresh(win);
 	return key;
+}
+
+/**
+Exits immediately.
+
+Intercepts exiting prematurely.
+
+@param status The return value.
+**/
+void exit(int status) { OVERLOAD
+	call("exit(%d).", status);
+	//do something
+	return um_exit(NO_PROBLEM);
 }
 
 #endif

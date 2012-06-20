@@ -4,7 +4,15 @@ Provides recording utilities.
 #ifndef RECORD_H
 #define RECORD_H
 
-#include <time.h>
+#include <time.h>//time_t
+
+/**
+Sets the frame rate.
+
+Choosing <code>sqrt(1 << 8 * sizeof duration)</code> as the frame rate creates a balanced time distribution.
+For a byte the minimum frame time is 0.0625 seconds and the maximum 16 seconds.
+**/
+const unsigned char frame_rate = 16;
 
 /**
 Represents a recorded frame.
@@ -35,24 +43,24 @@ typedef struct frame_s frame_t;
 </pre>
 Since a <code>time_t</code> can be treated as an <code>int</code> or a <code>long</code>,
 only <code>KEY_INPUT</code> inputs are visible and
-<code>TIME_INPUT</code> is only used with the next <code>SEED_INPUT</code>
+<code>TIME_INPUT</code> inputs are only used with the next <code>SEED_INPUT</code> inputs
 the struct can be condensed:
 <pre>
 struct frame_s {
-	int duration;//duration == 0 ? input = KEY_INPUT : input = SEED_INPUT
+	unsigned char duration;//duration == 0 ? input = KEY_INPUT : input = SEED_INPUT
 	int value;//duration != 0 ? key = value : time += value
 	struct frame_s * next;
 };
 typedef struct frame_s frame_t;
 </pre>
-Thus only two <code>int</code>s are needed.
+Thus only five bytes are needed.
 
-@var duration The input or the duration of the frame.
+@var duration The type of the input or the duration of the frame.
 @var value The key or the time difference of the frame.
 @var next The next frame.
 **/
 struct frame_s {
-	int duration;
+	unsigned char duration;
 	int value;
 	struct frame_s * next;
 };
@@ -76,10 +84,8 @@ typedef struct record_s record_t;
 
 void init_record(record_t * record);
 void clear_record(record_t * record);
-frame_t * add_frame(record_t * record, const int duration, const int value);
+frame_t * add_frame(record_t * record, const unsigned char duration, const int value);
 frame_t * add_key_frame(record_t * record, const unsigned char duration, const int key);
 frame_t * add_seed_frame(record_t * record, const time_t time);
-
-inline void convert_something_later() {}
 
 #endif

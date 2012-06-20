@@ -6,6 +6,8 @@ Serves as a template.
 #ifndef TEMPLATE_C
 #define TEMPLATE_C
 
+#include <stdlib.h>
+
 void * nowhere;
 
 void nothing() {

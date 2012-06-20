@@ -99,7 +99,7 @@ then
 fi
 
 #Starts the recording.
-FILTERS=`"$FFMPEG" -filters 2> "$NOWHERE"`
+FILTERS=`"$FFMPEG" -filters 2>"$NOWHERE"`
 FILTER=""
 case "$SIZE" in
 	"cu")
@@ -155,9 +155,9 @@ esac
 echo "Starting \"ffmpeg\"..."
 if test -z "$FILTER"
 then
-	"$FFMPEG" -y -f "x11grab" -an -r "$RATE" -s "$WIDTH"x"$HEIGHT" -i "$DISPLAY"+"$X","$Y" -q:v "$QUALITY" "$OUTPUT" &> "$NOWHERE" &
+	"$FFMPEG" -y -f "x11grab" -an -r "$RATE" -s "$WIDTH"x"$HEIGHT" -i "$DISPLAY"+"$X","$Y" -q:v "$QUALITY" "$OUTPUT" 1>"$NOWHERE" 2>"$NOWHERE" &
 else
-	"$FFMPEG" -y -f "x11grab" -an -r "$RATE" -s "$WIDTH"x"$HEIGHT" -i "$DISPLAY"+"$X","$Y" -q:v "$QUALITY" -vf "$FILTER" "$OUTPUT" &> "$NOWHERE" &
+	"$FFMPEG" -y -f "x11grab" -an -r "$RATE" -s "$WIDTH"x"$HEIGHT" -i "$DISPLAY"+"$X","$Y" -q:v "$QUALITY" -vf "$FILTER" "$OUTPUT" 1>"$NOWHERE" 2>"$NOWHERE" &
 fi
 FFMPEG_PID="$!"
 echo "Starting \"$COMMAND\"..."
@@ -168,12 +168,12 @@ COMMAND_PID="$!"
 while true
 do
 	sleep 1
-	if ! kill -0 "$FFMPEG_PID" &> "$NOWHERE"
+	if ! kill -0 "$FFMPEG_PID" 1>"$NOWHERE" 2>"$NOWHERE"
 	then
 		echo "Stopping since \"ffmpeg\" exited..."
 		break
 	fi
-	if ! kill -0 "$COMMAND_PID" &> "$NOWHERE"
+	if ! kill -0 "$COMMAND_PID" 1>"$NOWHERE" 2>"$NOWHERE"
 	then
 		echo "Stopping since \"$COMMAND\" exited..."
 		break
@@ -181,12 +181,12 @@ do
 done
 
 #Stops the recording.
-if kill -0 "$FFMPEG_PID" &> "$NOWHERE"
+if kill -0 "$FFMPEG_PID" 1>"$NOWHERE" 2>"$NOWHERE"
 then
 	echo "Terminating \"ffmpeg\"..."
 	kill -15 "$FFMPEG_PID"
 fi
-if kill -0 "$COMMAND_PID" &> "$NOWHERE"
+if kill -0 "$COMMAND_PID" 1>"$NOWHERE" 2>"$NOWHERE"
 then
 	echo "Killing \"$COMMAND\"..."
 	kill -9 "$COMMAND_PID"

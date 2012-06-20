@@ -1,5 +1,5 @@
 /**
-Provides general-purpose utilities.
+Provides general-purpose macros.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
@@ -7,11 +7,12 @@ Provides general-purpose utilities.
 #define UTIL_H
 
 #include <stdlib.h>//size_t
+#include <stdio.h>//FILE
 #include <string.h>//mem*
 #include <unistd.h>//getpagesize
 
 /**
-Lists the boolean values.
+The boolean values.
 **/
 #undef FALSE
 #undef TRUE
@@ -22,15 +23,16 @@ enum bool_e {
 #undef bool
 typedef enum bool_e bool;
 
+/**
+General-purpose functions.
+**/
 size_t intlen(int x);
-int strnchr(char *input, char target);
-int strnstr(char *input, char *target);
-char * astrrep(char *input, char *source, char *target);
 int hash(const unsigned char * array, const size_t size);
+char * astrrep(const char * haystack, const char * needle, const char * replacement);
 FILE * stdstr(const char * str);
 
 /**
-Defines an alternative <code>NULL</code> for error checking.
+An alternative <code>NULL</code> for error checking.
 
 Works with special functions:
 <pre>
@@ -44,7 +46,7 @@ if (shm == SUBNULL) {
 #define SUBNULL ((void * )-1)
 
 /**
-Sets the print format of a byte.
+The print format of a byte.
 
 Works in conjuction with the <code>BITS</code> macro:
 <pre>
@@ -117,11 +119,11 @@ Swaps two variables.
 @return An argument list of the bits.
 **/
 #undef SWAP
-#define SWAP(x, y) {\
+#define SWAP(x, y) do {\
 		unsigned char SWAP_z[sizeof (x) == sizeof (y) ? sizeof (x) : -1];\
 		memcpy(SWAP_z, &y, sizeof (x));\
 		memcpy(&y, &x, sizeof (x));\
 		memcpy(&x, SWAP_z, sizeof (x));\
-	}
+	} while (FALSE)
 
 #endif

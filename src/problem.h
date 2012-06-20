@@ -1,5 +1,5 @@
 /**
-Provides error handling.
+Handles errors.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
@@ -10,62 +10,7 @@ Provides error handling.
 Lists the error codes.
 **/
 enum problem_e {
-	NO_PROBLEM,
-	CONFIG_FIND_PROBLEM,
-	CONFIG_PROBLEM,
-	LD_PRELOAD_FIND_PROBLEM,
-	LD_PRELOAD_ACCESS_PROBLEM,
-	LD_PRELOAD_SET_PROBLEM,
-	CONFIG_EXEC_PROBLEM,
-	EXEC_FIND_PROBLEM,
-	EXEC_TYPE_PROBLEM,
-	EXEC_ACCESS_PROBLEM,
-	EXEC_SIZE_PROBLEM,
-	EXEC_READ_PROBLEM,
-	EXEC_HASH_PROBLEM,
-	CONFIG_DATA_PROBLEM,
-	DATA_FIND_PROBLEM,
-	VERSION_FIND_PROBLEM,
-	VERSION_PROBLEM,
-	PROCESS_PROBLEM,
-	EXEC_PROBLEM,
-	LIBC_FIND_PROBLEM,
-	LIBC_ACCESS_PROBLEM,
-	LIBNCURSES_FIND_PROBLEM,
-	LIBNCURSES_ACCESS_PROBLEM,
-	LIBC_PROBLEM,
-	LIBNCURSES_PROBLEM,
-	LD_PRELOAD_UNSET_PROBLEM,
-	CONFIG_SHM_PROBLEM,
-	SHM_OPEN_PROBLEM,
-	SHM_TRUNCATE_PROBLEM,
-	SHM_MAP_PROBLEM,
-	CONFIG_ROW_PROBLEM,
-	CONFIG_COL_PROBLEM,
-	CONFIG_STATE_PROBLEM,
-	STATE_AMOUNT_PROBLEM,
-	CONFIG_ITERATOR_PROBLEM,
-	CONFIG_INPUT_PROBLEM,
-	INPUT_FIND_PROBLEM,
-	INPUT_ACCESS_PROBLEM,
-	CONFIG_OUTPUT_PROBLEM,
-	OUTPUT_OVERWRITE_PROBLEM,
-	OUTPUT_REPLACEMENT_PROBLEM,
-	OUTPUT_ACCESS_PROBLEM,
-	CONFIG_ERROR_LOG_PROBLEM,
-	ERROR_LOG_OVERWRITE_PROBLEM,
-	ERROR_LOG_ACCESS_PROBLEM,
-	CONFIG_WARNING_LOG_PROBLEM,
-	WARNING_LOG_OVERWRITE_PROBLEM,
-	WARNING_LOG_ACCESS_PROBLEM,
-	CONFIG_NOTE_LOG_PROBLEM,
-	NOTE_LOG_OVERWRITE_PROBLEM,
-	NOTE_LOG_ACCESS_PROBLEM,
-	CONFIG_CALL_LOG_PROBLEM,
-	CALL_LOG_OVERWRITE_PROBLEM,
-	CALL_LOG_ACCESS_PROBLEM,
-	CALL_LOG_PROBLEM,
-	LOG_CHANGE_PROBLEM
+	NO_PROBLEM
 };
 typedef enum problem_e problem_t;
 
@@ -75,6 +20,48 @@ Converts an error code to an error message.
 @param code The error code.
 @return The error message.
 **/
+/*
+CONFIG_OPEN_PROBLEM "Opening the configuration file for writing failed.";
+CONFIG_WRITE_PROBLEM "Writing the configuration file failed.";
+CONFIG_CLOSE_PROBLEM "Closing the configuration file failed.";
+CONFIG_STAT_PROBLEM "Finding the configuration file failed. It will be created from a template.";
+CONFIG_PARSE_PROBLEM "Parsing the configuration file failed.";
+HOME_CONFIG_PROBLEM "Finding the location of the home directory in the configuration file failed.";
+HOME_GETENV_PROBLEM "Finding the location of the home directory in the environment variable failed.";
+HOME_GETPWUID_PROBLEM "Finding the location of the home directory in the environment variable failed. It will be guessed.";
+HOME_STAT_PROBLEM "Accessing the home directory failed. Shell expansions will be disabled.";
+LD_PRELOAD_CONFIG_PROBLEM "Finding the location of the library to preload in the configuration file failed.";
+LD_PRELOAD_GETENV_PROBLEM "Finding the location of the library to preload in the environment variable failed. It will be guessed.";
+LD_PRELOAD_STAT_PROBLEM "Accessing the library to preload failed.";
+LD_PRELOAD_SETENV_PROBLEM "Setting the library to preload in the environment variable failed.";
+EXECUTABLE_CONFIG_PROBLEM "Finding the location of the executable in the configuration file failed. It will be guessed.";
+EXECUTABLE_STAT_PROBLEM "Accessing the executable failed.";
+EXECUTABLE_TYPE_PROBLEM "Ensuring the executable is a file failed.";
+EXECUTABLE_PERMISSION_PROBLEM "Checking the permissions of the executable failed.";
+EXECUTABLE_SIZE_PROBLEM "Verifying the size of the executable failed.";
+EXECUTABLE_OPEN_PROBLEM "Opening the executable for reading failed.";
+EXECUTABLE_READ_PROBLEM "Reading the executable failed.";
+EXECUTABLE_HASH_PROBLEM "Verifying the hash code of the executable failed.";
+EXECUTABLE_CLOSE_PROBLEM "Closing the executable failed.";
+EXECUTABLE_DATA_CONFIG_PROBLEM "Finding the location of the executable's data directory in the configuration file failed. It will be guessed.";
+EXECUTABLE_DATA_HOME_PROBLEM "Guessing the location of the executable's data directory failed.";
+EXECUTABLE_DATA_STAT_PROBLEM "Accessing the executable's data directory in the configuration file failed.";
+EXECUTABLE_PROCESS_STAT_PROBLEM "Accessing the executable's process file failed.";
+EXECUTABLE_VERSION_STAT_PROBLEM "Accessing the executable's version file failed.";
+EXECUTABLE_COUNT_STAT_PROBLEM "Accessing the executable's count file failed.";
+EXECUTABLE_KEYBIND_STAT_PROBLEM "Accessing the executable's keybinding file failed.";
+EXECUTABLE_CONFIG_STAT_PROBLEM "Accessing the executable's configuration file failed.";
+
+COUNT_OPEN_PROBLEM "Opening the count file for writing failed.";
+COUNT_WRITE_PROBLEM "Writing the count file failed.";
+COUNT_CLOSE_PROBLEM "Closing the count file failed.";
+VERSION_OPEN_PROBLEM
+VERSION_READ_PROBLEM
+VERSION_CLOSE_PROBLEM
+VERSION_MISMATCH_PROBLEM
+PROCESS_UNLINK_PROBLEM
+EXEC_PROBLEM
+*/
 inline char * problem_message(const problem_t code) {
 	if (code == NO_PROBLEM) return "Nothing failed.";
 	if (code == CONFIG_FIND_PROBLEM) return "Finding the configuration file failed. It will be created from a template.";
@@ -151,9 +138,9 @@ problem_t method {
 @return The error code.
 **/
 #undef PROPAGATE
-#define PROPAGATE(code) {\
+#define PROPAGATE(code) do {\
 		const problem_t PROPAGATE_code = code;\
 		if (PROPAGATE_code != NO_PROBLEM) return PROPAGATE_code;\
-	}
+	} while (FALSE)
 
 #endif

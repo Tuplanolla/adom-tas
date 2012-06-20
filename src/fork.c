@@ -24,13 +24,14 @@ Works like cutlery.
 #include <curses.h>
 #include <libconfig.h>
 
+#include "problem.h"//problem_t
 #include "fork.h"
 
 /**
 Saves the game to memory.
 **/
 chtype ** screen;
-void save(const int state) {
+problem_t save(const int state) {
 	int y, x;
 	getyx(stdscr, y, x);
 	screen = malloc(rows*sizeof (chtype *));
@@ -79,12 +80,13 @@ void save(const int state) {
 		fprintfl(warning_stream, "[%d::inherit(%d)]", (unsigned short )getpid(), (unsigned short )getppid()); fflush(stdout);
 		shm->pids[0] = getpid();
 	}
+	return NO_PROBLEM;
 }
 
 /**
 Loads the game from memory.
 **/
-void load(const int state) {
+problem_t load(const int state) {
 	if (shm->pids[state] != 0) {
 		const int killable = shm->pids[0];
 		const int continuable = shm->pids[state];
@@ -126,6 +128,7 @@ void load(const int state) {
 		*/
 		kill(killable, SIGKILL);
 	}
+	return NO_PROBLEM;
 }
 
 #endif

@@ -13,6 +13,7 @@ typedef long (* RANDOM)();
 typedef int (* INIT_PAIR)(short pair, short f, short b);
 typedef int (* WREFRESH)(WINDOW * win);
 typedef int (* WGETCH)(WINDOW * win);
+typedef int (* EXIT)(int status);
 
 extern UNLINK um_unlink;
 extern IOCTL um_ioctl;
@@ -23,5 +24,6 @@ extern RANDOM um_random;
 extern INIT_PAIR um_init_pair;
 extern WREFRESH um_wrefresh;
 extern WGETCH um_wgetch;
+extern EXIT um_exit;
 
 #endif

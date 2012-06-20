@@ -13,7 +13,7 @@ Handles the shared memory segment.
 #include "problem.h"//problem_t
 
 /**
-Points the objects inside the shared memory segment.
+Contains the objects in the shared memory segment.
 
 @var ppid The process identifier of the parent process.
 @var pids A pointer to the process identifiers of the child processes.
@@ -26,8 +26,14 @@ struct shm_s {
 };
 typedef struct shm_s shm_t;
 
+/**
+The objects in the shared memory segment.
+**/
 extern shm_t * shm;
 
+/**
+Manages the shared memory segment.
+**/
 problem_t init_shm(const char * pathname);
 problem_t attach_shm();
 problem_t detach_shm();

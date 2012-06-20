@@ -1,45 +1,91 @@
 /**
-Provides direct access to the executable.
+Provides information about
+	the files,
+	the variables and
+	the behavior
+		of the executable.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef ADOM_H
 #define ADOM_H
 
-/**
-Points to the turn count of the executable.
-**/
-#define TURNS ((unsigned int * )0x082b16e0)
+#include <stdlib.h>//size_t
 
 /**
-Points to the random number generator of the executable.
+The size of the executable.
 **/
-#define ARC4_S ((unsigned char * )0x082ada40)
-#define ARC4_I ((unsigned char * )0x082adb40)
-#define ARC4_J ((unsigned char * )0x082adb41)
+const size_t executable_size = 2452608;
 
 /**
-Lists the amount of random number generator calls measured in the executable.
+The hash code of the executable.
 **/
-#define ARC4_CALLS_MENU 4*1214//splash screen and main menu
-#define ARC4_CALLS_AUTO_LOAD 4*1419//game after loading it automatically
-#define ARC4_CALLS_MANUAL_LOAD 4*1623//game after loading it manually
+const int executable_hash = 952942381;
 
 /**
-Lists the minimum and maximum sizes of the terminal.
+The version of the executable.
 **/
-#define ROWS_MIN 25
-#define COLS_MIN 77
-#define ROWS_MAX 127
-#define COLS_MAX 127
+const unsigned char executable_version[4] = {1, 1, 1, 0};
 
-extern unsigned char arc4_s[0x100];
-extern unsigned char arc4_i;
-extern unsigned char arc4_j;
+/**
+The simulated turn count.
 
-int harc4();
+Ignores negative turns.
+**/
+unsigned int turns = 0;
+
+/**
+The turn count.
+**/
+unsigned int * const executable_turns = (void * )0x082b16e0;
+
+/**
+The save count.
+**/
+unsigned int * const executable_saves = (void * )0x082b6140;
+
+/**
+The minimum and maximum height and width of the terminal.
+**/
+const unsigned int executable_rows_min = 25;
+const unsigned int executable_cols_min = 77;
+const unsigned int executable_rows_max = 127;
+const unsigned int executable_cols_max = 127;
+
+/**
+The data files of the executable.
+**/
+const char * const executable_data_file = ".adom.data";
+const char * const executable_process_file = ".adom.prc";
+const char * const executable_version_file = ".adom.ver";
+const char * const executable_count_file = ".adom.cnt";
+const char * const executable_keybind_file = ".adom.kbd";
+const char * const executable_config_file = ".adom.cfg";
+
+/**
+The random number generator variables of the executable.
+**/
+unsigned char * const executable_arc4_s = (void * )0x082ada40;
+unsigned char * const executable_arc4_i = (void * )0x082adb40;
+unsigned char * const executable_arc4_j = (void * )0x082adb41;
+
+/**
+The amounts of random number generator calls measured in the executable.
+**/
+const unsigned int executable_arc4_calls_menu = 4 * 1214;
+const unsigned int executable_arc4_calls_automatic_load = 4 * 1419;
+const unsigned int executable_arc4_calls_manual_load = 4 * 1623;
+
+/**
+Simulates the random number generator of the executable.
+**/
 void sarc4(const int seed);
 unsigned char arc4();
+void iarc4(const int seed, const unsigned int bytes);
+
+/**
+Simulates the key number interpreter of the executable.
+**/
 void key_code(char * code, const int key);
 
 #endif

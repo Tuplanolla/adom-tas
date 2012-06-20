@@ -45,8 +45,8 @@ size_t freadp(FILE * stream, record_t * record) {
 		int subresult = 0;
 		int duration;
 		int value;
-		subresult += fread(&duration, sizeof (duration), 1, input_stream);
-		subresult += fread(&value, sizeof (value), 1, input_stream);
+		subresult += fread(&duration, sizeof (duration), 1, stream);
+		subresult += fread(&value, sizeof (value), 1, stream);
 		if (subresult == 0) break;
 		add_frame(record, duration, value);
 		result++;
