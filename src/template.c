@@ -10,7 +10,7 @@ Serves as a template.
 
 void * nowhere;
 
-void nothing() {
+void nothing(void) {
 	nowhere = NULL;
 }
 

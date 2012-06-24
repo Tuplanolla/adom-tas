@@ -24,7 +24,13 @@ Provides reading for the whole family.
 #include <curses.h>
 #include <libconfig.h>
 
+#include "util.h"
+#include "adom.h"
+#include "shm.h"
+#include "problem.h"
+#include "record.h"
 #include "lib.h"
+#include "loader.h"
 
 UNLINK um_unlink = NULL;
 IOCTL um_ioctl = NULL;
@@ -37,17 +43,64 @@ WREFRESH um_wrefresh = NULL;
 WGETCH um_wgetch = NULL;
 EXIT um_exit = NULL;
 
+char * home_path;
+char * executable_path;
+char * executable_data_path;
+char * executable_process_path;
+char * executable_version_path;
+char * executable_count_path;
+char * executable_keybind_path;
+char * executable_config_path;
+char * loader_path;
+char * libc_path;
+char * libncurses_path;
+unsigned int generations;
+unsigned int states;
+unsigned int rows;
+unsigned int cols;
+char * iterator;
+FILE * input_stream;
+FILE ** output_streams;
+char * shm_path;
+FILE * error_stream;
+FILE * warning_stream;
+FILE * note_stream;
+FILE * call_stream;
+record_t record;
+
+bool initialized = FALSE;
+
 /**
 Annotates and initializes overloaded functions.
 **/
-#define OVERLOAD if (!initialized) init_parent();
+#define OVERLOAD if (!initialized) initialized = init_parent() == NO_PROBLEM;
+
+/**
+Very important temporary variables.
+**/
+record_t record;
+int globstate = 1;
+time_t current_time = 0;//0x7fe81780
+
+/**
+Redirects calls from injected instructions.
+**/
+void seed(const int seed) {
+	iarc4(seed, executable_arc4_calls_automatic_load);
+}
+
+void injector(void) {
+	seed(current_time);
+	add_seed_frame(&record, current_time);
+	wrefresh(stdscr);
+}
 
 bool was_meta = FALSE;//not good
 int was_colon = FALSE;//worse
 bool condensed = FALSE;
 bool playbacking = FALSE;
 frame_t * playback_frame;
-char codeins[7];
+char name[7];
 
 /**
 Removes a file.
@@ -135,7 +188,7 @@ Generates the next pseudorandom number.
 
 @return The number.
 **/
-long random() { OVERLOAD
+long random(void) { OVERLOAD
 	call("random().");
 	return um_random();
 }
@@ -202,6 +255,8 @@ int wrefresh(WINDOW * win) { OVERLOAD
 
 	TODO make non-static with padding
 	*/
+	const int TERM_COL = 77;
+	const int TERM_ROW = 25;
 	int ws_x = TERM_COL, ws_y = TERM_ROW-1;
 	char ws_str[TERM_COL], ws_buf[TERM_COL];
 	#define wrefresh_ADDSTR(format, length, ...) \
@@ -215,10 +270,10 @@ int wrefresh(WINDOW * win) { OVERLOAD
 		ws_x--;
 	wrefresh_ADDSTR("S: %u/%u", 6, globstate, states-1);
 	wrefresh_ADDSTR("D: %u", 13, (unsigned int )(current_time-record.time));
-	wrefresh_ADDSTR("R: 0x%08x", 13, hash(ARC4_S, 0x100));
-	wrefresh_ADDSTR("T: ?/%u", 13, TURNS);
+	wrefresh_ADDSTR("R: 0x%08x", 13, hash(executable_arc4_s, 0x100));
+	wrefresh_ADDSTR("T: ?/%u", 13, *executable_turns);
 	wrefresh_ADDSTR("F: ?/%u", 13, record.count);
-	wrefresh_ADDSTR("I: %s", 9, codeins);
+	wrefresh_ADDSTR("I: %s", 9, name);
 
 	/*
 	Draws the debug bar.
@@ -336,19 +391,19 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 	else if (!was_meta && key == 0x1b) was_meta = TRUE;
 	else {
 		char code[4];
-		strcpy(codeins, "");
+		strcpy(name, "");
 		if (was_colon) {
 			key_code(code, was_colon == 1 ? 0x3a : 'w');
-			strcat(codeins, code);
+			strcat(name, code);
 		}
 		if (was_meta) {
 			key_code(code, 0x1b);
-			strcat(codeins, code);
+			strcat(name, code);
 		}
 		was_colon = FALSE;
 		was_meta = FALSE;
 		key_code(code, key);
-		strcat(codeins, code);//TODO turn this into a macro
+		strcat(name, code);//TODO turn this into a macro
 	}
 	unsigned char duration = frame_rate/2;
 	add_key_frame(&record, duration, key);//meta, colon and w are undisplayed but still recorded (for now)
@@ -366,7 +421,7 @@ Intercepts exiting prematurely.
 void exit(int status) { OVERLOAD
 	call("exit(%d).", status);
 	//do something
-	return um_exit(NO_PROBLEM);
+	um_exit(NO_PROBLEM);
 }
 
 #endif

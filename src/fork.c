@@ -25,7 +25,34 @@ Works like cutlery.
 #include <libconfig.h>
 
 #include "problem.h"//problem_t
+#include "shm.h"
 #include "fork.h"
+
+char * home_path;
+char * executable_path;
+char * executable_data_path;
+char * executable_process_path;
+char * executable_version_path;
+char * executable_count_path;
+char * executable_keybind_path;
+char * executable_config_path;
+char * loader_path;
+char * libc_path;
+char * libncurses_path;
+unsigned int generations;
+unsigned int states;
+unsigned int rows;
+unsigned int cols;
+char * iterator;
+FILE * input_stream;
+FILE ** output_streams;
+char * shm_path;
+FILE * error_stream;
+FILE * warning_stream;
+FILE * note_stream;
+FILE * call_stream;
+
+void continuator() {}
 
 /**
 Saves the game to memory.
@@ -44,12 +71,12 @@ problem_t save(const int state) {
 	}
 	fprintfl(warning_stream, "[%d::fork()]", (unsigned short )getpid()); fflush(stdout);
 	pid_t pid = fork();//returns 0 in child, process id of child in parent, -1 on error
-	shmattach();
+	attach_shm();
 	struct sigaction act;
 	act.sa_handler = continuator;
 	act.sa_flags = 0;
 	if (sigaction(SIGUSR1, &act, NULL) != 0) fprintfl(note_stream, "Can't catch CONT.");
-	if (pid == -1) uninit(error(NO_PROBLEM));
+	if (pid == -1) return error(NO_PROBLEM);
 	if (pid != 0) {//parent
 		if (shm->pids[state] != 0) {
 			fprintfl(warning_stream, "[%d::kill(%d)]", (unsigned short )getpid(), (unsigned short )shm->pids[state]); fflush(stdout);

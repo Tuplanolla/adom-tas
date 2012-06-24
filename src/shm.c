@@ -31,9 +31,9 @@ SHM_REMOVE_PROBLEM
 #include "log.h"//error
 #include "shm.h"//shm_t
 
-int states;
-int rows;
-int cols;
+unsigned int states;
+unsigned int rows;
+unsigned int cols;
 char * shm_path;
 
 key_t key = 0;
@@ -108,7 +108,7 @@ Initializes the shared memory segment.
 
 @return The error code.
 **/
-problem_t init_shm() {
+problem_t init_shm(void) {
 	/*
 	Generates a key for the shared memory segment.
 	*/
@@ -145,7 +145,7 @@ Attaches the shared memory segment.
 
 @return The error code.
 **/
-problem_t attach_shm() {
+problem_t attach_shm(void) {
 	PROPAGATE(get_shm(SHM_R | SHM_W));
 	return NO_PROBLEM;
 }
@@ -155,7 +155,7 @@ Detaches the shared memory segment.
 
 @return The error code.
 **/
-problem_t detach_shm() {
+problem_t detach_shm(void) {
 	if (shmdt(shm) == -1) {
 		return error(SHM_DETACH_PROBLEM);
 	}
@@ -168,7 +168,7 @@ Removes the shared memory segment.
 
 @return The error code.
 **/
-problem_t uninit_shm() {
+problem_t uninit_shm(void) {
 	if (shmctl(shmid, IPC_RMID, NULL) == -1) {
 		return error(SHM_REMOVE_PROBLEM);
 	}

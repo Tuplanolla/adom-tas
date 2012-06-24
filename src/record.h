@@ -6,13 +6,7 @@ Provides recording utilities.
 
 #include <time.h>//time_t
 
-/**
-Sets the frame rate.
-
-Choosing <code>sqrt(1 << 8 * sizeof duration)</code> as the frame rate creates a balanced time distribution.
-For a byte the minimum frame time is 0.0625 seconds and the maximum 16 seconds.
-**/
-const unsigned char frame_rate = 16;
+extern const unsigned char frame_rate;
 
 /**
 Represents a recorded frame.

@@ -18,10 +18,15 @@ Launches the executable.
 #include "adom.h"
 #include "config.h"
 #include "problem.h"
-#include "log.h"
 #include "put.h"
 #include "def.h"
+#include "log.h"
 
+char * executable_path;
+char * executable_process_path;
+char * executable_version_path;
+char * executable_count_path;
+unsigned int generations;
 FILE * error_stream;
 FILE * warning_stream;
 FILE * note_stream;
@@ -35,8 +40,6 @@ Runs the executable.
 @return The return code of the executable if successful and <code>EXECUTION_PROBLEM</code> otherwise.
 **/
 int main(int argc, char ** argv) {
-	struct stat buf;
-
 	/*
 	Updates the count file of the executable.
 	*/
@@ -46,7 +49,7 @@ int main(int argc, char ** argv) {
 			error(COUNT_OPEN_PROBLEM);
 		}
 		else {
-			if (fwrite(generations, 1, sizeof generations, stream) != sizeof generations) {
+			if (fwrite(&generations, sizeof generations, 1, stream) != 1) {
 				error(COUNT_WRITE_PROBLEM);
 			}
 			if (fclose(stream) != 0) {
@@ -98,14 +101,9 @@ int main(int argc, char ** argv) {
 	This process is replaced by the executable and all memory is automatically deallocated.
 	*/
 	argc--; argv++;//removes the first argument
-	if (execvp(executable_path, argv) == 0) return NO_PROBLEM;//never returns
-
-	/*
-	Unloads the configuration file.
-
-	The memory allocated by the <code>config_lookup_*</code> calls is automatically deallocated.
-	*/
-	config_destroy(&config);
+	if (execvp(executable_path, argv) == 0) {
+		return NO_PROBLEM;//never returns
+	}
 
 	return error(EXEC_PROBLEM);
 }

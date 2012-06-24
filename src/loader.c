@@ -1,5 +1,9 @@
 /**
 Modifies the executable.
+
+SIGUSR1 forks.
+SIGUSR2 dumps.
+SIGTERM terminates.
 **/
 #ifndef LOADER_C
 #define LOADER_C
@@ -11,7 +15,7 @@ Modifies the executable.
 #include <math.h>
 #include <time.h>
 #include <unistd.h>
-#include <dlfcn.h>
+#include <dlfcn.h>//dl*
 #include <fcntl.h>
 #include <signal.h>
 #include <sys/ioctl.h>
@@ -29,10 +33,14 @@ Modifies the executable.
 #include "log.h"
 #include "def.h"
 #include "put.h"
+#include "config.h"
 #include "asm.h"
 #include "shm.h"
 #include "adom.h"
 #include "record.h"
+#include "lib.h"
+
+record_t record;
 
 void * libc_handle;
 void * libncurses_handle;
@@ -43,7 +51,7 @@ Uninitializes this process.
 Contains unnecessary checks.
 **/
 void uninit_child(problem_t code) {
-	shm_detach();
+	detach_shm();
 
 	/*
 	Closes the log streams.
@@ -65,7 +73,7 @@ Uninitializes all processes.
 Contains unnecessary checks.
 **/
 void uninit_parent(problem_t code) {
-	shm_uninit();
+	uninit_shm();
 
 	/*
 	Closes the log streams.
@@ -82,26 +90,6 @@ void uninit_parent(problem_t code) {
 	Exits gracefully.
 	*/
 	um_exit(code);
-}
-
-/**
-Very important temporary variables.
-**/
-int globstate = 1;
-time_t current_time = 0;//0x7fe81780
-record_t record;
-
-/**
-Redirects calls from injected instructions.
-**/
-void injector() {
-	seed(current_time);
-	add_seed_frame(&record, current_time);
-	wrefresh(stdscr);
-}
-
-void seed(const int seed) {
-	iarc4(executable_arc4_calls_automatic_load);
 }
 
 /**
@@ -139,44 +127,37 @@ void handle_child(const int sig) {
 /**
 Initializes this process.
 **/
-bool initialized = FALSE, actually_initialized = FALSE;
-void init_parent() {
-	initialized = TRUE;
-
+problem_t init_parent(void) {
 	init_loader_config();
-
 
 	/*
 	Loads functions from dynamically linked libraries.
 	*/
-	{
-		libc_handle = dlopen(libc_path, RTLD_LAZY);//requires either RTLD_LAZY or RTLD_NOW
-		if (libc_handle == NULL) {
-			uninit(error(LIBC_PROBLEM));
-		}
-		um_unlink = (UNLINK )dlsym(libc_handle, "unlink");
-		um_time = (TIME )dlsym(libc_handle, "time");
-		um_localtime = (LOCALTIME )dlsym(libc_handle, "localtime");
-		um_srandom = (SRANDOM )dlsym(libc_handle, "srandom");
-		um_random = (RANDOM )dlsym(libc_handle, "random");
-		um_ioctl = (IOCTL )dlsym(libc_handle, "ioctl");
-		um_exit = (EXIT )dlsym(libc_handle, "exit");
+	libc_handle = dlopen(libc_path, RTLD_LAZY);//requires either RTLD_LAZY or RTLD_NOW
+	if (libc_handle == NULL) {
+		return error(LIBC_DLOPEN_PROBLEM);
 	}
-	{
-		libncurses_handle = dlopen(libncurses_path, RTLD_LAZY);
-		if (libncurses_handle == NULL) {
-			uninit(error(LIBNCURSES_PROBLEM));
-		}
-		um_init_pair = (INIT_PAIR )dlsym(libncurses_handle, "init_pair");
-		um_wrefresh = (WREFRESH )dlsym(libncurses_handle, "wrefresh");
-		um_wgetch = (WGETCH )dlsym(libncurses_handle, "wgetch");
+	um_unlink = (UNLINK )dlsym(libc_handle, "unlink");
+	um_time = (TIME )dlsym(libc_handle, "time");
+	um_localtime = (LOCALTIME )dlsym(libc_handle, "localtime");
+	um_srandom = (SRANDOM )dlsym(libc_handle, "srandom");
+	um_random = (RANDOM )dlsym(libc_handle, "random");
+	um_ioctl = (IOCTL )dlsym(libc_handle, "ioctl");
+	um_exit = (EXIT )dlsym(libc_handle, "exit");
+
+	libncurses_handle = dlopen(libncurses_path, RTLD_LAZY);
+	if (libncurses_handle == NULL) {
+		return error(LIBNCURSES_DLOPEN_PROBLEM);
 	}
+	um_init_pair = (INIT_PAIR )dlsym(libncurses_handle, "init_pair");
+	um_wrefresh = (WREFRESH )dlsym(libncurses_handle, "wrefresh");
+	um_wgetch = (WGETCH )dlsym(libncurses_handle, "wgetch");
 
 	/*
 	Prevents reloading libraries for child processes.
 	*/
 	if (unsetenv("LD_PRELOAD") != 0) {
-		warning(LD_PRELOAD_UNSET_PROBLEM);
+		warning(LD_PRELOAD_UNSETENV_PROBLEM);
 	}
 
 	init_record(&record);
@@ -186,14 +167,12 @@ void init_parent() {
 	*/
 	//inject_save(&injector);
 
-	actually_initialized = TRUE;
-
 	/*if (signal(SIGWINCH, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "No no resizing!");
 	if (signal(SIGCONT, terminator) == SIG_ERR) fprintfl(note_stream, "Can't catch CONT.");
 	if (signal(SIGINT, terminator) == SIG_ERR) fprintfl(note_stream, "Can't stop!");
 	if (signal(SIGTERM, terminator) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");*/
 
-	shm_init();
+	init_shm();
 
 	struct sigaction act;
 	act.sa_handler = handle_parent;
@@ -207,7 +186,7 @@ void init_parent() {
 		error(FORK_PROBLEM);
 	}
 	else if (pid == 0) {//child
-		shm_init();
+		attach_shm();
 		shm->pids[0] = getpid();
 	}
 	else {//parent
@@ -225,10 +204,13 @@ void init_parent() {
 		sigset_t mask;
 		sigfillset(&mask);
 		sigdelset(&mask, SIGUSR1);
-		sigwait(&mask);
+		int sig;
+		sigwait(&mask, &sig);
 		fprintf(stderr, "Quitting...\n");
-		uninit(error(NO_PROBLEM/*_MATE*/));
+		return error(NO_PROBLEM/*_MATE*/);
 	}
+
+	return NO_PROBLEM;
 }
 
 #endif

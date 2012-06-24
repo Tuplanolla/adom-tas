@@ -7,10 +7,7 @@ OBJ = obj
 SRC = src
 NAME = adom-tas
 
-nothing:
-	echo "Don't bother trying."
-
-all: $(BIN)/$(NAME).so $(BIN)/$(NAME) sh
+all: $(BIN)/$(NAME).so $(BIN)/$(NAME)
 
 clean:
 	$(RM) $(OBJ)/* $(BIN)/*
@@ -25,11 +22,11 @@ sh:
 $(OBJ)/%.o: $(SRC)/%.c
 	$(GCC) -fpic -c -o $@ $<
 
-$(BIN)/$(NAME).so: prepare $(OBJ)/loader.o $(OBJ)/log.o $(OBJ)/adom.o $(OBJ)/record.o $(OBJ)/put.o
-	$(GCC) -fpic -shared -o $(BIN)/$(NAME).so $(OBJ)/loader.o $(OBJ)/log.o $(OBJ)/adom.o $(OBJ)/record.o $(OBJ)/put.o
+$(BIN)/$(NAME).so: prepare $(OBJ)/launcher.o $(OBJ)/loader.o $(OBJ)/adom.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
+	$(GCC) -fpic -shared -o $(BIN)/$(NAME).so $(OBJ)/launcher.o $(OBJ)/loader.o $(OBJ)/adom.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
 
-$(BIN)/$(NAME): prepare $(OBJ)/launcher.o $(OBJ)/log.o $(OBJ)/adom.o
-	$(GCC) -lncurses -o $(BIN)/$(NAME) $(OBJ)/launcher.o $(OBJ)/log.o $(OBJ)/adom.o
+$(BIN)/$(NAME): prepare $(OBJ)/launcher.o $(OBJ)/loader.o $(OBJ)/adom.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
+	$(GCC) -lncurses -o $(BIN)/$(NAME) $(OBJ)/launcher.o $(OBJ)/loader.o $(OBJ)/adom.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
 
 run: all
 	$(BIN)/$(NAME)

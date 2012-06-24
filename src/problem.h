@@ -10,7 +10,86 @@ Handles errors.
 Lists the error codes.
 **/
 enum problem_e {
-	NO_PROBLEM
+	NO_PROBLEM,
+
+	CONFIG_OPEN_PROBLEM,
+	CONFIG_WRITE_PROBLEM,
+	CONFIG_CLOSE_PROBLEM,
+	CONFIG_STAT_PROBLEM,
+	CONFIG_PARSE_PROBLEM,
+	HOME_CONFIG_PROBLEM,
+	HOME_GETENV_PROBLEM,
+	HOME_GETPWUID_PROBLEM,
+	HOME_STAT_PROBLEM,
+	LD_PRELOAD_CONFIG_PROBLEM,
+	LD_PRELOAD_GETENV_PROBLEM,
+	LD_PRELOAD_STAT_PROBLEM,
+	LD_PRELOAD_SETENV_PROBLEM,
+	EXECUTABLE_CONFIG_PROBLEM,
+	EXECUTABLE_STAT_PROBLEM,
+	EXECUTABLE_TYPE_PROBLEM,
+	EXECUTABLE_PERMISSION_PROBLEM,
+	EXECUTABLE_SIZE_PROBLEM,
+	EXECUTABLE_OPEN_PROBLEM,
+	EXECUTABLE_READ_PROBLEM,
+	EXECUTABLE_HASH_PROBLEM,
+	EXECUTABLE_CLOSE_PROBLEM,
+	EXECUTABLE_DATA_CONFIG_PROBLEM,
+	EXECUTABLE_DATA_HOME_PROBLEM,
+	EXECUTABLE_DATA_STAT_PROBLEM,
+	EXECUTABLE_PROCESS_STAT_PROBLEM,
+	EXECUTABLE_VERSION_STAT_PROBLEM,
+	EXECUTABLE_COUNT_STAT_PROBLEM,
+	EXECUTABLE_KEYBIND_STAT_PROBLEM,
+	EXECUTABLE_CONFIG_STAT_PROBLEM,
+	LIBC_CONFIG_PROBLEM,
+	LIBC_STAT_PROBLEM,
+	LIBNCURSES_CONFIG_PROBLEM,
+	LIBNCURSES_STAT_PROBLEM,
+	ROW_CONFIG_PROBLEM,
+	ROW_AMOUNT_PROBLEM,
+	COL_CONFIG_PROBLEM,
+	COL_AMOUNT_PROBLEM,
+	STATE_CONFIG_PROBLEM,
+	STATE_AMOUNT_PROBLEM,
+	SHM_CONFIG_PROBLEM,
+	ITERATOR_CONFIG_PROBLEM,
+	INPUT_CONFIG_PROBLEM,
+	INPUT_STAT_PROBLEM,
+	INPUT_OPEN_PROBLEM,
+	OUTPUT_CONFIG_PROBLEM,
+	OUTPUT_ITERATOR_PROBLEM,
+	OUTPUT_STAT_PROBLEM,
+	OUTPUT_OPEN_PROBLEM,
+	ERROR_CONFIG_PROBLEM,
+	ERROR_STAT_PROBLEM,
+	ERROR_OPEN_PROBLEM,
+	LOG_CHANGE_PROBLEM,
+
+	COUNT_OPEN_PROBLEM,
+	COUNT_WRITE_PROBLEM,
+	COUNT_CLOSE_PROBLEM,
+	VERSION_OPEN_PROBLEM,
+	VERSION_READ_PROBLEM,
+	VERSION_CLOSE_PROBLEM,
+	VERSION_MISMATCH_PROBLEM,
+	PROCESS_UNLINK_PROBLEM,
+	EXEC_PROBLEM,
+
+	LIBC_DLOPEN_PROBLEM,
+	LIBNCURSES_DLOPEN_PROBLEM,
+	LD_PRELOAD_UNSETENV_PROBLEM,
+
+	SHM_KEY_PROBLEM,
+	SHM_GET_PROBLEM,
+	SHM_ATTACH_PROBLEM,
+	SHM_DETACH_PROBLEM,
+	SHM_REMOVE_PROBLEM,
+
+	FORK_PROBLEM,
+
+	ASM_PROBLEM,
+	MPROTECT_PROBLEM
 };
 typedef enum problem_e problem_t;
 
@@ -51,79 +130,64 @@ EXECUTABLE_VERSION_STAT_PROBLEM "Accessing the executable's version file failed.
 EXECUTABLE_COUNT_STAT_PROBLEM "Accessing the executable's count file failed.";
 EXECUTABLE_KEYBIND_STAT_PROBLEM "Accessing the executable's keybinding file failed.";
 EXECUTABLE_CONFIG_STAT_PROBLEM "Accessing the executable's configuration file failed.";
+LIBC_CONFIG_PROBLEM "Finding the location of the C standard library in the configuration file failed. It will be guessed.";
+LIBC_STAT_PROBLEM "Accessing the C standard library failed.";
+LIBNCURSES_CONFIG_PROBLEM "Finding the location of the New Cursor Optimization library in the configuration file failed. It will be guessed.";
+LIBNCURSES_STAT_PROBLEM "Accessing the New Cursor Optimization library failed.";
+ROW_CONFIG_PROBLEM "Finding the height of the terminal in the configuration file failed. The default value will be assumed.";
+ROW_AMOUNT_PROBLEM "Setting the height of the terminal failed. The closest estimate will be used.";
+COL_CONFIG_PROBLEM "Finding the width of the terminal in the configuration file failed. The default value will be assumed.";
+COL_AMOUNT_PROBLEM "Setting the width of the terminal failed. The closest estimate will be used.";
+STATE_CONFIG_PROBLEM "Finding the amount of save states in the configuration file failed. The default value will be assumed.";
+STATE_AMOUNT_PROBLEM "Setting the amount of save states failed. The closest estimate will be used.";
+SHM_CONFIG_PROBLEM "Finding the location of the shared memory segment in the configuration file failed. The default value will be assumed.";
+ITERATOR_CONFIG_PROBLEM "Finding the iterator string in the configuration file failed. The default value will be assumed.";
+INPUT_CONFIG_PROBLEM "Finding the location of the input file in the configuration file failed. The default value will be assumed.";
+INPUT_STAT_PROBLEM
+INPUT_OPEN_PROBLEM
+OUTPUT_CONFIG_PROBLEM "Finding the location of the output files in the configuration file failed. The default values will be assumed.";
+OUTPUT_ITERATOR_PROBLEM
+OUTPUT_STAT_PROBLEM
+OUTPUT_OPEN_PROBLEM
+ERROR_CONFIG_PROBLEM
+ERROR_STAT_PROBLEM
+ERROR_OPEN_PROBLEM
+LOG_CHANGE_PROBLEM "The log locations changed.";
 
 COUNT_OPEN_PROBLEM "Opening the count file for writing failed.";
 COUNT_WRITE_PROBLEM "Writing the count file failed.";
 COUNT_CLOSE_PROBLEM "Closing the count file failed.";
-VERSION_OPEN_PROBLEM
-VERSION_READ_PROBLEM
-VERSION_CLOSE_PROBLEM
-VERSION_MISMATCH_PROBLEM
-PROCESS_UNLINK_PROBLEM
-EXEC_PROBLEM
+VERSION_OPEN_PROBLEM "Opening the version file for reading failed.";
+VERSION_READ_PROBLEM "Reading the version file failed.";
+VERSION_CLOSE_PROBLEM "Closing the version file failed.";
+VERSION_MISMATCH_PROBLEM "Verifying the version of the executable failed.";
+PROCESS_UNLINK_PROBLEM "Removing the process file failed.";
+EXEC_PROBLEM "Launching the executable failed.";
+
+LIBC_DLOPEN_PROBLEM
+LIBNCURSES_DLOPEN_PROBLEM
+LD_PRELOAD_UNSETENV_PROBLEM
+
+SHM_KEY_PROBLEM
+SHM_GET_PROBLEM
+SHM_ATTACH_PROBLEM
+SHM_DETACH_PROBLEM
+SHM_REMOVE_PROBLEM
+
+FORK_PROBLEM
+
+ASM_PROBLEM
+MPROTECT_PROBLEM
 */
 inline char * problem_message(const problem_t code) {
-	if (code == NO_PROBLEM) return "Nothing failed.";
-	if (code == CONFIG_FIND_PROBLEM) return "Finding the configuration file failed. It will be created from a template.";
-	if (code == CONFIG_PROBLEM) return "Parsing the configuration file failed.";
-	if (code == LD_PRELOAD_FIND_PROBLEM) return "Finding the library to preload \"ld_preload\" in the configuration file or the environment variable \"LD_PRELOAD\" failed.";
-	if (code == LD_PRELOAD_ACCESS_PROBLEM) return "Accessing the library to preload failed.";
-	if (code == LD_PRELOAD_SET_PROBLEM) return "Setting the library to preload failed.";
-	if (code == CONFIG_EXEC_PROBLEM) return "Finding the location of the executable \"exec\" in the configuration file failed.";
-	if (code == EXEC_FIND_PROBLEM) return "Finding the executable failed.";
-	if (code == EXEC_TYPE_PROBLEM) return "Ensuring the executable is a file failed.";
-	if (code == EXEC_ACCESS_PROBLEM) return "Accessing the executable failed.";
-	if (code == EXEC_SIZE_PROBLEM) return "Verifying the size of the executable failed.";
-	if (code == EXEC_READ_PROBLEM) return "Reading the executable failed.";
-	if (code == EXEC_HASH_PROBLEM) return "Verifying the hash code of the executable failed.";
-	if (code == CONFIG_DATA_PROBLEM) return "Finding the location of the executable's data \"data\" in the configuration file failed.";
-	if (code == DATA_FIND_PROBLEM) return "Finding the executable's data failed.";
-	if (code == VERSION_FIND_PROBLEM) return "Finding the version of the executable failed.";
-	if (code == VERSION_PROBLEM) return "Verifying the version of the executable failed.";
-	if (code == PROCESS_PROBLEM) return "Removing the process file of the executable failed.";
-	if (code == EXEC_PROBLEM) return "Launching the executable failed.";
-	if (code == LIBC_FIND_PROBLEM) return "Finding the C standard library \"libc\" in the configuration file failed.";
-	if (code == LIBC_ACCESS_PROBLEM) return "Accessing the C standard library failed.";
-	if (code == LIBNCURSES_FIND_PROBLEM) return "Finding the New Cursor Optimization library \"libncurses\" in the configuration file failed.";
-	if (code == LIBNCURSES_ACCESS_PROBLEM) return "Accessing the New Cursor Optimization library failed.";
-	if (code == LIBC_PROBLEM) return "Loading the C standard library failed.";
-	if (code == LIBNCURSES_PROBLEM) return "Loading the New Cursor Optimization library failed.";
-	if (code == LD_PRELOAD_UNSET_PROBLEM) return "Unsetting the library to preload failed.";
-	if (code == CONFIG_SHM_PROBLEM) return "Finding the location of the shared memory \"shm\" in the configuration file failed. The default location will be assumed.";
-	if (code == SHM_OPEN_PROBLEM) return "Opening the shared memory failed.";
-	if (code == SHM_TRUNCATE_PROBLEM) return "Truncating the shared memory failed.";
-	if (code == SHM_MAP_PROBLEM) return "Mapping the shared memory failed.";
-	if (code == CONFIG_ROW_PROBLEM) return "Finding the height of the terminal \"rows\" in the configuration file failed. The default height will be assumed.";
-	if (code == CONFIG_COL_PROBLEM) return "Finding the width of the terminal \"cols\" in the configuration file failed. The default width will be assumed.";
-	if (code == CONFIG_STATE_PROBLEM) return "Finding the amount of save states \"states\" in the configuration file failed. The default amount will be assumed.";
-	if (code == STATE_AMOUNT_PROBLEM) return "The amount of save states must be positive. The minimum amount will be assumed.";
-	if (code == CONFIG_ITERATOR_PROBLEM) return "Finding the iterator string \"iterator\" in the configuration file failed. The default string will be assumed.";
-	if (code == CONFIG_INPUT_PROBLEM) return "Finding the location of the input file \"input\" in the configuration file failed. The default location will be assumed.";
-	if (code == INPUT_FIND_PROBLEM) return "Finding the input file failed.";
-	if (code == INPUT_ACCESS_PROBLEM) return "Accessing the input file failed.";
-	if (code == CONFIG_OUTPUT_PROBLEM) return "Finding the location of the output file \"output\" in the configuration file failed. The default location will be assumed.";
-	if (code == OUTPUT_OVERWRITE_PROBLEM) return "The output file already exists and may be overwritten.";
-	if (code == OUTPUT_REPLACEMENT_PROBLEM) return "The location of the output file contains more than one replacement characters. Only the first one will be replaced.";
-	if (code == OUTPUT_ACCESS_PROBLEM) return "Accessing the output file failed.";
-	if (code == CONFIG_ERROR_LOG_PROBLEM) return "Finding the location of the error log \"errors\" in the configuration file failed. Errors will be logged to the standard error stream \"stderr\" instead.";
-	if (code == ERROR_LOG_OVERWRITE_PROBLEM) return "The error log already exists and will be overwritten.";
-	if (code == ERROR_LOG_ACCESS_PROBLEM) return "Accessing the error log failed.";
-	if (code == CONFIG_WARNING_LOG_PROBLEM) return "Finding the location of the warning log \"warnings\" in the configuration file failed. Warnings will be logged to the standard error stream \"stderr\" instead.";
-	if (code == WARNING_LOG_OVERWRITE_PROBLEM) return "The warning log already exists and will be overwritten.";
-	if (code == WARNING_LOG_ACCESS_PROBLEM) return "Accessing the warning log failed.";
-	if (code == CONFIG_NOTE_LOG_PROBLEM) return "Finding the location of the note log \"notes\" in the configuration file failed. Notes will be logged to the standard error stream \"stderr\" instead.";
-	if (code == NOTE_LOG_OVERWRITE_PROBLEM) return "The note log already exists and will be overwritten.";
-	if (code == NOTE_LOG_ACCESS_PROBLEM) return "Accessing the note log failed.";
-	if (code == CONFIG_CALL_LOG_PROBLEM) return "Finding the location of the call log \"calls\" in the configuration file failed. Calls will not be logged.";
-	if (code == CALL_LOG_OVERWRITE_PROBLEM) return "The call log already exists and will be overwritten.";
-	if (code == CALL_LOG_ACCESS_PROBLEM) return "Accessing the call log failed.";
-	if (code == CALL_LOG_PROBLEM) return "The call log is verbose and requires a lot of resources.";
-	if (code == LOG_CHANGE_PROBLEM) return "The log streams have changed and will be redirected.";
-	return "Converting an error code to an error message failed.";
+	switch (code) {
+		case NO_PROBLEM: return "Nothing failed.";
+		default: return "Converting an error code to an error message failed.";
+	}
 }
 
 /**
-Propagates an error.
+Propagates an error code.
 
 Returns the error code of an error if one occurs:
 <pre>
@@ -135,7 +199,6 @@ problem_t method {
 </pre>
 
 @param code The error code.
-@return The error code.
 **/
 #undef PROPAGATE
 #define PROPAGATE(code) do {\

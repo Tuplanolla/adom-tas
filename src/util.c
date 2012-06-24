@@ -53,7 +53,7 @@ Replaces the first occurrence of a string in a string with another string.
 
 Allocates enough memory for the return value.
 
-All occurrences can be replaced with a loop assuming no recursion occurs:
+All occurrences can be replaced with a loop, assuming no recursion occurs:
 <pre>
 strcpy(haystack, "an ample example");
 strcpy(needle, "ample");
@@ -72,8 +72,14 @@ printf("%s\n", haystack);
 @return The resulting string.
 **/
 char * astrrep(const char * const haystack, const char * const needle, const char * const replacement) {
-	const char * needle_position = strstr(haystack, needle);
+	if (haystack == NULL) {
+		return NULL;
+	}
 	const size_t haystack_size = strlen(haystack) + 1;
+	const char * needle_position = NULL;
+	if (needle != NULL && replacement != NULL) {
+		const char * needle_position = strstr(haystack, needle);
+	}
 	if (needle_position == NULL) {
 		char * result = malloc(haystack_size);
 		strcpy(result, haystack);

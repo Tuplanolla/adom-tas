@@ -41,7 +41,7 @@ problem_t inject_save(void (* injector)()) {
 	instructions[9] = 0x00;
 	const int prot = PROT_READ | PROT_WRITE | PROT_EXEC;
 	if (mprotect(PAGE(location), PAGE_SIZE(instructions), prot) == 0) {
-		memcpy(location, instructions, sizeof (instructions));//TODO make sure it's patching the right instructions
+		memcpy(location, instructions, sizeof (instructions));//TODO make sure it's patching the right instructions or return ASM_PROBLEM
 	}
 	else {
 		return error(MPROTECT_PROBLEM);

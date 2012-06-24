@@ -34,9 +34,9 @@ extern shm_t * shm;
 /**
 Manages the shared memory segment.
 **/
-problem_t init_shm(const char * pathname);
-problem_t attach_shm();
-problem_t detach_shm();
-problem_t uninit_shm();
+problem_t init_shm(void);
+problem_t attach_shm(void);
+problem_t detach_shm(void);
+problem_t uninit_shm(void);
 
 #endif

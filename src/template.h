@@ -8,6 +8,6 @@ Serves as a template.
 
 extern void * nowhere;
 
-void nothing();
+void nothing(void);
 
 #endif

@@ -9,6 +9,7 @@ Manages the configuration variables.
 #include <stdio.h>//FILE
 
 #include "problem.h"//problem_t
+#include "record.h"//record_t
 
 extern char * home_path;
 extern char * executable_path;
@@ -21,10 +22,10 @@ extern char * executable_config_path;
 extern char * loader_path;
 extern char * libc_path;
 extern char * libncurses_path;
-extern int generations;
-extern int states;
-extern int rows;
-extern int cols;
+extern unsigned int generations;
+extern unsigned int states;
+extern unsigned int rows;
+extern unsigned int cols;
 extern char * iterator;
 extern FILE * input_stream;
 extern FILE ** output_streams;
@@ -33,8 +34,9 @@ extern FILE * error_stream;
 extern FILE * warning_stream;
 extern FILE * note_stream;
 extern FILE * call_stream;
+extern record_t record;
 
-problem_t init_launcher_config();
-problem_t init_loader_config();
+problem_t init_launcher_config(void);
+problem_t init_loader_config(void);
 
 #endif
