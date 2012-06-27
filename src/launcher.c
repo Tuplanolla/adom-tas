@@ -6,62 +6,54 @@ Launches the executable.
 #ifndef LAUNCHER_C
 #define LAUNCHER_C
 
-#include <stdlib.h>//*alloc, free, *env
-#include <stdio.h>//*print*, *open, *close, std*, FILE
-#include <string.h>//str*
-#include <pwd.h>//get*uid, passwd
-#include <sys/stat.h>//stat, S_*
+#include <stdlib.h>//NULL
+#include <stdio.h>//*open, *read, *write, *close, *print*, std*, FILE
+#include <string.h>//mem*, unlink
+#include <unistd.h>//exec*
 
-#include <libconfig.h>//config_*
+#include "util.h"//intern
+#include "problem.h"//*_PROBLEM
+#include "log.h"//error, warning, note
+#include "exec.h"//executable_*
+#include "config.h"//*_config, executable_*, generations
 
-#include "util.h"
-#include "adom.h"
-#include "config.h"
-#include "problem.h"
-#include "put.h"
-#include "def.h"
-#include "log.h"
-
-char * executable_path;
-char * executable_process_path;
-char * executable_version_path;
-char * executable_count_path;
-unsigned int generations;
-FILE * error_stream;
-FILE * warning_stream;
-FILE * note_stream;
-FILE * call_stream;
+intern char * executable_path;
+intern char * executable_config_path;
+intern char * executable_process_path;
+intern char * executable_keybind_path;
+intern char * executable_version_path;
+intern char * executable_count_path;
+intern unsigned int generations;
+intern const unsigned char executable_version[4];
 
 /**
 Runs the executable.
 
-@param argc The amount of command line arguments.
-@param argv The command line arguments.
-@return The return code of the executable if successful and <code>EXECUTION_PROBLEM</code> otherwise.
+The command-line arguments are passed through.
+
+@param argc The amount of command-line arguments.
+@param argv The command-line arguments.
+@return <code>NO_PROBLEM</code> if successful and something else otherwise.
 **/
-int main(int argc, char ** argv) {
+int main(const int argc, char * argv[]) {
 	/*
-	Updates the count file of the executable.
+	Loads the configuration.
 	*/
-	if (executable_count_file != NULL) {
-		FILE * stream = fopen(executable_count_path, "wb");
-		if (stream == NULL) {
-			error(COUNT_OPEN_PROBLEM);
-		}
-		else {
-			if (fwrite(&generations, sizeof generations, 1, stream) != 1) {
-				error(COUNT_WRITE_PROBLEM);
-			}
-			if (fclose(stream) != 0) {
-				error(COUNT_CLOSE_PROBLEM);
-			}
+	init_launcher_config();
+
+	/*
+	Removes the process file.
+	*/
+	if (executable_process_path != NULL) {
+		if (unlink(executable_process_path) != 0) {
+			return error(PROCESS_UNLINK_PROBLEM);
 		}
 	}
 
 	/*
-	Verifies the version of the executable.
+	Verifies the version.
 	*/
-	if (executable_version_file != NULL) {
+	if (executable_version_path != NULL) {
 		FILE * stream = fopen(executable_version_path, "rb");
 		if (stream == NULL) {
 			warning(VERSION_OPEN_PROBLEM);
@@ -81,31 +73,41 @@ int main(int argc, char ** argv) {
 	}
 
 	/*
-	Removes the process file of the executable.
+	Sets the amount of generated characters.
 	*/
-	if (executable_process_path != NULL) {
-		if (unlink(executable_process_path) != 0) {
-			return error(PROCESS_UNLINK_PROBLEM);
+	if (executable_count_path != NULL) {
+		FILE * stream = fopen(executable_count_path, "wb");
+		if (stream == NULL) {
+			error(COUNT_OPEN_PROBLEM);
+		}
+		else {
+			if (fwrite(&generations, sizeof generations, 1, stream) != 1) {
+				error(COUNT_WRITE_PROBLEM);
+			}
+			if (fclose(stream) != 0) {
+				error(COUNT_CLOSE_PROBLEM);
+			}
 		}
 	}
 
 	/*
-	Reports good news.
-	*/
-	printf("Loading...\n");
-	sleep(1);
-
-	/*
 	Launches the executable.
-
-	This process is replaced by the executable and all memory is automatically deallocated.
 	*/
-	argc--; argv++;//removes the first argument
-	if (execvp(executable_path, argv) == 0) {
-		return NO_PROBLEM;//never returns
+	if (executable_path != NULL) {
+		argv[0] = executable_path;
+		if (execv(executable_path, argv) != 0) {
+			return error(EXEC_PROBLEM);
+		}
 	}
 
-	return error(EXEC_PROBLEM);
+	/*
+	Suppresses warnings.
+
+	An <code>exec*</code> call either
+		replaces this process with the executable or
+		fails and returns the appropriate error code.
+	*/
+	return error(CAUSALITY_PROBLEM);
 }
 
 #endif

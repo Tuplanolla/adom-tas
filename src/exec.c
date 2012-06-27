@@ -6,83 +6,89 @@ Simulates
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef ADOM_C
-#define ADOM_C
+#ifndef EXEC_C
+#define EXEC_C
 
-#include <stdlib.h>//*random
+#include <stdlib.h>//*random, size_t
 #include <stdio.h>//*print*
 #include <string.h>//str*, mem*
 
 #include <curses.h>//KEY_*
 
-#include "util.h"//SWAP
-#include "adom.h"//executable_*
+#include "util.h"//intern, SWAP
+
+#include "exec.h"//executable_*
 
 /**
 The simulated turn count.
 
 Ignores negative turns.
 **/
-unsigned int turns = 0;
+intern int turns = 0;
+
+/**
+The size of the executable.
+**/
+intern const size_t executable_size = 2452608;
 
 /**
 The hash code of the executable.
 **/
-const int executable_hash = 952942381;
+intern const int executable_hash = 952942381;
 
 /**
 The version of the executable.
 **/
-const unsigned char executable_version[4] = {1, 1, 1, 0};
+intern const unsigned char executable_version[4] = {1, 1, 1, 0};
 
 /**
 The turn count.
 **/
-unsigned int * const executable_turns = (void * )0x082b16e0;
+intern int * const executable_turns = (void * )0x082b16e0;
 
 /**
 The save count.
 **/
-unsigned int * const executable_saves = (void * )0x082b6140;
+intern int * const executable_saves = (void * )0x082b6140;
 
 /**
 The minimum and maximum height and width of the terminal.
 **/
-const unsigned int executable_rows_min = 25;
-const unsigned int executable_cols_min = 77;
-const unsigned int executable_rows_max = 127;
-const unsigned int executable_cols_max = 127;
+intern const int executable_rows_min = 25;
+intern const int executable_cols_min = 77;
+intern const int executable_rows_max = 127;
+intern const int executable_cols_max = 127;
 
 /**
 The data files of the executable.
 **/
-const char * const executable_data_file = ".adom.data";
-const char * const executable_process_file = ".adom.prc";
-const char * const executable_version_file = ".adom.ver";
-const char * const executable_count_file = ".adom.cnt";
-const char * const executable_keybind_file = ".adom.kbd";
-const char * const executable_config_file = ".adom.cfg";
+intern const char * const executable_data_file = ".adom.data";
+intern const char * const executable_config_file = ".adom.cfg";
+intern const char * const executable_process_file = ".adom.prc";
+intern const char * const executable_keybind_file = ".adom.kbd";
+intern const char * const executable_version_file = ".adom.ver";
+intern const char * const executable_count_file = ".adom.cnt";
 
 /**
 The random number generator variables of the executable.
 **/
-unsigned char * const executable_arc4_s = (void * )0x082ada40;
-unsigned char * const executable_arc4_i = (void * )0x082adb40;
-unsigned char * const executable_arc4_j = (void * )0x082adb41;
+intern unsigned char * const executable_arc4_s = (void * )0x082ada40;
+intern unsigned char * const executable_arc4_i = (void * )0x082adb40;
+intern unsigned char * const executable_arc4_j = (void * )0x082adb41;
 
 /**
 The amounts of random number generator calls measured in the executable.
 **/
-const unsigned int executable_arc4_calls_menu = 4 * 1214;
-const unsigned int executable_arc4_calls_automatic_load = 4 * 1419;
-const unsigned int executable_arc4_calls_manual_load = 4 * 1623;
+intern const unsigned int executable_arc4_calls_menu = 4 * 1214;
+intern const unsigned int executable_arc4_calls_automatic_load = 4 * 1419;
+intern const unsigned int executable_arc4_calls_manual_load = 4 * 1623;
 
 /**
 The current state S and iterators i and j.
 **/
-unsigned char arc4_s[0x100];
-unsigned char arc4_i = 0x00;
-unsigned char arc4_j = 0x00;
+intern unsigned char arc4_s[0x100];
+intern unsigned char arc4_i = 0x00;
+intern unsigned char arc4_j = 0x00;
 
 /**
 Seeds the current state S.
@@ -96,7 +102,7 @@ void sarc4(const int seed) {
 		i++;
 	} while(i != 0x00);
 	do {
-		j += arc4_s[i] + ((unsigned char * )&seed)[i % sizeof seed];
+		j += arc4_s[i] + ((const unsigned char * )&seed)[i % sizeof seed];
 		SWAP(arc4_s[i], arc4_s[j]);
 		i++;
 	} while (i != 0x00);
@@ -126,7 +132,7 @@ Generates and injects
 @param seed The seed k to use.
 @param bytes The amount of bytes r to generate.
 **/
-void iarc4(const int seed, const unsigned int bytes) {
+void iarc4(const unsigned int seed, const unsigned int bytes) {
 	arc4_i = 0;
 	arc4_j = 0;
 	srandom(seed);
@@ -154,7 +160,7 @@ printf("%d = \"%s\"\n", key, code);
 @param code The key code to return.
 @param key The key number.
 */
-void key_code(char * code, const int key) {
+void key_code(char * const code, const int key) {
 	#define key_code_RETURN(str) {\
 			strcpy(code, str);\
 			return;\

@@ -24,21 +24,21 @@ SHM_REMOVE_PROBLEM
 
 #include <curses.h>//chtype
 
-#include "def.h"//project_name
-#include "config.h"//states, rows, cols, shm_path
-#include "util.h"//hash, SUBNULL
+#include "util.h"//hash, intern, SUBNULL
 #include "problem.h"//problem_t, PROPAGATE, *_PROBLEM
 #include "log.h"//error
-#include "shm.h"//shm_t
+#include "def.h"//project_name
+#include "config.h"//states, rows, cols, shm_path
+#include "shm.h"//shm_t, shm
 
-unsigned int states;
-unsigned int rows;
-unsigned int cols;
-char * shm_path;
+intern unsigned int states;
+intern unsigned int rows;
+intern unsigned int cols;
+intern char * shm_path;
+intern shm_t * shm = NULL;
 
 key_t key = 0;
 int shmid = -1;
-shm_t * shm = NULL;
 
 /**
 Creates the shared memory segment.
@@ -53,17 +53,20 @@ The values come after the pointers:
   |        ...
   |    pids[states]
   `-> ** chs[0] -----.
-      ** chs[1]      |
-            ...      |
-      ** chs[states] |
-   ,- * chs[0][0] <--'
-   |  * chs[0][1]
-   |          ...
-   |  * chs[0][rows]
-   `--> chs[0][0][0]
-        chs[0][0][1]
-                 ...
-        chs[0][0][cols]
+      ** chs[1] -----+--.
+            ...      |  |
+      ** chs[states] |  |
+,---- * chs[0][0] <--'  |
+|  ,- * chs[0][1]       |
+|  |          ...       |
+|  |  * chs[0][rows]    |
+|  |       ...          |
+`--+--> chs[0][0][0]    |
+   |    chs[0][0][1]    |
+   |             ...    |
+   |    chs[0][0][cols] |
+   `--------> ...       |
+           ... <--------'
 </pre>
 
 @return The error code.
@@ -74,6 +77,8 @@ problem_t get_shm(const int shmflg) {
 	*/
 	const size_t size = sizeof *shm
 			+ states * sizeof *shm->pids
+			+ states * sizeof *shm->chs
+			+ states * rows * sizeof **shm->chs
 			+ states * rows * cols * sizeof ***shm->chs;
 	shmid = shmget(key, size, shmflg);
 	if (shmid == -1) {
@@ -85,21 +90,24 @@ problem_t get_shm(const int shmflg) {
 	}
 
 	/*
-	Calculates offsets for the pointers in the shared memory segment.
+	Calculates the offsets for the pointers in the shared memory segment.
 	*/
-	shm->pids = (int * )(shm
+	shm->pids = (int * )((size_t )shm
 			+ sizeof *shm);
-	shm->chs = (chtype *** )(shm->pids
-			+ states*sizeof *shm->pids);
+	shm->chs = (chtype *** )((size_t )shm->pids
+			+ states * sizeof *shm->pids);
 	for (unsigned int state = 0; state < states; state++) {
-		shm->chs[state] = (chtype ** )(shm->chs
-				+ states*sizeof ***shm->chs
-				+ state * rows * sizeof **shm->chs);
+		shm->chs[state] = (chtype ** )((size_t )shm->chs
+				+ states * sizeof *shm->chs
+				+ state * rows * sizeof **shm->chs
+				+ state * rows * cols * sizeof ***shm->chs);
 		for (unsigned int row = 0; row < rows; row++) {
-			shm->chs[state][row] = (chtype * )(shm->chs[state]
-					+ row * cols * sizeof (*shm->chs));
+			shm->chs[state][row] = (chtype * )((size_t )shm->chs[state]
+					+ rows * sizeof **shm->chs
+					+ row * cols * sizeof ***shm->chs);
 		}
 	}
+
 	return NO_PROBLEM;
 }
 
@@ -112,7 +120,7 @@ problem_t init_shm(void) {
 	/*
 	Generates a key for the shared memory segment.
 	*/
-	const int proj_id = hash((unsigned char * )project_name, strlen(project_name));
+	const int proj_id = hash((const unsigned char * )project_name, strlen(project_name));
 	key = ftok(shm_path, proj_id);
 	if (key == -1) {
 		return error(SHM_KEY_PROBLEM);
@@ -133,10 +141,11 @@ problem_t init_shm(void) {
 	for (unsigned int state = 0; state < states; state++) {
 		for (unsigned int row = 0; row < rows; row++) {
 			for (unsigned int col = 0; col < cols; col++) {
-				shm->chs[state][row][col] = 0;
+				shm->chs[state][row][col] = (chtype )' ';
 			}
 		}
 	}
+
 	return NO_PROBLEM;
 }
 

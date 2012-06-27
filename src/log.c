@@ -12,14 +12,16 @@
 #include <sys/time.h>//gettimeofday
 #include <unistd.h>//getpid
 
-#include "def.h"//???
 #include "problem.h"//problem_t, *_PROBLEM
+#include "def.h"//log_*
+#include "config.h"//*_stream
+
 #include "log.h"
 
-FILE * error_stream;
-FILE * warning_stream;
-FILE * note_stream;
-FILE * call_stream;
+intern FILE * error_stream;
+intern FILE * warning_stream;
+intern FILE * note_stream;
+intern FILE * call_stream;
 
 /**
 Formats and logs a message.
@@ -29,7 +31,7 @@ Formats and logs a message.
 @param ap The parameters to format.
 @return The amount of characters written.
 **/
-int vfprintfl(FILE * stream, const char * fmt, va_list ap) {
+int vfprintfl(FILE * const stream, const char * const fmt, va_list ap) {
 	/*
 	Creativity is required since <code>time</code> and <code>localtime</code> are unavailable.
 	*/
@@ -56,7 +58,7 @@ Formats and logs a message.
 @param ... The parameters to format.
 @return The amount of characters written.
 **/
-int fprintfl(FILE * stream, const char * fmt, ...) {
+int fprintfl(FILE * const stream, const char * const fmt, ...) {
 	va_list	ap;
 	va_start(ap, fmt);
 	const int result = vfprintfl(stream, fmt, ap);
@@ -113,7 +115,7 @@ Logs a call and returns its error code.
 @param ... The function parameters.
 @return The error code.
 **/
-problem_t call(const char * fmt, ...) {
+problem_t call(const char * const fmt, ...) {
 	if (call_stream != NULL) {
 		va_list	ap;
 		va_start(ap, fmt);

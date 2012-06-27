@@ -24,7 +24,7 @@ SIGTERM terminates.
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/types.h>
-
+//sig*, SA_*, RTLD_*
 #include <curses.h>
 #include <libconfig.h>
 
@@ -36,9 +36,23 @@ SIGTERM terminates.
 #include "config.h"
 #include "asm.h"
 #include "shm.h"
-#include "adom.h"
+#include "exec.h"
 #include "record.h"
 #include "lib.h"
+#include "loader.h"
+
+intern UNLINK um_unlink = NULL;
+intern IOCTL um_ioctl = NULL;
+intern TIME um_time = NULL;
+intern LOCALTIME um_localtime = NULL;
+intern SRANDOM um_srandom = NULL;
+intern RANDOM um_random = NULL;
+intern INIT_PAIR um_init_pair = NULL;
+intern WREFRESH um_wrefresh = NULL;
+intern WGETCH um_wgetch = NULL;
+intern EXIT um_exit = NULL;
+
+intern shm_t * shm;
 
 record_t record;
 
@@ -47,49 +61,46 @@ void * libncurses_handle;
 
 /**
 Uninitializes this process.
-
-Contains unnecessary checks.
 **/
-void uninit_child(problem_t code) {
-	detach_shm();
+problem_t uninit_common(void) {
+	PROPAGATE(detach_shm());
 
-	/*
-	Closes the log streams.
-	*/
-	if (error_stream != NULL) fclose(error_stream);
-	if (warning_stream != NULL) fclose(warning_stream);
-	if (note_stream != NULL) fclose(note_stream);
-	if (call_stream != NULL) fclose(call_stream);
+	PROPAGATE(uninit_config());
+
+	dlclose(libc_handle);
+	dlclose(libncurses_handle);
+
+	return NO_PROBLEM;
+}
+
+/**
+Uninitializes this process.
+**/
+problem_t uninit_child(void) {
+	PROPAGATE(uninit_common());
 
 	/*
 	Exits gracefully.
 	*/
-	exit(code);
+	um_exit(NO_PROBLEM);
+
+	return NO_PROBLEM;
 }
 
 /**
 Uninitializes all processes.
-
-Contains unnecessary checks.
 **/
-void uninit_parent(problem_t code) {
-	uninit_shm();
+problem_t uninit_parent(void) {
+	PROPAGATE(uninit_common());
 
-	/*
-	Closes the log streams.
-	*/
-	if (error_stream != NULL) fclose(error_stream);
-	if (warning_stream != NULL) fclose(warning_stream);
-	if (note_stream != NULL) fclose(note_stream);
-	if (call_stream != NULL) fclose(call_stream);
-
-	dlclose(libc_handle);//TODO move
-	dlclose(libncurses_handle);
+	PROPAGATE(uninit_shm());
 
 	/*
 	Exits gracefully.
 	*/
-	um_exit(code);
+	um_exit(NO_PROBLEM);
+
+	return NO_PROBLEM;
 }
 
 /**
@@ -104,7 +115,7 @@ void handle_parent(const int sig) {
 	}
 	else if (sig == SIGTERM) {
 		fprintfl(warning_stream, "#%u caught TERM.", getpid());
-		uninit_parent(NO_PROBLEM);
+		uninit_parent();
 	}
 }
 
@@ -120,7 +131,7 @@ void handle_child(const int sig) {
 	}
 	else if (sig == SIGTERM) {
 		fprintfl(warning_stream, "#%u caught TERM.", getpid());
-		uninit_child(NO_PROBLEM);
+		uninit_child();
 	}
 }
 
@@ -132,8 +143,10 @@ problem_t init_parent(void) {
 
 	/*
 	Loads functions from dynamically linked libraries.
+
+	Requires either <code>RTLD_LAZY</code> or <code>RTLD_NOW</code>.
 	*/
-	libc_handle = dlopen(libc_path, RTLD_LAZY);//requires either RTLD_LAZY or RTLD_NOW
+	libc_handle = dlopen(libc_path, RTLD_LAZY);
 	if (libc_handle == NULL) {
 		return error(LIBC_DLOPEN_PROBLEM);
 	}
@@ -191,10 +204,10 @@ problem_t init_parent(void) {
 	}
 	else {//parent
 		shm->ppid = getpid();
-		struct sigaction act;
-		act.sa_handler = handle_child;
-		act.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT;
-		if (sigaction(SIGUSR1, &act, NULL) != 0) {
+		struct sigaction act_;
+		act_.sa_handler = handle_child;
+		act_.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT;
+		if (sigaction(SIGUSR1, &act_, NULL) != 0) {
 			fprintfl(note_stream, "Can't catch CONT.");
 		}
 		if (sigaction(SIGUSR2, &act, NULL) != 0) {

@@ -25,7 +25,9 @@ Works like cutlery.
 #include <libconfig.h>
 
 #include "problem.h"//problem_t
+#include "log.h"
 #include "shm.h"
+
 #include "fork.h"
 
 char * home_path;
@@ -52,7 +54,9 @@ FILE * warning_stream;
 FILE * note_stream;
 FILE * call_stream;
 
-void continuator() {}
+void continuator(const int sig) {
+	printf("%d!", sig);
+}//TODO everything
 
 /**
 Saves the game to memory.
@@ -62,9 +66,9 @@ problem_t save(const int state) {
 	int y, x;
 	getyx(stdscr, y, x);
 	screen = malloc(rows*sizeof (chtype *));
-	for (int row = 0; row < rows; row++) {
+	for (unsigned int row = 0; row < rows; row++) {
 		chtype * subscreen = malloc(cols*sizeof (chtype));
-		for (int col = 0; col < cols; col++) {
+		for (unsigned int col = 0; col < cols; col++) {
 			subscreen[col] = mvinch(row, col);
 		}
 		screen[row] = subscreen;
@@ -93,8 +97,8 @@ problem_t save(const int state) {
 		shm->pids[0] = getpid();
 		fprintfl(warning_stream, "[%d::continue()]", (unsigned short )getpid()); fflush(stdout);
 
-		for (int row = 0; row < rows; row++) {
-			for (int col = 0; col < cols; col++) {
+		for (unsigned int row = 0; row < rows; row++) {
+			for (unsigned int col = 0; col < cols; col++) {
 				mvaddch(row, col, screen[row][col]);
 			}
 			free(screen[row]);

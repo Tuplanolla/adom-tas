@@ -6,38 +6,37 @@ Sets the default values of various variables.
 #ifndef DEF_C
 #define DEF_C
 
-#include <stdlib.h>//size_t
+#include <stddef.h>//size_t
 
-#include "util.h"//bool, FALSE, TRUE
+#include "util.h"//intern, bool, FALSE, TRUE
 
-const char * const project_name = "adom-tas";
+intern const char * const project_name = "adom-tas";
 
-const char * const log_separator = " - ";
-const char * const log_error = "Error";
-const char * const log_warning = "Warning";
-const char * const log_note = "Note";
-const char * const log_call = "Call";
+intern const char * const log_separator = " - ";
+intern const char * const log_error = "Error";
+intern const char * const log_warning = "Warning";
+intern const char * const log_note = "Note";
+intern const char * const log_call = "Call";
 
-const char * const default_home_path = "/user/home";
-const char * const default_executable_path = "adom/adom";
-const char * const default_loader_path = "bin/adom-tas.so";
-const char * const default_libc_path = "/lib/libc.so.6";
-const char * const default_libncurses_path = "/usr/lib/libncurses.so.5";
-const unsigned int default_generations = 100;
-const unsigned int default_states = 9;
-const unsigned int default_rows = 25;
-const unsigned int default_cols = 77;
-const char * const default_iterator = "#";
-const char * const default_input_path = "input.tas";
-const char * const default_output_path = "output.tas";
-const char * const default_shm_path = "adom-tas.shm";
-const char * const default_error_stream = "stderr";
-const char * const default_warning_stream = "stderr";
-const char * const default_note_stream = "stderr";
-const char * const default_call_stream = "null";
-const bool default_play = FALSE;
-const char * const default_config_path = "adom-tas.cfg";
-const char * const default_config =
+intern const char * const default_executable_path = "adom/adom";
+intern const char * const default_loader_path = "bin/adom-tas.so";
+intern const char * const default_libc_path = "/lib/libc.so.6";
+intern const char * const default_libncurses_path = "/usr/lib/libncurses.so.5";
+intern const int default_generations = 100;
+intern const int default_states = 9;
+intern const int default_rows = 25;
+intern const int default_cols = 77;
+intern const char * const default_iterator = "#";
+intern const char * const default_input_path = "input.tas";
+intern const char * const default_output_path = "output.tas";
+intern const char * const default_shm_path = "adom-tas.shm";
+intern const char * const default_error_stream = "stderr";
+intern const char * const default_warning_stream = "stderr";
+intern const char * const default_note_stream = "stderr";
+intern const char * const default_call_stream = "null";
+intern const bool default_play = FALSE;
+intern const char * const default_config_path = "adom-tas.cfg";
+intern const char * const default_config =
 		"#required\n"
 		"executable   = \"adom/adom\"\n"
 		"data         = \"~/.adom.data\"\n"
@@ -54,7 +53,7 @@ const char * const default_config =
 		"#iterator    = \"(state)\"\n"
 		"#input       = \"input.tas\"\n"
 		"#output      = \"output.(state).tas\"\n"
-		"#shm         = \".adom-tas.shm\"\n"
+		"#shm         = \"adom-tas.shm\"\n"
 		"#error       = \"adom-tas.log\"\n"//TODO locks and automation
 		"#warning     = \"adom-tas.log\"\n"
 		"#note        = \"adom-tas.log\"\n"

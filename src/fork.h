@@ -6,7 +6,7 @@ Works like cutlery.
 
 #include "problem.h"//problem_t
 
-problem_t save(const int state);
-problem_t load(const int state);
+problem_t save(int state);
+problem_t load(int state);
 
 #endif

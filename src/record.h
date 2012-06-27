@@ -78,8 +78,8 @@ typedef struct record_s record_t;
 
 void init_record(record_t * record);
 void clear_record(record_t * record);
-frame_t * add_frame(record_t * record, const unsigned char duration, const int value);
-frame_t * add_key_frame(record_t * record, const unsigned char duration, const int key);
-frame_t * add_seed_frame(record_t * record, const time_t time);
+frame_t * add_frame(record_t * record, unsigned char duration, int value);
+frame_t * add_key_frame(record_t * record, unsigned char duration, int key);
+frame_t * add_seed_frame(record_t * record, time_t time);
 
 #endif

@@ -32,13 +32,28 @@ size_t intlen(int x) {
 }
 
 /**
+Returns the string length of an unsigned integer.
+
+@param x The integer.
+@return The string length.
+**/
+size_t uintlen(unsigned int x) {
+	size_t len = 1;
+	while (x > 9) {
+		len++;
+		x /= 10;
+	}
+	return len;
+}
+
+/**
 Returns the hash code of a byte array.
 
 @param array The byte array.
 @param size The length of the byte array.
 @return The hash code.
 **/
-int hash(const unsigned char * array, const size_t size) {
+int hash(const unsigned char * const array, const size_t size) {
 	const int prime = 31;
 	int result = 1;
 	for (size_t index = 0; index < size; index++) {
@@ -78,7 +93,7 @@ char * astrrep(const char * const haystack, const char * const needle, const cha
 	const size_t haystack_size = strlen(haystack) + 1;
 	const char * needle_position = NULL;
 	if (needle != NULL && replacement != NULL) {
-		const char * needle_position = strstr(haystack, needle);
+		needle_position = strstr(haystack, needle);
 	}
 	if (needle_position == NULL) {
 		char * result = malloc(haystack_size);
@@ -91,14 +106,14 @@ char * astrrep(const char * const haystack, const char * const needle, const cha
 	char * result = malloc(result_size);
 	const char * haystack_position = haystack;
 	char * result_position = result;
-	const size_t needle_start_distance = needle_position - haystack;
+	const size_t needle_start_distance = (size_t )(needle_position - haystack);
 	strncpy(result_position, haystack_position, needle_start_distance);
 	haystack_position += needle_start_distance;
 	result_position += needle_start_distance;
 	strncpy(result_position, replacement, replacement_length);
 	haystack_position += needle_length;
 	result_position += replacement_length;
-	const size_t needle_end_distance = result_position - result;
+	const size_t needle_end_distance = (size_t )(result_position - result);
 	strncpy(result_position, haystack_position, result_size - needle_end_distance);
 	return result;
 }
@@ -109,7 +124,7 @@ Converts a string to a standard stream.
 @param str The string to convert.
 @return The standard stream if the string is valid and <code>SUBNULL</code> otherwise.
 **/
-FILE * stdstr(const char * str) {
+FILE * stdstr(const char * const str) {
 	if (strcmp(str, "stdin") == 0) return stdin;
 	if (strcmp(str, "stdout") == 0) return stdout;
 	if (strcmp(str, "stderr") == 0) return stderr;

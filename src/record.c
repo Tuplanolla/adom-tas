@@ -7,6 +7,8 @@ Provides recording utilities.
 #include <stdlib.h>//*alloc, free
 #include <time.h>//time_t
 
+#include "util.h"//intern
+
 #include "record.h"
 
 /**
@@ -15,7 +17,7 @@ Sets the frame rate.
 Choosing <code>sqrt(1 << 8 * sizeof duration)</code> as the frame rate creates a balanced time distribution.
 For a byte the minimum frame time is 0.0625 seconds and the maximum 16 seconds.
 **/
-const unsigned char frame_rate = 16;
+intern const unsigned char frame_rate = 16;
 
 /**
 Creates a new record.

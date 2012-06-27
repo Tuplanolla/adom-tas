@@ -458,15 +458,13 @@ Checklist
 			[X] Random number generator state
 		[ ] Implement cheats that disable the recording
 		[X] Refine sloppy implementations
-	[ ] Refactor everything
+	[X] Refactor everything
 	[ ] Document
+		[ ] Code
 		[X] Documentation
 		[ ] Project
 		[ ] Executable
-		[ ] Emulation tools
-		[ ] Recording tools
-		[ ] Analysis tools
-
+		[ ] Meta
 Progression
 -----------
 

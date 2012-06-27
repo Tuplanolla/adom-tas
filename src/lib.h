@@ -4,6 +4,8 @@ Provides reading for the whole family.
 #ifndef LIB_H
 #define LIB_H
 
+#include "gnu.h"//__*__
+
 typedef int (* UNLINK)(const char * path);
 typedef int (* IOCTL)(int d, unsigned long request, ...);
 typedef time_t (* TIME)(time_t * timer);
@@ -13,7 +15,7 @@ typedef long (* RANDOM)(void);
 typedef int (* INIT_PAIR)(short pair, short f, short b);
 typedef int (* WREFRESH)(WINDOW * win);
 typedef int (* WGETCH)(WINDOW * win);
-typedef int (* EXIT)(int status);
+typedef int (* EXIT)(int status) __attribute__((__noreturn__));
 
 extern UNLINK um_unlink;
 extern IOCTL um_ioctl;

@@ -6,10 +6,12 @@ Provides general-purpose macros.
 #ifndef UTIL_H
 #define UTIL_H
 
-#include <stdlib.h>//size_t
+#include <stddef.h>//size_t, ptrdiff_t
 #include <stdio.h>//FILE
 #include <string.h>//mem*
 #include <unistd.h>//getpagesize
+
+#include "gnu.h"//__*__
 
 /**
 The boolean values.
@@ -27,9 +29,16 @@ typedef enum bool_e bool;
 General-purpose functions.
 **/
 size_t intlen(int x);
-int hash(const unsigned char * array, const size_t size);
-char * astrrep(const char * haystack, const char * needle, const char * replacement);
+size_t uintlen(unsigned int x);
+int hash(const unsigned char * array, size_t size);
+char * astrrep(const char * haystack, const char * needle, const char * replacement) __attribute__((malloc));
 FILE * stdstr(const char * str);
+
+/**
+An annotation to use with an <code>extern</code> variable.
+**/
+#undef intern
+#define intern
 
 /**
 An alternative <code>NULL</code> for error checking.
@@ -100,7 +109,7 @@ Returns the page boundary of a pointer.
 @return A pointer to the page boundary.
 **/
 #undef PAGE
-#define PAGE(pointer) ((void * )(((int )(pointer))-((int )(pointer))%getpagesize()))
+#define PAGE(pointer) ((void * )(((ptrdiff_t )(pointer)) - ((ptrdiff_t )(pointer)) % getpagesize()))
 
 /**
 Returns the page size of an object.
@@ -109,7 +118,7 @@ Returns the page size of an object.
 @return The page size of the object.
 **/
 #undef PAGE_SIZE
-#define PAGE_SIZE(object) ((size_t )((1+(sizeof (object)-1)/getpagesize())*getpagesize()))
+#define PAGE_SIZE(object) ((size_t )((1 + ((int )sizeof (object) - 1) / getpagesize()) * getpagesize()))
 
 /**
 Swaps two variables.
@@ -120,7 +129,7 @@ Swaps two variables.
 **/
 #undef SWAP
 #define SWAP(x, y) do {\
-		unsigned char SWAP_z[sizeof (x) == sizeof (y) ? sizeof (x) : -1];\
+		unsigned char SWAP_z[sizeof (x) == sizeof (y) ? sizeof (x) : 0];\
 		memcpy(SWAP_z, &y, sizeof (x));\
 		memcpy(&y, &x, sizeof (x));\
 		memcpy(&x, SWAP_z, sizeof (x));\

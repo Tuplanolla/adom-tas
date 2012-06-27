@@ -6,6 +6,6 @@ Injects not-medicine.
 
 #include "problem.h"//problem_t
 
-problem_t inject_save(void (* injector)());
+problem_t inject_save(void (* function)(void));
 
 #endif

@@ -38,5 +38,6 @@ extern record_t record;
 
 problem_t init_launcher_config(void);
 problem_t init_loader_config(void);
+problem_t uninit_config(void);
 
 #endif

@@ -13,18 +13,14 @@ Notes are not problems.
 #include <stdarg.h>//va_list
 #include <stdio.h>//FILE
 
+#include "gnu.h"//__*__
 #include "problem.h"//problem_t
 
-extern FILE * error_stream;
-extern FILE * warning_stream;
-extern FILE * note_stream;
-extern FILE * call_stream;
-
-int vfprintfl(FILE * stream, const char * fmt, va_list ap);
-int fprintfl(FILE * stream, const char * fmt, ...);
-problem_t error(const problem_t code);
-problem_t warning(const problem_t code);
-problem_t note(const problem_t code);
-problem_t call(const char * fmt, ...);
+int vfprintfl(FILE * stream, const char * fmt, va_list ap) __attribute__((format(printf, 2, 0)));
+int fprintfl(FILE * stream, const char * fmt, ...) __attribute__((format(printf, 2, 3)));
+problem_t error(problem_t code);
+problem_t warning(problem_t code);
+problem_t note(problem_t code);
+problem_t call(const char * fmt, ...) __attribute__((format(printf, 1, 2)));
 
 #endif

@@ -25,47 +25,52 @@ Provides reading for the whole family.
 #include <libconfig.h>
 
 #include "util.h"
-#include "adom.h"
+#include "exec.h"
 #include "shm.h"
 #include "problem.h"
 #include "record.h"
-#include "lib.h"
+#include "put.h"
 #include "loader.h"
+#include "fork.h"
+#include "log.h"
 
-UNLINK um_unlink = NULL;
-IOCTL um_ioctl = NULL;
-TIME um_time = NULL;
-LOCALTIME um_localtime = NULL;
-SRANDOM um_srandom = NULL;
-RANDOM um_random = NULL;
-INIT_PAIR um_init_pair = NULL;
-WREFRESH um_wrefresh = NULL;
-WGETCH um_wgetch = NULL;
-EXIT um_exit = NULL;
+#include "lib.h"
 
-char * home_path;
-char * executable_path;
-char * executable_data_path;
-char * executable_process_path;
-char * executable_version_path;
-char * executable_count_path;
-char * executable_keybind_path;
-char * executable_config_path;
-char * loader_path;
-char * libc_path;
-char * libncurses_path;
-unsigned int generations;
-unsigned int states;
-unsigned int rows;
-unsigned int cols;
-char * iterator;
-FILE * input_stream;
-FILE ** output_streams;
-char * shm_path;
-FILE * error_stream;
-FILE * warning_stream;
-FILE * note_stream;
-FILE * call_stream;
+intern UNLINK um_unlink;
+intern IOCTL um_ioctl;
+intern TIME um_time;
+intern LOCALTIME um_localtime;
+intern SRANDOM um_srandom;
+intern RANDOM um_random;
+intern INIT_PAIR um_init_pair;
+intern WREFRESH um_wrefresh;
+intern WGETCH um_wgetch;
+intern EXIT um_exit;
+
+intern char * home_path;
+intern char * executable_path;
+intern char * executable_data_path;
+intern char * executable_process_path;
+intern char * executable_version_path;
+intern char * executable_count_path;
+intern char * executable_keybind_path;
+intern char * executable_config_path;
+intern char * loader_path;
+intern char * libc_path;
+intern char * libncurses_path;
+intern unsigned int generations;
+intern unsigned int states;
+intern unsigned int rows;
+intern unsigned int cols;
+intern char * iterator;
+intern FILE * input_stream;
+intern FILE ** output_streams;
+intern char * shm_path;
+intern FILE * error_stream;
+intern FILE * warning_stream;
+intern FILE * note_stream;
+intern FILE * call_stream;
+
 record_t record;
 
 bool initialized = FALSE;
@@ -82,15 +87,8 @@ record_t record;
 int globstate = 1;
 time_t current_time = 0;//0x7fe81780
 
-/**
-Redirects calls from injected instructions.
-**/
-void seed(const int seed) {
-	iarc4(seed, executable_arc4_calls_automatic_load);
-}
-
 void injector(void) {
-	seed(current_time);
+	iarc4((unsigned int )current_time, executable_arc4_calls_automatic_load);
 	add_seed_frame(&record, current_time);
 	wrefresh(stdscr);
 }
@@ -133,14 +131,14 @@ Intercepting <code>SIGWINCH</code> elsewhere is also required.
 int ioctl(int d, unsigned long request, ...) { OVERLOAD
 	va_list	argp;
 	va_start(argp, request);
-	const void * arg = va_arg(argp, void * );
+	void * arg = va_arg(argp, void *);
 	call("ioctl(0x%08x, 0x%08x, 0x%08x).", (unsigned int )d, (unsigned int )request, (unsigned int )arg);
 	const int result = um_ioctl(d, request, arg);
 	if (request == TIOCGWINSZ) {
 		struct winsize * size;
 		size = (struct winsize * )arg;
-		size->ws_row = rows;
-		size->ws_col = cols;
+		size->ws_row = (unsigned short )rows;
+		size->ws_col = (unsigned short)cols;
 	}
 	va_end(argp);
 	return result;
@@ -280,7 +278,7 @@ int wrefresh(WINDOW * win) { OVERLOAD
 	*/
 	char some[TERM_COL];//a hack
 	strcpy(some, "P:");
-	for (int index = 0; index < states; index++) {
+	for (unsigned int index = 0; index < states; index++) {
 		if (shm->pids != NULL) {
 			char somer[TERM_COL];
 			bool somery = shm->pids[index] != 0;
@@ -322,7 +320,7 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		if (playback_frame != NULL) {//TODO move this
 			if (playback_frame->duration == 0) {
 				current_time += playback_frame->value;
-				seed(current_time);
+				iarc4((unsigned int )current_time, executable_arc4_calls_automatic_load);
 				playback_frame = playback_frame->next;
 				return 0;
 			}
@@ -361,8 +359,8 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		return 0;//redundant
 	}
 	else if (key == KEY_F(36)) {//changes the state (Ctrl F12 now)
-		globstate = globstate%(states-1)+1;//++
-		//globstate = (globstate-2)%(states-1)+1;//--
+		globstate = globstate%((int )states-1)+1;//++
+		//globstate = (globstate-2)%((int )states-1)+1;//--
 		wrefresh(win);
 		return 0;
 	}
