@@ -24,35 +24,37 @@ Works like cutlery.
 #include <curses.h>
 #include <libconfig.h>
 
+#include "util.h"
 #include "problem.h"//problem_t
 #include "log.h"
+#include "config.h"
 #include "shm.h"
 
 #include "fork.h"
 
-char * home_path;
-char * executable_path;
-char * executable_data_path;
-char * executable_process_path;
-char * executable_version_path;
-char * executable_count_path;
-char * executable_keybind_path;
-char * executable_config_path;
-char * loader_path;
-char * libc_path;
-char * libncurses_path;
-unsigned int generations;
-unsigned int states;
-unsigned int rows;
-unsigned int cols;
-char * iterator;
-FILE * input_stream;
-FILE ** output_streams;
-char * shm_path;
-FILE * error_stream;
-FILE * warning_stream;
-FILE * note_stream;
-FILE * call_stream;
+intern char * home_path;
+intern char * executable_path;
+intern char * executable_data_path;
+intern char * executable_process_path;
+intern char * executable_version_path;
+intern char * executable_count_path;
+intern char * executable_keybind_path;
+intern char * executable_config_path;
+intern char * loader_path;
+intern char * libc_path;
+intern char * libncurses_path;
+intern unsigned int generations;
+intern unsigned int states;
+intern unsigned int rows;
+intern unsigned int cols;
+intern char * iterator;
+intern FILE * input_stream;
+intern FILE ** output_streams;
+intern char * shm_path;
+intern FILE * error_stream;
+intern FILE * warning_stream;
+intern FILE * note_stream;
+intern FILE * call_stream;
 
 void continuator(const int sig) {
 	printf("%d!", sig);
@@ -60,34 +62,40 @@ void continuator(const int sig) {
 
 /**
 Saves the game to memory.
+
+SIGUSR1 forks.
+SIGUSR2 dumps.
+SIGTERM terminates.
 **/
-chtype ** screen;
 problem_t save(const int state) {
 	int y, x;
+	attr_t attrs; attr_t * _attrs = &attrs;
+	short pair; short * _pair = &pair;
 	getyx(stdscr, y, x);
-	screen = malloc(rows*sizeof (chtype *));
+	wattr_get(stdscr, _attrs, _pair, NULL);
 	for (unsigned int row = 0; row < rows; row++) {
-		chtype * subscreen = malloc(cols*sizeof (chtype));
 		for (unsigned int col = 0; col < cols; col++) {
-			subscreen[col] = mvinch(row, col);
+			shm->chs[state][row][col] = mvinch((int )row, (int )col);
 		}
-		screen[row] = subscreen;
 	}
-	fprintfl(warning_stream, "[%d::fork()]", (unsigned short )getpid()); fflush(stdout);
+	signal(SIGCHLD, SIG_IGN);//just in case
+	fprintfl(error_stream, "[fork]"); fflush(stdout);
 	pid_t pid = fork();//returns 0 in child, process id of child in parent, -1 on error
 	attach_shm();
 	struct sigaction act;
 	act.sa_handler = continuator;
-	act.sa_flags = 0;
-	if (sigaction(SIGUSR1, &act, NULL) != 0) fprintfl(note_stream, "Can't catch CONT.");
-	if (pid == -1) return error(NO_PROBLEM);
-	if (pid != 0) {//parent
+	act.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT;
+	if (sigaction(SIGUSR1, &act, NULL) != 0) fprintfl(error_stream, "Can't catch CONT.");
+	if (pid == -1) {
+		error(FORK_PROBLEM);
+	}
+	else if (pid != 0) {//parent
 		if (shm->pids[state] != 0) {
-			fprintfl(warning_stream, "[%d::kill(%d)]", (unsigned short )getpid(), (unsigned short )shm->pids[state]); fflush(stdout);
+			fprintfl(error_stream, "[kill -> %d]", (unsigned short )shm->pids[state]); fflush(stdout);
 			kill(shm->pids[state], SIGKILL);
 		}
 		shm->pids[state] = getpid();
-		fprintfl(warning_stream, "[%d::stop()]", (unsigned short )getpid()); fflush(stdout);
+		fprintfl(error_stream, "[stop]"); fflush(stdout);
 
 		sigset_t mask;
 		sigfillset(&mask);
@@ -95,20 +103,19 @@ problem_t save(const int state) {
 		sigsuspend(&mask);
 
 		shm->pids[0] = getpid();
-		fprintfl(warning_stream, "[%d::continue()]", (unsigned short )getpid()); fflush(stdout);
+		fprintfl(error_stream, "[continue]"); fflush(stdout);
 
 		for (unsigned int row = 0; row < rows; row++) {
 			for (unsigned int col = 0; col < cols; col++) {
-				mvaddch(row, col, screen[row][col]);
+				mvaddch((int )row, (int )col, shm->chs[state][row][col]);
 			}
-			free(screen[row]);
 		}
-		free(screen);
+		wattr_set(stdscr, attrs, pair, NULL);
 		wmove(stdscr, y, x);
 		wrefresh(stdscr);
 	}
 	else {//child
-		fprintfl(warning_stream, "[%d::inherit(%d)]", (unsigned short )getpid(), (unsigned short )getppid()); fflush(stdout);
+		fprintfl(error_stream, "[inherit -> %d]", (unsigned short )getppid()); fflush(stdout);
 		shm->pids[0] = getpid();
 	}
 	return NO_PROBLEM;
@@ -123,9 +130,9 @@ problem_t load(const int state) {
 		const int continuable = shm->pids[state];
 		shm->pids[0] = shm->pids[state];
 		shm->pids[state] = 0;
-		fprintfl(warning_stream, "[%d::signal(%d)]", (unsigned short )getpid(), (unsigned short )continuable); fflush(stdout);
+		fprintfl(error_stream, "[poke -> %d]", (unsigned short )continuable);
 		kill(continuable, SIGUSR1);
-		fprintfl(warning_stream, "[%d::kill(%d)]", (unsigned short )getpid(), (unsigned short )killable); fflush(stdout);
+		fprintfl(error_stream, "[die -> %d]", (unsigned short )killable);
 
 		/*
 		Kills two processes for an unknown reason.
@@ -156,6 +163,8 @@ problem_t load(const int state) {
 		user     11067  0.0  0.1   5488  1044 pts/0    S+   17:00   0:00 [adom]        state 2
 		user     11069  0.0  0.0   5488   812 pts/0    S+   17:00   0:00 [adom]        previously active state (received nothing)
 		</pre>
+
+		Luckily signals can be replaced by manual yield based on the shm priorities.
 		*/
 		kill(killable, SIGKILL);
 	}

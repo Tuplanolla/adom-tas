@@ -23,6 +23,7 @@ intern char * executable_process_path;
 intern char * executable_keybind_path;
 intern char * executable_version_path;
 intern char * executable_count_path;
+intern char * loader_path;
 intern unsigned int generations;
 intern const unsigned char executable_version[4];
 
@@ -39,7 +40,7 @@ int main(const int argc, char * argv[]) {
 	/*
 	Loads the configuration.
 	*/
-	init_launcher_config();
+	PROPAGATE(init_launcher_config());
 
 	/*
 	Removes the process file.
@@ -88,6 +89,13 @@ int main(const int argc, char * argv[]) {
 				error(COUNT_CLOSE_PROBLEM);
 			}
 		}
+	}
+
+	/*
+	Enables preloading libraries.
+	*/
+	if (setenv("LD_PRELOAD", loader_path, TRUE) != 0) {
+		return error(LD_PRELOAD_SETENV_PROBLEM);
 	}
 
 	/*

@@ -15,8 +15,6 @@ Injects not-medicine.
 /**
 Replaces the save command with a custom function.
 
-What happens to the stack balance is unknown.
-
 The original instructions:
 <pre>
     0x08090727:  00 00 00
@@ -68,7 +66,7 @@ problem_t inject_save(void (* const function)(void)) {
 		return error(ASM_MPROTECT_PROBLEM);
 	}
 	else {
-		if (memcmp(new_instructions, old_instructions, sizeof new_instructions) != 0) {
+		if (memcmp(location, old_instructions, sizeof new_instructions) != 0) {
 			return error(ASM_MEMCMP_PROBLEM);
 		}
 		else {

@@ -275,11 +275,6 @@ problem_t init_launcher_config(void) {
 			loader_path = NULL;
 			return error(LD_PRELOAD_STAT_PROBLEM);
 		}
-		else if (setenv("LD_PRELOAD", loader_path, TRUE) != 0) {
-			free(loader_path);
-			loader_path = NULL;
-			return error(LD_PRELOAD_SETENV_PROBLEM);
-		}
 	}
 
 	/*
@@ -572,13 +567,12 @@ problem_t init_loader_config(void) {
 	The configuration file is first parsed and
 	the existence of the input file is then checked.
 	*/
-	char * input_path;
 	const char * new_input_path;
 	if (config_lookup_string(&config, "input", &new_input_path) == 0) {
 		new_input_path = default_input_path;
 		warning(INPUT_CONFIG_PROBLEM);
 	}
-	input_path = astrrep(new_input_path, "~", home_path);
+	char * input_path = astrrep(new_input_path, "~", home_path);
 	if (stat(input_path, &buf) != 0) {
 		warning(INPUT_STAT_PROBLEM);
 	}
@@ -602,13 +596,12 @@ problem_t init_loader_config(void) {
 		the index character is first replaced with the corresponding save state number and
 		the file is then used for that save state.
 	*/
-	char * output_path;
 	const char * new_output_path;
 	if (config_lookup_string(&config, "output", &new_output_path) == 0) {
 		new_output_path = default_output_path;
 		warning(OUTPUT_CONFIG_PROBLEM);
 	}
-	output_path = astrrep(new_output_path, "~", home_path);
+	char * output_path = astrrep(new_output_path, "~", home_path);
 	output_streams = malloc(states * sizeof *output_streams);
 	for (unsigned int state = 1; state < states; state++) {
 		const size_t size = uintlen(state) + 1;
@@ -639,33 +632,47 @@ problem_t init_loader_config(void) {
 	FILE * new_warning_stream = warning_stream;
 	FILE * new_note_stream = note_stream;
 	FILE * new_call_stream = call_stream;
-	const char * error_path;//TODO rewrite this mess
-	if (config_lookup_string(&config, "errors", &error_path) == 0) {
+	struct stat error_buf;//TODO check NULL problems and refine
+	struct stat warning_buf;
+	struct stat note_buf;
+	struct stat call_buf;
+	const char * new_error_path;
+	if (config_lookup_string(&config, "errors", &new_error_path) == 0) {
+		new_error_path = default_error_stream;
 		warning(ERROR_CONFIG_PROBLEM);
-		if (strcmp(default_error_stream, "null") == 0) new_error_stream = NULL;
-		else if (strcmp(default_error_stream, "stdin") == 0) new_error_stream = stdin;
-		else if (strcmp(default_error_stream, "stdout") == 0) new_error_stream = stdout;
-		else if (strcmp(default_error_stream, "stderr") == 0) new_error_stream = stderr;
 	}
-	else {
-		if (strcmp(error_path, "null") == 0) new_error_stream = NULL;
-		else if (strcmp(error_path, "stdin") == 0) new_error_stream = stdin;
-		else if (strcmp(error_path, "stdout") == 0) new_error_stream = stdout;
-		else if (strcmp(error_path, "stderr") == 0) new_error_stream = stderr;
-		else {
-			if (stat(error_path, &buf) == 0) {
-				note(ERROR_STAT_PROBLEM);
-			}
-			new_error_stream = fopen(error_path, "w");
-			if (new_error_stream == NULL) {
-				warning(ERROR_OPEN_PROBLEM);
-				if (strcmp(default_error_stream, "null") == 0) new_error_stream = NULL;
-				else if (strcmp(default_error_stream, "stdin") == 0) new_error_stream = stdin;
-				else if (strcmp(default_error_stream, "stdout") == 0) new_error_stream = stdout;
-				else if (strcmp(default_error_stream, "stderr") == 0) new_error_stream = stderr;
-			}
+	char * error_path = astrrep(new_error_path, "~", home_path);
+	error_stream = stdstr(error_path);
+	if (error_stream == NULL) {
+		if (stat(error_path, &buf) == 0) {
+			//note(ERROR_STAT_PROBLEM);
+		}
+		error_stream = fopen(error_path, "w");
+		if (new_error_stream == NULL) {
+			error_stream = stdstr(default_error_stream);
+			warning(ERROR_OPEN_PROBLEM);
 		}
 	}
+	free(error_path);
+	const char * new_warning_path;
+	if (config_lookup_string(&config, "warnings", &new_warning_path) == 0) {
+		new_warning_path = default_warning_stream;
+		warning(WARNING_CONFIG_PROBLEM);
+	}
+	char * warning_path = astrrep(new_warning_path, "~", home_path);
+	warning_stream = stdstr(warning_path);
+	if (warning_stream == NULL) {
+		//buf.st_dev && buf.st_ino
+		if (stat(warning_path, &buf) == 0) {
+			note(WARNING_STAT_PROBLEM);
+		}
+		warning_stream = fopen(warning_path, "w");
+		if (new_warning_stream == NULL) {
+			warning_stream = stdstr(default_warning_stream);
+			warning(WARNING_OPEN_PROBLEM);
+		}
+	}
+	free(warning_path);
 	if (new_error_stream != error_stream
 			|| new_warning_stream != warning_stream
 			|| new_note_stream != note_stream

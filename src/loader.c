@@ -1,9 +1,5 @@
 /**
 Modifies the executable.
-
-SIGUSR1 forks.
-SIGUSR2 dumps.
-SIGTERM terminates.
 **/
 #ifndef LOADER_C
 #define LOADER_C
@@ -178,7 +174,7 @@ problem_t init_parent(void) {
 	/*
 	Injects Assembly instructions to disable the save function of the executable.
 	*/
-	//inject_save(&injector);
+	inject_save(&injector);
 
 	/*if (signal(SIGWINCH, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "No no resizing!");
 	if (signal(SIGCONT, terminator) == SIG_ERR) fprintfl(note_stream, "Can't catch CONT.");
@@ -194,15 +190,12 @@ problem_t init_parent(void) {
 		fprintfl(error_stream, "Can't catch TERM.");
 	}
 
+	signal(SIGCHLD, SIG_IGN);//just in case
 	pid_t pid = fork();
 	if (pid == -1) {
 		error(FORK_PROBLEM);
 	}
-	else if (pid == 0) {//child
-		attach_shm();
-		shm->pids[0] = getpid();
-	}
-	else {//parent
+	else if (pid != 0) {//parent
 		shm->ppid = getpid();
 		struct sigaction act_;
 		act_.sa_handler = handle_child;
@@ -217,10 +210,14 @@ problem_t init_parent(void) {
 		sigset_t mask;
 		sigfillset(&mask);
 		sigdelset(&mask, SIGUSR1);
-		int sig;
-		sigwait(&mask, &sig);
+		sigdelset(&mask, SIGINT);
+		sigsuspend(&mask);
 		fprintf(stderr, "Quitting...\n");
-		return error(NO_PROBLEM/*_MATE*/);
+		return error(NO_PROBLEM);
+	}
+	else {//child
+		attach_shm();
+		shm->pids[0] = getpid();
 	}
 
 	return NO_PROBLEM;

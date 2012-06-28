@@ -16,11 +16,11 @@ Notes are not problems.
 #include "gnu.h"//__*__
 #include "problem.h"//problem_t
 
-int vfprintfl(FILE * stream, const char * fmt, va_list ap) __attribute__((format(printf, 2, 0)));
-int fprintfl(FILE * stream, const char * fmt, ...) __attribute__((format(printf, 2, 3)));
+int vfprintfl(FILE * stream, const char * fmt, va_list ap) __attribute__ ((format(printf, 2, 0)));
+int fprintfl(FILE * stream, const char * fmt, ...) __attribute__ ((format(printf, 2, 3)));
 problem_t error(problem_t code);
 problem_t warning(problem_t code);
 problem_t note(problem_t code);
-problem_t call(const char * fmt, ...) __attribute__((format(printf, 1, 2)));
+problem_t call(const char * fmt, ...) __attribute__ ((format(printf, 1, 2)));
 
 #endif

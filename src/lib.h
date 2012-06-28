@@ -15,7 +15,7 @@ typedef long (* RANDOM)(void);
 typedef int (* INIT_PAIR)(short pair, short f, short b);
 typedef int (* WREFRESH)(WINDOW * win);
 typedef int (* WGETCH)(WINDOW * win);
-typedef int (* EXIT)(int status) __attribute__((__noreturn__));
+typedef int (* EXIT)(int status) __attribute__ ((__noreturn__));
 
 extern UNLINK um_unlink;
 extern IOCTL um_ioctl;
@@ -27,5 +27,7 @@ extern INIT_PAIR um_init_pair;
 extern WREFRESH um_wrefresh;
 extern WGETCH um_wgetch;
 extern EXIT um_exit;
+
+void injector(void);
 
 #endif

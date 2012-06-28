@@ -162,13 +162,13 @@ printf("%d = \"%s\"\n", key, code);
 */
 void key_code(char * const code, const int key) {
 	#define key_code_RETURN(str) {\
-			strcpy(code, str);\
-			return;\
-		}
+				strcpy(code, str);\
+				return;\
+			}
 	#define key_code_RETURNF(format, str) {\
-			sprintf(code, format, str);\
-			return;\
-		}
+				sprintf(code, format, str);\
+				return;\
+			}
 	if (key == '\\') key_code_RETURN("\\\\");//backslash
 	if (key == KEY_UP) key_code_RETURN("\\U");//Up
 	if (key == KEY_DOWN) key_code_RETURN("\\D");//Down

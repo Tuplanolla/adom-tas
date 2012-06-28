@@ -31,7 +31,7 @@ General-purpose functions.
 size_t intlen(int x);
 size_t uintlen(unsigned int x);
 int hash(const unsigned char * array, size_t size);
-char * astrrep(const char * haystack, const char * needle, const char * replacement) __attribute__((malloc));
+char * astrrep(const char * haystack, const char * needle, const char * replacement) __attribute__ ((malloc));
 FILE * stdstr(const char * str);
 
 /**
@@ -73,14 +73,14 @@ Returns the bits of a byte.
 **/
 #undef BITS
 #define BITS(byte) \
-	byte & 0b10000000 ? 1 : 0,\
-	byte & 0b01000000 ? 1 : 0,\
-	byte & 0b00100000 ? 1 : 0,\
-	byte & 0b00010000 ? 1 : 0,\
-	byte & 0b00001000 ? 1 : 0,\
-	byte & 0b00000100 ? 1 : 0,\
-	byte & 0b00000010 ? 1 : 0,\
-	byte & 0b00000001 ? 1 : 0
+		byte & 0b10000000 ? 1 : 0,\
+		byte & 0b01000000 ? 1 : 0,\
+		byte & 0b00100000 ? 1 : 0,\
+		byte & 0b00010000 ? 1 : 0,\
+		byte & 0b00001000 ? 1 : 0,\
+		byte & 0b00000100 ? 1 : 0,\
+		byte & 0b00000010 ? 1 : 0,\
+		byte & 0b00000001 ? 1 : 0
 
 /*
 Returns the smaller of two numbers.
@@ -129,10 +129,10 @@ Swaps two variables.
 **/
 #undef SWAP
 #define SWAP(x, y) do {\
-		unsigned char SWAP_z[sizeof (x) == sizeof (y) ? sizeof (x) : 0];\
-		memcpy(SWAP_z, &y, sizeof (x));\
-		memcpy(&y, &x, sizeof (x));\
-		memcpy(&x, SWAP_z, sizeof (x));\
-	} while (FALSE)
+			unsigned char SWAP_z[sizeof (x) == sizeof (y) ? sizeof (x) : 0];\
+			memcpy(SWAP_z, &y, sizeof (x));\
+			memcpy(&y, &x, sizeof (x));\
+			memcpy(&x, SWAP_z, sizeof (x));\
+		} while (FALSE)
 
 #endif

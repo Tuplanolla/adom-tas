@@ -57,7 +57,7 @@ intern const char * const default_config =
 		"#error       = \"adom-tas.log\"\n"//TODO locks and automation
 		"#warning     = \"adom-tas.log\"\n"
 		"#note        = \"adom-tas.log\"\n"
-		"#call        = \"null\"\n"
+		"#call        = \"/dev/null\"\n"
 		"#play        = false\n"
 	;
 
