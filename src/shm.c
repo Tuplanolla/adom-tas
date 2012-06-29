@@ -17,6 +17,7 @@ SHM_REMOVE_PROBLEM
 #ifndef SHM_C
 #define SHM_C
 
+#include <stddef.h>//NULL
 #include <string.h>//str*
 #include <sys/ipc.h>//IPC_*
 #include <sys/shm.h>//shm*, SHM_*
@@ -35,13 +36,9 @@ intern unsigned int states;
 intern unsigned int rows;
 intern unsigned int cols;
 intern char * shm_path;
-intern shm_t * shm = NULL;
-
-key_t key = 0;
-int shmid = -1;
 
 /**
-Creates the shared memory segment.
+Contains the objects in the shared memory segment.
 
 The values come after the pointers:
 <pre>
@@ -69,12 +66,31 @@ The values come after the pointers:
            ... <--------'
 </pre>
 
+@var ppid The process identifier of the parent process.
+@var pids A pointer to the process identifiers of the child processes.
+@var chs A pointer to the screens of the child processes.
+**/
+struct shm_s {
+	pid_t ppid;
+	pid_t * pids;
+	chtype *** chs;
+};
+typedef struct shm_s shm_t;
+
+/**
+The objects in the shared memory segment.
+**/
+shm_t * shm = NULL;
+
+key_t key = 0;
+int shmid = -1;
+
+/**
+Finds the shared memory segment.
+
 @return The error code.
 **/
 problem_t get_shm(const int shmflg) {
-	/*
-	Finds the shared memory segment.
-	*/
 	const size_t size = sizeof *shm
 			+ states * sizeof *shm->pids
 			+ states * sizeof *shm->chs
@@ -89,9 +105,15 @@ problem_t get_shm(const int shmflg) {
 		return error(SHM_ATTACH_PROBLEM);
 	}
 
-	/*
-	Calculates the offsets for the pointers in the shared memory segment.
-	*/
+	return NO_PROBLEM;
+}
+
+/**
+Calculates the offsets for the pointers in the shared memory segment.
+
+@return The error code.
+**/
+void offset_shm(void) {
 	shm->pids = (int * )((size_t )shm
 			+ sizeof *shm);
 	shm->chs = (chtype *** )((size_t )shm->pids
@@ -107,8 +129,74 @@ problem_t get_shm(const int shmflg) {
 					+ row * cols * sizeof ***shm->chs);
 		}
 	}
+}
 
-	return NO_PROBLEM;
+/**
+Gets the parent process identifier object <code>ppid</code>.
+
+@return The error code.
+**/
+pid_t get_shm_ppid(void) {
+	offset_shm();
+	return shm->ppid;
+}
+
+/**
+Sets the parent process identifier object <code>ppid</code>.
+
+@param ppid The object.
+**/
+void set_shm_ppid(const pid_t ppid) {
+	offset_shm();
+	shm->ppid = ppid;
+}
+
+/**
+Gets a child process identifier object <code>pid</code> from <code>pids</code>.
+
+@param state The location of the object.
+@return The error code.
+**/
+pid_t get_shm_pid(const int state) {
+	offset_shm();
+	return shm->pids[state];
+}
+
+/**
+Sets a child process identifier object <code>pid</code> from <code>pids</code>.
+
+@param pid The object.
+@param state The location of the object.
+**/
+void set_shm_pid(const int state, const pid_t pid) {
+	offset_shm();
+	shm->pids[state] = pid;
+}
+
+/**
+Gets a character object <code>ch</code> from <code>chs</code>.
+
+@param state The location of the object.
+@param row ...
+@param col ...
+@return The error code.
+**/
+chtype get_shm_ch(const int state, const int row, const int col) {
+	offset_shm();
+	return shm->chs[state][row][col];
+}
+
+/**
+Sets a character object <code>ch</code> in <code>chs</code>.
+
+@param ch The object.
+@param state The location of the object.
+@param row ...
+@param col ...
+**/
+void set_shm_ch(const int state, const int row, const int col, const chtype ch) {
+	offset_shm();
+	shm->chs[state][row][col] = ch;
 }
 
 /**
@@ -134,9 +222,10 @@ problem_t init_shm(void) {
 	/*
 	Sets the default values of the objects in the shared memory segment.
 	*/
+	offset_shm();
 	shm->ppid = 0;
 	for (unsigned int state = 0; state < states; state++) {
-		shm->pids[state] = 0;
+		shm->pids[state] = (pid_t )0;
 	}
 	for (unsigned int state = 0; state < states; state++) {
 		for (unsigned int row = 0; row < rows; row++) {
@@ -156,6 +245,7 @@ Attaches the shared memory segment.
 **/
 problem_t attach_shm(void) {
 	PROPAGATE(get_shm(SHM_R | SHM_W));
+
 	return NO_PROBLEM;
 }
 

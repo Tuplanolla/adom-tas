@@ -27,11 +27,11 @@ sh:
 $(OBJ)/%.o: $(SRC)/%.c
 	$(GCC) -fpic -c -o $@ $<
 
-$(BIN)/$(NAME).so: prepare $(OBJ)/launcher.o $(OBJ)/loader.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
-	$(GCC) -fpic -shared -o $(BIN)/$(NAME).so $(OBJ)/launcher.o $(OBJ)/loader.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
+$(BIN)/$(NAME).so: prepare $(OBJ)/launcher.o $(OBJ)/loader.o $(OBJ)/problem.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
+	$(GCC) -fpic -shared -o $(BIN)/$(NAME).so $(OBJ)/launcher.o $(OBJ)/loader.o $(OBJ)/problem.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
 
-$(BIN)/$(NAME): prepare $(OBJ)/launcher.o $(OBJ)/loader.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
-	$(GCC) -lncurses -o $(BIN)/$(NAME) $(OBJ)/launcher.o $(OBJ)/loader.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
+$(BIN)/$(NAME): prepare $(OBJ)/launcher.o $(OBJ)/loader.o $(OBJ)/problem.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
+	$(GCC) -lncurses -o $(BIN)/$(NAME) $(OBJ)/launcher.o $(OBJ)/loader.o $(OBJ)/problem.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
 
 run: all
 	$(BIN)/$(NAME)

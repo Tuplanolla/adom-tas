@@ -417,7 +417,7 @@ Checklist
 			[X] git
 			[X] ttyrec
 			[X] ffmpeg
-	[ ] Implement emulation tools
+	[X] Implement emulation tools
 		[X] Disable the actual save function
 		[X] Find the random number generator's seed function
 		[X] Redirect the seed function to the recorder and back again
@@ -429,7 +429,7 @@ Checklist
 		[X] Implement slow save (memory-file)
 		[X] Implement slow load (file-memory)
 		[X] Make processes independent
-		[ ] Make processes actually work
+		[X] Make processes actually work
 		[X] Refine sloppy implementations
 	[ ] Implement recording tools
 		[X] Find the input handler
@@ -459,12 +459,14 @@ Checklist
 		[ ] Implement cheats that disable the recording
 		[X] Refine sloppy implementations
 	[X] Refactor everything
+	[ ] Refactor everything harder
 	[ ] Document
 		[ ] Code
 		[X] Documentation
 		[ ] Project
 		[ ] Executable
 		[ ] Meta
+
 Progression
 -----------
 

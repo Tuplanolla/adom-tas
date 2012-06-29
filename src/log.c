@@ -12,7 +12,7 @@
 #include <sys/time.h>//gettimeofday
 #include <unistd.h>//getpid
 
-#include "problem.h"//problem_t, *_PROBLEM
+#include "problem.h"//problem_message, problem_t, *_PROBLEM
 #include "def.h"//log_*
 #include "config.h"//*_stream
 

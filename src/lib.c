@@ -279,12 +279,10 @@ int wrefresh(WINDOW * win) { OVERLOAD
 	char some[TERM_COL];//a hack
 	strcpy(some, "P:");
 	for (unsigned int index = 0; index < states; index++) {
-		if (shm->pids != NULL) {
-			char somer[TERM_COL];
-			bool somery = shm->pids[index] != 0;
-			sprintf(somer, "%s %c%d%c", some, somery ? '[' : ' ', (unsigned short )shm->pids[index], somery ? ']' : ' ');
-			strcpy(some, somer);
-		}
+		char somer[TERM_COL];
+		bool somery = get_shm_pid(index) != 0;
+		sprintf(somer, "%s %c%d%c", some, somery ? '[' : ' ', (unsigned short )get_shm_pid(index), somery ? ']' : ' ');
+		strcpy(some, somer);
 	}
 	mvaddnstr(21, 10, some, TERM_COL-20);
 
@@ -381,7 +379,7 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 				shm->pids[index] = 0;
 			}
 		}*/
-		kill(shm->ppid, SIGTERM);
+		kill(get_shm_ppid(), SIGTERM);
 		kill(getpid(), SIGTERM);
 		return 0;
 	}

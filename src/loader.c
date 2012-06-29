@@ -48,8 +48,6 @@ intern WREFRESH um_wrefresh = NULL;
 intern WGETCH um_wgetch = NULL;
 intern EXIT um_exit = NULL;
 
-intern shm_t * shm;
-
 record_t record;
 
 void * libc_handle;
@@ -100,38 +98,6 @@ problem_t uninit_parent(void) {
 }
 
 /**
-Catches signals or something.
-**/
-void handle_parent(const int sig) {
-	if (sig == SIGUSR1) {
-		fprintfl(warning_stream, "#%u caught USR1.", getpid());
-	}
-	else if (sig == SIGUSR2) {
-		fprintfl(warning_stream, "#%u caught USR2.", getpid());
-	}
-	else if (sig == SIGTERM) {
-		fprintfl(warning_stream, "#%u caught TERM.", getpid());
-		uninit_parent();
-	}
-}
-
-/**
-Catches signals or something.
-**/
-void handle_child(const int sig) {
-	if (sig == SIGUSR1) {
-		fprintfl(warning_stream, "#%u caught USR1.", getpid());
-	}
-	else if (sig == SIGUSR2) {
-		fprintfl(warning_stream, "#%u caught USR2.", getpid());
-	}
-	else if (sig == SIGTERM) {
-		fprintfl(warning_stream, "#%u caught TERM.", getpid());
-		uninit_child();
-	}
-}
-
-/**
 Initializes this process.
 **/
 problem_t init_parent(void) {
@@ -174,7 +140,7 @@ problem_t init_parent(void) {
 	/*
 	Injects Assembly instructions to disable the save function of the executable.
 	*/
-	inject_save(&injector);
+	//inject_save(&injector);
 
 	/*if (signal(SIGWINCH, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "No no resizing!");
 	if (signal(SIGCONT, terminator) == SIG_ERR) fprintfl(note_stream, "Can't catch CONT.");
@@ -182,13 +148,13 @@ problem_t init_parent(void) {
 	if (signal(SIGTERM, terminator) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");*/
 
 	init_shm();
-
-	struct sigaction act;
-	act.sa_handler = handle_parent;
-	act.sa_flags = 0;
-	if (sigaction(SIGTERM, &act, NULL) != 0) {
-		fprintfl(error_stream, "Can't catch TERM.");
-	}
+	/*FILE * h = fopen(shm_path, "wb");
+	fwrite(shm, sizeof *shm
+			+ states * sizeof *shm->pids
+			+ states * sizeof *shm->chs
+			+ states * rows * sizeof **shm->chs
+			+ states * rows * cols * sizeof ***shm->chs, 1, h);
+	fclose(h);*/
 
 	signal(SIGCHLD, SIG_IGN);//just in case
 	pid_t pid = fork();
@@ -196,20 +162,10 @@ problem_t init_parent(void) {
 		error(FORK_PROBLEM);
 	}
 	else if (pid != 0) {//parent
-		shm->ppid = getpid();
-		struct sigaction act_;
-		act_.sa_handler = handle_child;
-		act_.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT;
-		if (sigaction(SIGUSR1, &act_, NULL) != 0) {
-			fprintfl(note_stream, "Can't catch CONT.");
-		}
-		if (sigaction(SIGUSR2, &act, NULL) != 0) {
-			fprintfl(note_stream, "Can't catch CONT.");
-		}
+		set_shm_ppid(getpid());
 		fprintf(stderr, "The parent process seems to have fallen asleep. Use Ctrl C to wake it up.\n");
 		sigset_t mask;
 		sigfillset(&mask);
-		sigdelset(&mask, SIGUSR1);
 		sigdelset(&mask, SIGINT);
 		sigsuspend(&mask);
 		fprintf(stderr, "Quitting...\n");
@@ -217,7 +173,7 @@ problem_t init_parent(void) {
 	}
 	else {//child
 		attach_shm();
-		shm->pids[0] = getpid();
+		set_shm_pid(0, getpid());
 	}
 
 	return NO_PROBLEM;

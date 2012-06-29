@@ -642,37 +642,19 @@ problem_t init_loader_config(void) {
 		warning(ERROR_CONFIG_PROBLEM);
 	}
 	char * error_path = astrrep(new_error_path, "~", home_path);
-	error_stream = stdstr(error_path);
-	if (error_stream == NULL) {
+	new_error_stream = stdstr(error_path);
+	if (new_error_stream == NULL) {
 		if (stat(error_path, &buf) == 0) {
 			//note(ERROR_STAT_PROBLEM);
 		}
-		error_stream = fopen(error_path, "w");
+		new_error_stream = fopen(error_path, "w");
 		if (new_error_stream == NULL) {
-			error_stream = stdstr(default_error_stream);
+			new_error_stream = NULL;
 			warning(ERROR_OPEN_PROBLEM);
 		}
 	}
 	free(error_path);
-	const char * new_warning_path;
-	if (config_lookup_string(&config, "warnings", &new_warning_path) == 0) {
-		new_warning_path = default_warning_stream;
-		warning(WARNING_CONFIG_PROBLEM);
-	}
-	char * warning_path = astrrep(new_warning_path, "~", home_path);
-	warning_stream = stdstr(warning_path);
-	if (warning_stream == NULL) {
-		//buf.st_dev && buf.st_ino
-		if (stat(warning_path, &buf) == 0) {
-			note(WARNING_STAT_PROBLEM);
-		}
-		warning_stream = fopen(warning_path, "w");
-		if (new_warning_stream == NULL) {
-			warning_stream = stdstr(default_warning_stream);
-			warning(WARNING_OPEN_PROBLEM);
-		}
-	}
-	free(warning_path);
+	//buf.st_dev && buf.st_ino
 	if (new_error_stream != error_stream
 			|| new_warning_stream != warning_stream
 			|| new_note_stream != note_stream
@@ -683,6 +665,9 @@ problem_t init_loader_config(void) {
 		note_stream = new_note_stream;
 		call_stream = new_call_stream;
 	}
+	warning_stream = NULL;
+	note_stream = NULL;
+	call_stream = NULL;
 
 	PROPAGATE(after_init_config());
 

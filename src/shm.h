@@ -13,30 +13,18 @@ Handles the shared memory segment.
 #include "problem.h"//problem_t
 
 /**
-Contains the objects in the shared memory segment.
-
-@var ppid The process identifier of the parent process.
-@var pids A pointer to the process identifiers of the child processes.
-@var chs A pointer to the screens of the child processes.
-**/
-struct shm_s {
-	pid_t ppid;
-	pid_t * pids;
-	chtype *** chs;
-};
-typedef struct shm_s shm_t;
-
-/**
-The objects in the shared memory segment.
-**/
-extern shm_t * shm;
-
-/**
 Manages the shared memory segment.
 **/
 problem_t init_shm(void);
 problem_t attach_shm(void);
 problem_t detach_shm(void);
 problem_t uninit_shm(void);
+
+pid_t get_shm_ppid(void);
+pid_t get_shm_pid(int state);
+chtype get_shm_ch(int state, int row, int col);
+void set_shm_ppid(pid_t ppid);
+void set_shm_pid(int state, pid_t pid);
+void set_shm_ch(int state, int row, int col, chtype ch);
 
 #endif

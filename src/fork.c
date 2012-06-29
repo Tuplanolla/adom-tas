@@ -29,6 +29,7 @@ Works like cutlery.
 #include "log.h"
 #include "config.h"
 #include "shm.h"
+#include "loader.h"
 
 #include "fork.h"
 
@@ -56,16 +57,8 @@ intern FILE * warning_stream;
 intern FILE * note_stream;
 intern FILE * call_stream;
 
-void continuator(const int sig) {
-	printf("%d!", sig);
-}//TODO everything
-
 /**
 Saves the game to memory.
-
-SIGUSR1 forks.
-SIGUSR2 dumps.
-SIGTERM terminates.
 **/
 problem_t save(const int state) {
 	int y, x;
@@ -73,50 +66,49 @@ problem_t save(const int state) {
 	short pair; short * _pair = &pair;
 	getyx(stdscr, y, x);
 	wattr_get(stdscr, _attrs, _pair, NULL);
-	for (unsigned int row = 0; row < rows; row++) {
+	/*for (unsigned int row = 0; row < rows; row++) {
 		for (unsigned int col = 0; col < cols; col++) {
 			shm->chs[state][row][col] = mvinch((int )row, (int )col);
 		}
-	}
+	}*/
 	signal(SIGCHLD, SIG_IGN);//just in case
-	fprintfl(error_stream, "[fork]"); fflush(stdout);
+	fprintfl(error_stream, "[fork]");
 	pid_t pid = fork();//returns 0 in child, process id of child in parent, -1 on error
-	attach_shm();
-	struct sigaction act;
-	act.sa_handler = continuator;
-	act.sa_flags = SA_NOCLDSTOP | SA_NOCLDWAIT;
-	if (sigaction(SIGUSR1, &act, NULL) != 0) fprintfl(error_stream, "Can't catch CONT.");
 	if (pid == -1) {
-		error(FORK_PROBLEM);
+		return error(FORK_PROBLEM);
 	}
 	else if (pid != 0) {//parent
-		if (shm->pids[state] != 0) {
-			fprintfl(error_stream, "[kill -> %d]", (unsigned short )shm->pids[state]); fflush(stdout);
-			kill(shm->pids[state], SIGKILL);
+		attach_shm();
+
+		if (get_shm_pid(state) != 0) {
+			fprintfl(error_stream, "[displace -> %d]", (unsigned short )get_shm_pid(state));
+			kill(get_shm_pid(state), SIGKILL);
 		}
-		shm->pids[state] = getpid();
-		fprintfl(error_stream, "[stop]"); fflush(stdout);
+		set_shm_pid(state, getpid());
+		fprintfl(error_stream, "[stop]");
+		set_shm_pid(0, pid);
 
-		sigset_t mask;
-		sigfillset(&mask);
-		sigdelset(&mask, SIGUSR1);
-		sigsuspend(&mask);
+		struct timespec req;
+		req.tv_sec = 0;
+		req.tv_nsec = 1000000000l/16;
+		while (get_shm_pid(0) != getpid()) {
+			nanosleep(&req, NULL);
+		}
 
-		shm->pids[0] = getpid();
-		fprintfl(error_stream, "[continue]"); fflush(stdout);
+		fprintfl(error_stream, "[continue]");
 
-		for (unsigned int row = 0; row < rows; row++) {
+		/*for (unsigned int row = 0; row < rows; row++) {
 			for (unsigned int col = 0; col < cols; col++) {
 				mvaddch((int )row, (int )col, shm->chs[state][row][col]);
 			}
 		}
 		wattr_set(stdscr, attrs, pair, NULL);
 		wmove(stdscr, y, x);
-		wrefresh(stdscr);
+		wrefresh(stdscr);*/
 	}
 	else {//child
-		fprintfl(error_stream, "[inherit -> %d]", (unsigned short )getppid()); fflush(stdout);
-		shm->pids[0] = getpid();
+		attach_shm();
+		fprintfl(error_stream, "[inherit <- %d]", (unsigned short )getppid());
 	}
 	return NO_PROBLEM;
 }
@@ -125,48 +117,15 @@ problem_t save(const int state) {
 Loads the game from memory.
 **/
 problem_t load(const int state) {
-	if (shm->pids[state] != 0) {
-		const int killable = shm->pids[0];
-		const int continuable = shm->pids[state];
-		shm->pids[0] = shm->pids[state];
-		shm->pids[state] = 0;
+	if (get_shm_pid(state) != 0) {
+		const int killable = get_shm_pid(0);
+		const int continuable = get_shm_pid(state);
+		set_shm_pid(0, continuable);
+		set_shm_pid(state, 0);
 		fprintfl(error_stream, "[poke -> %d]", (unsigned short )continuable);
-		kill(continuable, SIGUSR1);
 		fprintfl(error_stream, "[die -> %d]", (unsigned short )killable);
-
-		/*
-		Kills two processes for an unknown reason.
-
-		Two wrong outcomes are possible depending on whether SIGKILL is sent.
-		<pre>
-		P: [11069] [11066] [11067]  00000
-		user     11065  0.1  0.0   5244   972 pts/0    S+   17:00   0:00 [adom]        base
-		user     11066  0.0  0.1   5456  1788 pts/0    S+   17:00   0:00 [adom]        state 1
-		user     11067  0.0  0.1   5488  1044 pts/0    S+   17:00   0:00 [adom]        state 2
-		user     11069  0.0  0.0   5488   812 pts/0    S+   17:00   0:00 [adom]        active state
-		load 1 [11066]
-		P: [11066]  00000  [11067]  00000
-		user     11065  0.0  0.0   5244   972 pts/0    S+   17:00   0:00 [adom]        base
-		user     11066  0.0  0.0      0     0 pts/0    Z+   17:00   0:00 [adom] <def>  active state (received SIGUSR1 to continue)
-		user     11067  0.0  0.1   5488  1044 pts/0    S+   17:00   0:00 [adom]        state 2
-		user     11069  0.0  0.0      0     0 pts/0    Z+   17:00   0:00 [adom] <def>  previously active state (received SIGKILL or SIGUSR2 to terminate)
-
-		P: [11069] [11066] [11067]  00000
-		user     11065  0.1  0.0   5244   972 pts/0    S+   17:00   0:00 [adom]        base
-		user     11066  0.0  0.1   5456  1788 pts/0    S+   17:00   0:00 [adom]        state 1
-		user     11067  0.0  0.1   5488  1044 pts/0    S+   17:00   0:00 [adom]        state 2
-		user     11069  0.0  0.0   5488   812 pts/0    S+   17:00   0:00 [adom]        active state
-		load 1 [11066]
-		P: [11066]  00000  [11067]  00000
-		user     11065  0.0  0.0   5244   972 pts/0    S+   17:00   0:00 [adom]        base
-		user     11066  0.0  0.0      0     0 pts/0    Z+   17:00   0:00 [adom] <def>  active state (received SIGUSR1 to continue)
-		user     11067  0.0  0.1   5488  1044 pts/0    S+   17:00   0:00 [adom]        state 2
-		user     11069  0.0  0.0   5488   812 pts/0    S+   17:00   0:00 [adom]        previously active state (received nothing)
-		</pre>
-
-		Luckily signals can be replaced by manual yield based on the shm priorities.
-		*/
 		kill(killable, SIGKILL);
+		//uninit_child();
 	}
 	return NO_PROBLEM;
 }
