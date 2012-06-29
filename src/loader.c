@@ -47,6 +47,7 @@ intern INIT_PAIR um_init_pair = NULL;
 intern WREFRESH um_wrefresh = NULL;
 intern WGETCH um_wgetch = NULL;
 intern EXIT um_exit = NULL;
+intern shm_t shm;
 
 record_t record;
 
@@ -148,13 +149,6 @@ problem_t init_parent(void) {
 	if (signal(SIGTERM, terminator) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");*/
 
 	init_shm();
-	/*FILE * h = fopen(shm_path, "wb");
-	fwrite(shm, sizeof *shm
-			+ states * sizeof *shm->pids
-			+ states * sizeof *shm->chs
-			+ states * rows * sizeof **shm->chs
-			+ states * rows * cols * sizeof ***shm->chs, 1, h);
-	fclose(h);*/
 
 	signal(SIGCHLD, SIG_IGN);//just in case
 	pid_t pid = fork();
@@ -162,7 +156,8 @@ problem_t init_parent(void) {
 		error(FORK_PROBLEM);
 	}
 	else if (pid != 0) {//parent
-		set_shm_ppid(getpid());
+		attach_shm();//TODO why
+		shm.ppid[0] = getpid();
 		fprintf(stderr, "The parent process seems to have fallen asleep. Use Ctrl C to wake it up.\n");
 		sigset_t mask;
 		sigfillset(&mask);
@@ -173,7 +168,7 @@ problem_t init_parent(void) {
 	}
 	else {//child
 		attach_shm();
-		set_shm_pid(0, getpid());
+		shm.pids[0] = getpid();
 	}
 
 	return NO_PROBLEM;

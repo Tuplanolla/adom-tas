@@ -56,21 +56,12 @@ intern FILE * error_stream;
 intern FILE * warning_stream;
 intern FILE * note_stream;
 intern FILE * call_stream;
+intern shm_t shm;
 
 /**
 Saves the game to memory.
 **/
-problem_t save(const int state) {
-	int y, x;
-	attr_t attrs; attr_t * _attrs = &attrs;
-	short pair; short * _pair = &pair;
-	getyx(stdscr, y, x);
-	wattr_get(stdscr, _attrs, _pair, NULL);
-	/*for (unsigned int row = 0; row < rows; row++) {
-		for (unsigned int col = 0; col < cols; col++) {
-			shm->chs[state][row][col] = mvinch((int )row, (int )col);
-		}
-	}*/
+problem_t save(const unsigned int state) {
 	signal(SIGCHLD, SIG_IGN);//just in case
 	fprintfl(error_stream, "[fork]");
 	pid_t pid = fork();//returns 0 in child, process id of child in parent, -1 on error
@@ -80,31 +71,39 @@ problem_t save(const int state) {
 	else if (pid != 0) {//parent
 		attach_shm();
 
-		if (get_shm_pid(state) != 0) {
-			fprintfl(error_stream, "[displace -> %d]", (unsigned short )get_shm_pid(state));
-			kill(get_shm_pid(state), SIGKILL);
+		int y, x;
+		getyx(stdscr, y, x);
+		for (unsigned int row = 0; row < rows; row++) {
+			for (unsigned int col = 0; col < cols; col++) {
+				shm.chs[state][row][col] = mvwinch(stdscr, (int )row, (int )col);
+			}
 		}
-		set_shm_pid(state, getpid());
+
+		if (shm.pids[state] != 0) {
+			fprintfl(error_stream, "[displace -> %d]", (unsigned short )shm.pids[state]);
+			kill(shm.pids[state], SIGKILL);
+		}
+		shm.pids[state] = getpid();
 		fprintfl(error_stream, "[stop]");
-		set_shm_pid(0, pid);
+		shm.pids[0] = pid;
 
 		struct timespec req;
 		req.tv_sec = 0;
 		req.tv_nsec = 1000000000l/16;
-		while (get_shm_pid(0) != getpid()) {
+		while (shm.pids[0] != getpid()) {
 			nanosleep(&req, NULL);
 		}
 
 		fprintfl(error_stream, "[continue]");
 
-		/*for (unsigned int row = 0; row < rows; row++) {
+		wclear(stdscr);
+		for (unsigned int row = 0; row < rows; row++) {
 			for (unsigned int col = 0; col < cols; col++) {
-				mvaddch((int )row, (int )col, shm->chs[state][row][col]);
+				mvwaddch(stdscr, (int )row, (int )col, shm.chs[state][row][col]);
 			}
 		}
-		wattr_set(stdscr, attrs, pair, NULL);
 		wmove(stdscr, y, x);
-		wrefresh(stdscr);*/
+		wrefresh(stdscr);
 	}
 	else {//child
 		attach_shm();
@@ -116,12 +115,12 @@ problem_t save(const int state) {
 /**
 Loads the game from memory.
 **/
-problem_t load(const int state) {
-	if (get_shm_pid(state) != 0) {
-		const int killable = get_shm_pid(0);
-		const int continuable = get_shm_pid(state);
-		set_shm_pid(0, continuable);
-		set_shm_pid(state, 0);
+problem_t load(const unsigned int state) {
+	if (shm.pids[state] != 0) {
+		const int killable = shm.pids[0];
+		const int continuable = shm.pids[state];
+		shm.pids[0] = continuable;
+		shm.pids[state] = (pid_t )0;
 		fprintfl(error_stream, "[poke -> %d]", (unsigned short )continuable);
 		fprintfl(error_stream, "[die -> %d]", (unsigned short )killable);
 		kill(killable, SIGKILL);

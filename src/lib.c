@@ -231,8 +231,8 @@ int wrefresh(WINDOW * win) { OVERLOAD
 	int y, x;
 	attr_t attrs; attr_t * _attrs = &attrs;
 	short pair; short * _pair = &pair;
-	getyx(win, y, x);
 	wattr_get(win, _attrs, _pair, NULL);
+	getyx(win, y, x);
 
 	/*
 	Initializes the color pairs used by the interface.
@@ -280,25 +280,17 @@ int wrefresh(WINDOW * win) { OVERLOAD
 	strcpy(some, "P:");
 	for (unsigned int index = 0; index < states; index++) {
 		char somer[TERM_COL];
-		bool somery = get_shm_pid(index) != 0;
-		sprintf(somer, "%s %c%d%c", some, somery ? '[' : ' ', (unsigned short )get_shm_pid(index), somery ? ']' : ' ');
+		bool somery = shm.pids[index] != 0;
+		sprintf(somer, "%s %c%d%c", some, somery ? '[' : ' ', (unsigned short )shm.pids[index], somery ? ']' : ' ');
 		strcpy(some, somer);
 	}
 	mvaddnstr(21, 10, some, TERM_COL-20);
 
 	/*
-	Tries something.
-	*/
-	/*WINDOW * subwin = newwin(1, 16, 8, 8);
-	waddstr(subwin, "Hooray.");
-	um_wrefresh(subwin);
-	delwin(subwin);*/
-
-	/*
 	Restores the state of the window.
 	*/
-	wattr_set(win, attrs, pair, NULL);
 	wmove(win, y, x);
+	wattr_set(win, attrs, pair, NULL);
 
 	/*
 	Redraws the window.
@@ -372,16 +364,16 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		return 0;
 	}
 	else if (key == 'Q') {//quits everything (stupid idea or implementation)
-		/*fprintfl(warning_stream, "[%d::send(TERM)]", (unsigned short )getpid());
-		for (int index = 0; index < states; index++) {
-			if (shm->pids[index] != 0 && shm->pids[index] != getpid()) {
-				kill(shm->pids[index], SIGTERM);
-				shm->pids[index] = 0;
+		printf("Ctrl C will get you back to your beloved terminal if nothing else works.\n"); fflush(stdout);
+		for (unsigned int index = 1; index < states; index++) {
+			if (shm.pids[index] != 0) {
+				kill(shm.pids[index], SIGKILL);
+				shm.pids[index] = 0;
 			}
-		}*/
-		kill(get_shm_ppid(), SIGTERM);
-		kill(getpid(), SIGTERM);
-		return 0;
+		}
+		kill(shm.ppid[0], SIGKILL);
+		kill(shm.pids[0], SIGKILL);
+		return 0;//nice and elegant
 	}
 	if (!was_meta && !was_colon && (key == 0x3a || key == 'w')) was_colon = key == 0x3a ? 1 : 2;//booleans are fun like that
 	else if (!was_meta && key == 0x1b) was_meta = TRUE;
