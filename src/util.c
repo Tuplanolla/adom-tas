@@ -84,7 +84,7 @@ printf("%s\n", haystack);
 @param haystack The string to search from.
 @param needle The string to search for.
 @param replacement The string to replace with.
-@return The resulting string.
+@return The resulting string if successful and <code>NULL</code> otherwise.
 **/
 char * astrrep(const char * const haystack, const char * const needle, const char * const replacement) {
 	if (haystack == NULL) {
@@ -97,6 +97,9 @@ char * astrrep(const char * const haystack, const char * const needle, const cha
 	}
 	if (needle_position == NULL) {
 		char * result = malloc(haystack_size);
+		if (result == NULL) {
+			return NULL;
+		}
 		strcpy(result, haystack);
 		return result;
 	}
@@ -104,6 +107,9 @@ char * astrrep(const char * const haystack, const char * const needle, const cha
 	const size_t replacement_length = strlen(replacement);
 	const size_t result_size = haystack_size - needle_length + replacement_length;
 	char * result = malloc(result_size);
+	if (result == NULL) {
+		return NULL;
+	}
 	const char * haystack_position = haystack;
 	char * result_position = result;
 	const size_t needle_start_distance = (size_t )(needle_position - haystack);

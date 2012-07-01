@@ -20,7 +20,7 @@ Simulates
 #include "exec.h"//executable_*
 
 /**
-The simulated turn count.
+The actual turn count.
 
 Ignores negative turns.
 **/
@@ -42,12 +42,12 @@ The version of the executable.
 intern const unsigned char executable_version[4] = {1, 1, 1, 0};
 
 /**
-The turn count.
+A pointer to the turn count.
 **/
 intern int * const executable_turns = (void * )0x082b16e0;
 
 /**
-The save count.
+A pointer to the save count.
 **/
 intern int * const executable_saves = (void * )0x082b6140;
 
@@ -63,6 +63,7 @@ intern const int executable_cols_max = 127;
 The data files of the executable.
 **/
 intern const char * const executable_data_file = ".adom.data";
+intern const char * const executable_temporary_file = "tmpdat";
 intern const char * const executable_config_file = ".adom.cfg";
 intern const char * const executable_process_file = ".adom.prc";
 intern const char * const executable_keybind_file = ".adom.kbd";
@@ -84,7 +85,7 @@ intern const unsigned int executable_arc4_calls_automatic_load = 4 * 1419;
 intern const unsigned int executable_arc4_calls_manual_load = 4 * 1623;
 
 /**
-The current state S and iterators i and j.
+The current state S and iterators i and j of the random number generator.
 **/
 intern unsigned char arc4_s[0x100];
 intern unsigned char arc4_i = 0x00;
@@ -149,43 +150,17 @@ void iarc4(const unsigned int seed, const unsigned int bytes) {
 /*
 Returns the key code of a key number.
 
-The key code is three characters long at most:
+The code is generated automatically:
 <pre>
-int key = 42;
-char code[4];
-key_code(code, key);
-printf("%d = \"%s\"\n", key, code);
+gcc src/meta.c -O3 -o obj/meta
+mkdir -p src/meta
+obj/meta key_code > src/meta/key_code.c
+rm -f obj/meta
 </pre>
 
-@param code The key code to return.
-@param key The key number.
+@param code The key number.
+@return The key code.
 */
-void key_code(char * const code, const int key) {
-	#define key_code_RETURN(str) {\
-				strcpy(code, str);\
-				return;\
-			}
-	#define key_code_RETURNF(format, str) {\
-				sprintf(code, format, str);\
-				return;\
-			}
-	if (key == '\\') key_code_RETURN("\\\\");//backslash
-	if (key == KEY_UP) key_code_RETURN("\\U");//Up
-	if (key == KEY_DOWN) key_code_RETURN("\\D");//Down
-	if (key == KEY_LEFT) key_code_RETURN("\\L");//Left
-	if (key == KEY_RIGHT) key_code_RETURN("\\R");//Right
-	if (key == ' ') key_code_RETURN("\\S");//Space
-	if (key == 0x1b) key_code_RETURN("\\M");//Meta (Alt or Esc)
-	if (key == 0x7f) key_code_RETURN("\\C_");//Delete
-	if (key == KEY_A1) key_code_RETURN("\\H");//keypad Home
-	if (key == KEY_A3) key_code_RETURN("\\+");//keypad PageUp
-	if (key == KEY_B2) key_code_RETURN("\\.");//keypad center
-	if (key == KEY_C1) key_code_RETURN("\\E");//keypad End
-	if (key == KEY_C3) key_code_RETURN("\\-");//keypad PageDown
-	if (key >= 0x00 && key < 0x1f) key_code_RETURNF("\\C%c", (char )(0x60 + key));//control keys
-	if (key >= KEY_F(1) && key <= KEY_F(64)) key_code_RETURNF("\\%d", key - KEY_F(0));//function keys
-	if (key > 0x20 && key < 0x80) key_code_RETURNF("%c", (char )key);//printable keys
-	key_code_RETURN("\\?");//nonprintable keys
-}
+#include "meta/key_code.c"
 
 #endif

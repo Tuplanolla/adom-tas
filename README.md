@@ -180,6 +180,11 @@ Keywords are always followed by spaces, pointers are always separated from the t
 Making of
 ---------
 
+When writing a recorder the most important thing is entropy.
+Since recordings are basically inputs sent to the game the game acts like an automata:
+even the slightest difference can cause desynchronization.
+It's not wanted so all sources of entropy need to be understood and controlled (since they're external).
+
 Let's decipher the random number generator with GDB.
 Let's fix this mess later.
 
@@ -430,6 +435,7 @@ Checklist
 		[X] Implement slow load (file-memory)
 		[X] Make processes independent
 		[X] Make processes actually work
+		[ ] Save temporary files
 		[X] Refine sloppy implementations
 	[ ] Implement recording tools
 		[X] Find the input handler

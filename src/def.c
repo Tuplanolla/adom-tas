@@ -34,7 +34,7 @@ intern const char * const default_error_stream = "stderr";
 intern const char * const default_warning_stream = "stderr";
 intern const char * const default_note_stream = "stderr";
 intern const char * const default_call_stream = "/dev/null";
-intern const bool default_play = FALSE;
+intern const bool default_autoplay = FALSE;
 intern const char * const default_config_path = "adom-tas.cfg";
 intern const char * const default_config =
 		"#required\n"
@@ -54,11 +54,11 @@ intern const char * const default_config =
 		"#input       = \"input.tas\"\n"
 		"#output      = \"output.(state).tas\"\n"
 		"#shm         = \"adom-tas.shm\"\n"
-		"#error       = \"adom-tas.log\"\n"//TODO locks and automation
+		"#error       = \"adom-tas.log\"\n"
 		"#warning     = \"adom-tas.log\"\n"
 		"#note        = \"adom-tas.log\"\n"
 		"#call        = \"/dev/null\"\n"
-		"#play        = false\n"
+		"#autoplay    = false\n"
 	;
 
 #endif

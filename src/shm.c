@@ -6,12 +6,6 @@ detaches and
 removes
 	the shared memory segment.
 
-SHM_GET_PROBLEM
-SHM_ATTACH_PROBLEM
-SHM_KEY_PROBLEM
-SHM_DETACH_PROBLEM
-SHM_REMOVE_PROBLEM
-
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef SHM_C
@@ -30,6 +24,7 @@ SHM_REMOVE_PROBLEM
 #include "log.h"//error
 #include "def.h"//project_name
 #include "config.h"//states, rows, cols, shm_path
+
 #include "shm.h"//shm_t, shm
 
 intern unsigned int states;
@@ -73,8 +68,14 @@ problem_t get_shm(const int shmflg) {
 	shm.pids = (pid_t * )heap_pointer;
 	heap_pointer += (ptrdiff_t )(states * sizeof *shm.pids);
 	shm.chs = malloc(states * sizeof *shm.chs);
+	if (shm.chs == NULL) {
+		return error(SHM_MALLOC_PROBLEM);
+	}
 	for (unsigned int state = 0; state < states; state++) {
 		shm.chs[state] = malloc(rows * sizeof **shm.chs);
+		if (shm.chs[state] == NULL) {
+			return error(SHM_MALLOC_PROBLEM);
+		}
 		for (unsigned int row = 0; row < rows; row++) {
 			shm.chs[state][row] = (chtype * )heap_pointer;
 			heap_pointer += (ptrdiff_t )(cols * sizeof ***shm.chs);

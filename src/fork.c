@@ -33,29 +33,6 @@ Works like cutlery.
 
 #include "fork.h"
 
-intern char * home_path;
-intern char * executable_path;
-intern char * executable_data_path;
-intern char * executable_process_path;
-intern char * executable_version_path;
-intern char * executable_count_path;
-intern char * executable_keybind_path;
-intern char * executable_config_path;
-intern char * loader_path;
-intern char * libc_path;
-intern char * libncurses_path;
-intern unsigned int generations;
-intern unsigned int states;
-intern unsigned int rows;
-intern unsigned int cols;
-intern char * iterator;
-intern FILE * input_stream;
-intern FILE ** output_streams;
-intern char * shm_path;
-intern FILE * error_stream;
-intern FILE * warning_stream;
-intern FILE * note_stream;
-intern FILE * call_stream;
 intern shm_t shm;
 
 /**
@@ -104,6 +81,7 @@ problem_t save(const unsigned int state) {
 		}
 		wmove(stdscr, y, x);
 		wrefresh(stdscr);
+		//tail recursion!
 	}
 	else {//child
 		attach_shm();

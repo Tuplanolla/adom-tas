@@ -15,23 +15,29 @@ NAME = adom-tas
 all: $(BIN)/$(NAME).so $(BIN)/$(NAME)
 
 clean:
-	$(RM) $(OBJ)/* $(BIN)/*
+	$(RM) $(SRC)/meta/* $(OBJ)/* $(BIN)/*
 
 prepare:
+	$(MKDIR) $(SRC)/meta
 	$(MKDIR) $(OBJ)
 	$(MKDIR) $(BIN)
 
 sh:
 	$(CP) $(SRC)/*.sh $(BIN)
 
+meta:
+	$(GCC) $(SRC)/meta.c -o $(OBJ)/meta
+	$(OBJ)/meta key_code > $(SRC)/meta/key_code.c
+	$(RM) $(OBJ)/meta
+
 $(OBJ)/%.o: $(SRC)/%.c
 	$(GCC) -fpic -c -o $@ $<
 
-$(BIN)/$(NAME).so: prepare $(OBJ)/launcher.o $(OBJ)/loader.o $(OBJ)/problem.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
-	$(GCC) -fpic -shared -o $(BIN)/$(NAME).so $(OBJ)/launcher.o $(OBJ)/loader.o $(OBJ)/problem.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
+$(BIN)/$(NAME).so: prepare meta $(OBJ)/main.o $(OBJ)/loader.o $(OBJ)/problem.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
+	$(GCC) -fpic -shared -o $(BIN)/$(NAME).so $(OBJ)/main.o $(OBJ)/loader.o $(OBJ)/problem.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
 
-$(BIN)/$(NAME): prepare $(OBJ)/launcher.o $(OBJ)/loader.o $(OBJ)/problem.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
-	$(GCC) -lncurses -o $(BIN)/$(NAME) $(OBJ)/launcher.o $(OBJ)/loader.o $(OBJ)/problem.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
+$(BIN)/$(NAME): prepare meta $(OBJ)/main.o $(OBJ)/loader.o $(OBJ)/problem.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
+	$(GCC) -lncurses -o $(BIN)/$(NAME) $(OBJ)/main.o $(OBJ)/loader.o $(OBJ)/problem.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
 
 run: all
 	$(BIN)/$(NAME)

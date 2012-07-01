@@ -16,7 +16,28 @@ Converts an error code to an error message.
 **/
 /*
 NO_PROBLEM "Nothing failed.";
-CAUSALITY_PROBLEM "Failing failed."
+NULL_PROBLEM "Dereferencing a null pointer failed.";
+MALLOC_PROBLEM "Allocating memory failed.";
+
+//main.c
+PROCESS_UNLINK_PROBLEM "Removing the process lock file failed.";
+VERSION_OPEN_PROBLEM "Opening the version file for reading failed.";
+VERSION_READ_PROBLEM "Reading the version file failed.";
+VERSION_CLOSE_PROBLEM "Closing the version file failed.";
+VERSION_MISMATCH_PROBLEM "Verifying the version of the executable failed.";
+COUNT_OPEN_PROBLEM "Opening the count file for writing failed.";
+COUNT_WRITE_PROBLEM "Writing the count file failed.";
+COUNT_CLOSE_PROBLEM "Closing the count file failed.";
+LD_PRELOAD_SETENV_PROBLEM "Setting the library to preload in the environment variable failed.";
+EXEC_PROBLEM "Launching the executable failed.";
+
+//config.c
+INPUT_CLOSE_PROBLEM "Closing the input file failed.";
+OUTPUT_CLOSE_PROBLEM "Closing the output file failed.";
+ERROR_CLOSE_PROBLEM "Closing the error log file failed.";
+WARNING_CLOSE_PROBLEM "Closing the warning log file failed.";
+NOTE_CLOSE_PROBLEM "Closing the note log file failed.";
+CALL_CLOSE_PROBLEM "Closing the call log file failed.";
 
 CONFIG_OPEN_PROBLEM "Opening the configuration file for writing failed.";
 CONFIG_WRITE_PROBLEM "Writing the configuration file failed.";
@@ -30,7 +51,6 @@ HOME_STAT_PROBLEM "Accessing the home directory failed. Shell expansions will be
 LD_PRELOAD_CONFIG_PROBLEM "Finding the location of the library to preload in the configuration file failed.";
 LD_PRELOAD_GETENV_PROBLEM "Finding the location of the library to preload in the environment variable failed. It will be guessed.";
 LD_PRELOAD_STAT_PROBLEM "Accessing the library to preload failed.";
-LD_PRELOAD_SETENV_PROBLEM "Setting the library to preload in the environment variable failed.";
 EXECUTABLE_CONFIG_PROBLEM "Finding the location of the executable in the configuration file failed. It will be guessed.";
 EXECUTABLE_STAT_PROBLEM "Accessing the executable failed.";
 EXECUTABLE_TYPE_PROBLEM "Ensuring the executable is a file failed.";
@@ -42,12 +62,13 @@ EXECUTABLE_HASH_PROBLEM "Verifying the hash code of the executable failed.";
 EXECUTABLE_CLOSE_PROBLEM "Closing the executable failed.";
 EXECUTABLE_DATA_CONFIG_PROBLEM "Finding the location of the executable's data directory in the configuration file failed. It will be guessed.";
 EXECUTABLE_DATA_HOME_PROBLEM "Guessing the location of the executable's data directory failed.";
-EXECUTABLE_DATA_STAT_PROBLEM "Accessing the executable's data directory in the configuration file failed.";
-EXECUTABLE_PROCESS_STAT_PROBLEM "Accessing the executable's process file failed.";
+EXECUTABLE_DATA_STAT_PROBLEM "Accessing the executable's data directory failed.";
+EXECUTABLE_TEMPORARY_STAT_PROBLEM  "Accessing the executable's temporary file directory.";
+EXECUTABLE_CONFIG_STAT_PROBLEM "Accessing the executable's configuration file failed.";
+EXECUTABLE_PROCESS_STAT_PROBLEM "Accessing the executable's process lock file failed.";
+EXECUTABLE_KEYBIND_STAT_PROBLEM "Accessing the executable's keybinding file failed.";
 EXECUTABLE_VERSION_STAT_PROBLEM "Accessing the executable's version file failed.";
 EXECUTABLE_COUNT_STAT_PROBLEM "Accessing the executable's count file failed.";
-EXECUTABLE_KEYBIND_STAT_PROBLEM "Accessing the executable's keybinding file failed.";
-EXECUTABLE_CONFIG_STAT_PROBLEM "Accessing the executable's configuration file failed.";
 LIBC_CONFIG_PROBLEM "Finding the location of the C standard library in the configuration file failed. It will be guessed.";
 LIBC_STAT_PROBLEM "Accessing the C standard library failed.";
 LIBNCURSES_CONFIG_PROBLEM "Finding the location of the New Cursor Optimization library in the configuration file failed. It will be guessed.";
@@ -72,28 +93,12 @@ ERROR_CONFIG_PROBLEM
 ERROR_STAT_PROBLEM
 ERROR_OPEN_PROBLEM
 LOG_CHANGE_PROBLEM "The log locations changed.";
-^
-INPUT_CLOSE_PROBLEM
-OUTPUT_CLOSE_PROBLEM
-ERROR_CLOSE_PROBLEM
-WARNING_CLOSE_PROBLEM
-NOTE_CLOSE_PROBLEM
-CALL_CLOSE_PROBLEM
-
-COUNT_OPEN_PROBLEM "Opening the count file for writing failed.";
-COUNT_WRITE_PROBLEM "Writing the count file failed.";
-COUNT_CLOSE_PROBLEM "Closing the count file failed.";
-VERSION_OPEN_PROBLEM "Opening the version file for reading failed.";
-VERSION_READ_PROBLEM "Reading the version file failed.";
-VERSION_CLOSE_PROBLEM "Closing the version file failed.";
-VERSION_MISMATCH_PROBLEM "Verifying the version of the executable failed.";
-PROCESS_UNLINK_PROBLEM "Removing the process file failed.";
-EXEC_PROBLEM "Launching the executable failed.";
 
 LIBC_DLOPEN_PROBLEM
 LIBNCURSES_DLOPEN_PROBLEM
 LD_PRELOAD_UNSETENV_PROBLEM
 
+SHM_MALLOC_PROBLEM
 SHM_KEY_PROBLEM
 SHM_GET_PROBLEM
 SHM_ATTACH_PROBLEM
@@ -108,7 +113,7 @@ ASM_MPROTECT_PROBLEM
 const char * problem_message(const problem_t code) {
 	switch (code) {
 		case NO_PROBLEM: return "Nothing failed.";
-		case CAUSALITY_PROBLEM: return "CAUSALITY_PROBLEM";
+		case NULL_PROBLEM: return "NULL_PROBLEM";
 		case CONFIG_OPEN_PROBLEM: return "CONFIG_OPEN_PROBLEM";
 		case CONFIG_WRITE_PROBLEM: return "CONFIG_WRITE_PROBLEM";
 		case CONFIG_CLOSE_PROBLEM: return "CONFIG_CLOSE_PROBLEM";

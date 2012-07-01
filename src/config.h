@@ -11,14 +11,18 @@ Manages the configuration variables.
 #include "problem.h"//problem_t
 #include "record.h"//record_t
 
+/**
+The configuration variables.
+**/
 extern char * home_path;
 extern char * executable_path;
 extern char * executable_data_path;
+extern char * executable_temporary_path;
+extern char * executable_config_path;
 extern char * executable_process_path;
+extern char * executable_keybind_path;
 extern char * executable_version_path;
 extern char * executable_count_path;
-extern char * executable_keybind_path;
-extern char * executable_config_path;
 extern char * loader_path;
 extern char * libc_path;
 extern char * libncurses_path;
@@ -35,7 +39,11 @@ extern FILE * warning_stream;
 extern FILE * note_stream;
 extern FILE * call_stream;
 extern record_t record;
+extern bool autoplay;
 
+/**
+The configuration functions.
+**/
 problem_t init_launcher_config(void);
 problem_t init_loader_config(void);
 problem_t uninit_config(void);

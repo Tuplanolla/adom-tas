@@ -6,7 +6,7 @@ Provides recording utilities.
 
 #include <time.h>//time_t
 
-extern const unsigned char frame_rate;
+extern unsigned char frame_rate;
 
 /**
 Represents a recorded frame.

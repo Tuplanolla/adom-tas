@@ -22,7 +22,6 @@ Modifies the executable.
 #include <sys/types.h>
 //sig*, SA_*, RTLD_*
 #include <curses.h>
-#include <libconfig.h>
 
 #include "util.h"
 #include "problem.h"
@@ -48,8 +47,7 @@ intern WREFRESH um_wrefresh = NULL;
 intern WGETCH um_wgetch = NULL;
 intern EXIT um_exit = NULL;
 intern shm_t shm;
-
-record_t record;
+intern record_t record;
 
 void * libc_handle;
 void * libncurses_handle;
@@ -136,6 +134,9 @@ problem_t init_parent(void) {
 		warning(LD_PRELOAD_UNSETENV_PROBLEM);
 	}
 
+	/*
+	Prepares recording.
+	*/
 	init_record(&record);
 
 	/*
@@ -156,18 +157,16 @@ problem_t init_parent(void) {
 		error(FORK_PROBLEM);
 	}
 	else if (pid != 0) {//parent
-		attach_shm();//TODO why
+		PROPAGATE(attach_shm());//TODO why
 		shm.ppid[0] = getpid();
-		fprintf(stderr, "The parent process seems to have fallen asleep. Use Ctrl C to wake it up.\n");
 		sigset_t mask;
 		sigfillset(&mask);
 		sigdelset(&mask, SIGINT);
 		sigsuspend(&mask);
-		fprintf(stderr, "Quitting...\n");
 		return error(NO_PROBLEM);
 	}
 	else {//child
-		attach_shm();
+		PROPAGATE(attach_shm());
 		shm.pids[0] = getpid();
 	}
 

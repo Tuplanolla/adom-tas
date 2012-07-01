@@ -8,21 +8,12 @@ Provides reading for the whole family.
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
-#include <math.h>
 #include <time.h>
 #include <unistd.h>
-#include <dlfcn.h>
-#include <fcntl.h>
 #include <signal.h>
 #include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <sys/types.h>
 
 #include <curses.h>
-#include <libconfig.h>
 
 #include "util.h"
 #include "exec.h"
@@ -46,6 +37,8 @@ intern INIT_PAIR um_init_pair;
 intern WREFRESH um_wrefresh;
 intern WGETCH um_wgetch;
 intern EXIT um_exit;
+
+intern turns;
 
 intern char * home_path;
 intern char * executable_path;
@@ -71,6 +64,8 @@ intern FILE * warning_stream;
 intern FILE * note_stream;
 intern FILE * call_stream;
 
+intern shm_t shm;
+
 record_t record;
 
 bool initialized = FALSE;
@@ -84,7 +79,7 @@ Annotates and initializes overloaded functions.
 Very important temporary variables.
 **/
 record_t record;
-int globstate = 1;
+unsigned int globstate = 1;
 time_t current_time = 0;//0x7fe81780
 
 void injector(void) {
@@ -217,8 +212,12 @@ Draws the custom interface.
 @param win The window to redraw.
 @return Zero if no errors occurred and something else otherwise.
 **/
+int previous_turns;
 int wrefresh(WINDOW * win) { OVERLOAD
 	call("wrefresh(0x%08x).", (unsigned int )win);
+
+	if (*executable_turns < previous_turns) turns++;
+	previous_turns = *executable_turns;
 
 	/*
 	Stores the state of the window.
@@ -233,6 +232,8 @@ int wrefresh(WINDOW * win) { OVERLOAD
 	short pair; short * _pair = &pair;
 	wattr_get(win, _attrs, _pair, NULL);
 	getyx(win, y, x);
+
+	wattrset(win, A_NORMAL);
 
 	/*
 	Initializes the color pairs used by the interface.
@@ -260,16 +261,16 @@ int wrefresh(WINDOW * win) { OVERLOAD
 	#define wrefresh_ADDSTR(format, length, ...) \
 		ws_pair--;\
 		wattrset(win, COLOR_PAIR(ws_pair));\
-		snprintf(ws_str, (size_t )TERM_COL, format, __VA_ARGS__);\
+		snprintf(ws_str, (size_t )TERM_COL, format, ##__VA_ARGS__);\
 		snprintf(ws_buf, (size_t )((condensed ? 1 : length)+1), "%-*s", length, ws_str);\
 		ws_x -= length;\
 		/*ws_x--;*/\
-		mvaddnstr(ws_y, ws_x, ws_buf, TERM_COL-ws_x);\
+		mvwaddnstr(win, ws_y, ws_x, ws_buf, TERM_COL-ws_x);\
 		ws_x--;
 	wrefresh_ADDSTR("S: %u/%u", 6, globstate, states-1);
-	wrefresh_ADDSTR("D: %u", 13, (unsigned int )(current_time-record.time));
+	wrefresh_ADDSTR("D: %u", 13, (unsigned int )(current_time - record.time));
 	wrefresh_ADDSTR("R: 0x%08x", 13, hash(executable_arc4_s, 0x100));
-	wrefresh_ADDSTR("T: ?/%u", 13, *executable_turns);
+	wrefresh_ADDSTR("T: ?/%u", 13, *executable_turns + turns);
 	wrefresh_ADDSTR("F: ?/%u", 13, record.count);
 	wrefresh_ADDSTR("I: %s", 9, name);
 
@@ -284,7 +285,7 @@ int wrefresh(WINDOW * win) { OVERLOAD
 		sprintf(somer, "%s %c%d%c", some, somery ? '[' : ' ', (unsigned short )shm.pids[index], somery ? ']' : ' ');
 		strcpy(some, somer);
 	}
-	mvaddnstr(21, 10, some, TERM_COL-20);
+	mvwaddnstr(win, 21, 10, some, TERM_COL-20);
 
 	/*
 	Restores the state of the window.
@@ -349,8 +350,54 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		return 0;//redundant
 	}
 	else if (key == KEY_F(36)) {//changes the state (Ctrl F12 now)
-		globstate = globstate%((int )states-1)+1;//++
-		//globstate = (globstate-2)%((int )states-1)+1;//--
+		globstate = globstate%(unsigned int )((int )states-1)+1;//++
+		//globstate = (unsigned int )(((int )globstate-2)%((int )states-1))+1;//--
+		wrefresh(win);
+		return 0;
+	}
+	else if (key == KEY_F(5)) {//opens a dialog
+		int y, x;
+		getyx(win, y, x);
+		WINDOW * subwin = newwin(rows/2+rows%2+2, cols/2+cols%2+2, rows/4-2, cols/4-1);
+		chtype ch = (chtype )' ' | COLOR_PAIR(37);
+		wborder(subwin, ch, ch, ch, ch, ch, ch, ch, ch);
+		um_wrefresh(subwin);
+		delwin(subwin);
+		subwin = newwin(3, cols/2+cols%2+2, rows*3/4+rows%2-1, cols/4-1);
+		ch = (chtype )' ' | COLOR_PAIR(37);
+		wborder(subwin, ch, ch, ch, ch, ch, ch, ch, ch);
+		mvwhline(subwin, 1, 1, ch, cols/2+cols%2);
+		wattrset(subwin, COLOR_PAIR(37));
+		unsigned int ws_x = 1;
+		size_t len = strlen("<");
+		mvwaddnstr(subwin, 1, ws_x, "<", len);
+		ws_x += len + 1;
+		unsigned int state = 1;
+		while (ws_x < cols/2+cols%2-2 && state < states) {
+			len = uintlen(state) + 2;
+			char * buf = malloc(len + 1);
+			const bool occupied = shm.pids[state] != 0;
+			snprintf(buf, len + 1, "%c%u%c", occupied ? '[' : ' ', state, occupied ? ']' : ' ');
+			mvwaddnstr(subwin, 1, ws_x, buf, len);
+			free(buf);
+			const char * indicator = "^";
+			if (state == globstate) {//TODO intlen/2 as well
+				mvwaddnstr(subwin, 2, ws_x + 1 - strlen(indicator)/2, indicator, strlen(indicator));
+			}
+			state++;
+			ws_x += len + 1;
+		}
+		len = strlen(">");
+		mvwaddnstr(subwin, 1, cols/2+cols%2+1-len, ">", len);
+		wattrset(subwin, A_NORMAL);
+		um_wrefresh(subwin);
+		delwin(subwin);
+		for (unsigned int row = 0; row < rows; row += 2) {
+			for (unsigned int col = 0; col < cols; col += 2) {
+				mvwaddch(win, row/2+rows/4-1, col/2+cols/4, shm.chs[globstate][row][col]);
+			}
+		}
+		wmove(win, y, x);
 		wrefresh(win);
 		return 0;
 	}
@@ -364,6 +411,7 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		return 0;
 	}
 	else if (key == 'Q') {//quits everything (stupid idea or implementation)
+		endwin();
 		printf("Ctrl C will get you back to your beloved terminal if nothing else works.\n"); fflush(stdout);
 		for (unsigned int index = 1; index < states; index++) {
 			if (shm.pids[index] != 0) {
@@ -378,19 +426,19 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 	if (!was_meta && !was_colon && (key == 0x3a || key == 'w')) was_colon = key == 0x3a ? 1 : 2;//booleans are fun like that
 	else if (!was_meta && key == 0x1b) was_meta = TRUE;
 	else {
-		char code[4];
+		const char * code;
 		strcpy(name, "");
 		if (was_colon) {
-			key_code(code, was_colon == 1 ? 0x3a : 'w');
+			code = key_code(was_colon == 1 ? 0x3a : 'w');
 			strcat(name, code);
 		}
 		if (was_meta) {
-			key_code(code, 0x1b);
+			code = key_code(0x1b);
 			strcat(name, code);
 		}
 		was_colon = FALSE;
 		was_meta = FALSE;
-		key_code(code, key);
+		code = key_code(key);
 		strcat(name, code);//TODO turn this into a macro
 	}
 	unsigned char duration = frame_rate/2;

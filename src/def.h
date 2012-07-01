@@ -34,7 +34,7 @@ extern const char * const default_error_stream;
 extern const char * const default_warning_stream;
 extern const char * const default_note_stream;
 extern const char * const default_call_stream;
-extern const bool default_play;
+extern const bool default_autoplay;
 extern const char * const default_config_path;
 extern const char * const default_config;
 

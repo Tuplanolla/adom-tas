@@ -12,20 +12,11 @@ Provides information about
 
 #include <stdlib.h>//size_t
 
-/**
-The simulated turn count.
-
-Ignores negative turns.
-**/
 extern int turns;
 
 extern const size_t executable_size;
-
 extern const int executable_hash;
 extern const unsigned char executable_version[4];
-
-extern int * const executable_turns;
-extern int * const executable_saves;
 
 extern const int executable_rows_min;
 extern const int executable_cols_min;
@@ -33,11 +24,15 @@ extern const int executable_rows_max;
 extern const int executable_cols_max;
 
 extern const char * const executable_data_file;
+extern const char * const executable_temporary_file;
 extern const char * const executable_config_file;
 extern const char * const executable_process_file;
 extern const char * const executable_keybind_file;
 extern const char * const executable_version_file;
 extern const char * const executable_count_file;
+
+extern int * const executable_turns;
+extern int * const executable_saves;
 
 extern unsigned char * const executable_arc4_s;
 extern unsigned char * const executable_arc4_i;
@@ -57,6 +52,6 @@ void iarc4(unsigned int seed, unsigned int bytes);
 /**
 Simulates the key number interpreter of the executable.
 **/
-void key_code(char * code, int key);
+const char * key_code(int key);
 
 #endif
