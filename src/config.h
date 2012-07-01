@@ -26,20 +26,31 @@ extern char * executable_count_path;
 extern char * loader_path;
 extern char * libc_path;
 extern char * libncurses_path;
-extern unsigned int generations;
 extern unsigned int states;
 extern unsigned int rows;
 extern unsigned int cols;
+extern char * shm_path;
+extern unsigned int generations;
+extern bool sql;
+extern bool autoplay;
+extern bool color;
 extern char * iterator;
 extern FILE * input_stream;
 extern FILE ** output_streams;
-extern char * shm_path;
 extern FILE * error_stream;
 extern FILE * warning_stream;
 extern FILE * note_stream;
 extern FILE * call_stream;
-extern record_t record;
-extern bool autoplay;
+extern int time_key;
+extern int untime_key;
+extern int save_key;
+extern int load_key;
+extern int state_key;
+extern int unstate_key;
+extern int menu_key;
+extern int unmenu_key;
+extern int play_key;
+extern int quit_key;
 
 /**
 The configuration functions.

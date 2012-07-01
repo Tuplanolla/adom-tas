@@ -16,7 +16,7 @@ Some redundant conditions are used to
 #include <sys/stat.h>//stat, S_*
 #include <pwd.h>//*id, *wd
 
-#include <libconfig.h>//config_*
+#include <libconfig.h>//config_*, CONFIG_*
 
 #include "util.h"//intern, hash, stdstr, SUBNULL
 #include "problem.h"//problem_t, *_PROBLEM
@@ -33,19 +33,31 @@ intern const char * const default_executable_path;
 intern const char * const default_loader_path;
 intern const char * const default_libc_path;
 intern const char * const default_libncurses_path;
-intern const int default_generations;
 intern const int default_states;
 intern const int default_rows;
 intern const int default_cols;
+intern const char * const default_shm_path;
+intern const int default_generations;
+intern const int default_sql;
+intern const int default_autoplay;
+intern const int default_color;
 intern const char * const default_iterator;
 intern const char * const default_input_path;
 intern const char * const default_output_path;
-intern const char * const default_shm_path;
 intern const char * const default_error_stream;
 intern const char * const default_warning_stream;
 intern const char * const default_note_stream;
 intern const char * const default_call_stream;
-intern const bool default_autoplay;
+intern const int default_time_key;
+intern const int default_untime_key;
+intern const int default_save_key;
+intern const int default_load_key;
+intern const int default_state_key;
+intern const int default_unstate_key;
+intern const int default_menu_key;
+intern const int default_unmenu_key;
+intern const int default_play_key;
+intern const int default_quit_key;
 intern const char * const default_config_path;
 intern const char * const default_config;
 
@@ -82,19 +94,31 @@ intern char * executable_count_path;
 intern char * loader_path;
 intern char * libc_path;
 intern char * libncurses_path;
-intern unsigned int generations;
 intern unsigned int states;
 intern unsigned int rows;
 intern unsigned int cols;
+intern char * shm_path;
+intern unsigned int generations;
+intern bool sql;
+intern bool autoplay;
+intern bool color;
 intern char * iterator;
 intern FILE * input_stream;
 intern FILE ** output_streams;
-intern char * shm_path;
 intern FILE * error_stream;
 intern FILE * warning_stream;
 intern FILE * note_stream;
 intern FILE * call_stream;
-intern bool autoplay;
+intern int time_key;
+intern int untime_key;
+intern int save_key;
+intern int load_key;
+intern int state_key;
+intern int unstate_key;
+intern int menu_key;
+intern int unmenu_key;
+intern int play_key;
+intern int quit_key;
 
 /**
 The configuration.
@@ -251,7 +275,7 @@ problem_t init_config(void) {
 	the existence of the directory is finally checked.
 	*/
 	const char * new_home_path;
-	if (config_lookup_string(&config, "home", &new_home_path) == 0) {
+	if (config_lookup_string(&config, "home", &new_home_path) == CONFIG_FALSE) {
 		//warning(HOME_CONFIG_PROBLEM);
 		new_home_path = getenv("HOME");
 		if (new_home_path == NULL) {
@@ -315,7 +339,7 @@ problem_t init_launcher_config(void) {
 	the environment variable is finally set.
 	*/
 	const char * new_loader_path;
-	if (config_lookup_string(&config, "loader", &new_loader_path) == 0) {
+	if (config_lookup_string(&config, "loader", &new_loader_path) == CONFIG_FALSE) {
 		//warning(LD_PRELOAD_CONFIG_PROBLEM);
 		new_loader_path = getenv("LD_PRELOAD");
 		if (loader_path == NULL) {
@@ -346,7 +370,7 @@ problem_t init_launcher_config(void) {
 	the hash code of the file is finally verified.
 	*/
 	const char * new_executable_path;
-	if (config_lookup_string(&config, "executable", &new_executable_path) == 0) {
+	if (config_lookup_string(&config, "executable", &new_executable_path) == CONFIG_FALSE) {
 		new_executable_path = default_executable_path;
 		//warning(EXECUTABLE_CONFIG_PROBLEM);
 	}
@@ -410,7 +434,7 @@ problem_t init_launcher_config(void) {
 	the existence of the directory is finally checked.
 	*/
 	const char * new_executable_data_path;
-	if (config_lookup_string(&config, "data", &new_executable_data_path) == 0) {
+	if (config_lookup_string(&config, "data", &new_executable_data_path) == CONFIG_FALSE) {
 		new_executable_data_path = NULL;
 		//warning(EXECUTABLE_DATA_CONFIG_PROBLEM);
 		if (home_path == NULL) {
@@ -566,18 +590,18 @@ problem_t init_loader_config(void) {
 	the existence of the file is then checked.
 	*/
 	const char * new_libc_path;
-	if (config_lookup_string(&config, "libc", &new_libc_path) == 0) {
+	if (config_lookup_string(&config, "libc", &new_libc_path) == CONFIG_FALSE) {
 		new_libc_path = default_libc_path;
 		warning(LIBC_CONFIG_PROBLEM);
 	}
 	libc_path = astrrep(new_libc_path, "~", home_path);
-	if (stat(libc_path, &buf) != 0) {
+	if (stat(libc_path, &buf) == -1) {
 		free(libc_path);
 		libc_path = NULL;
 		return error(LIBC_STAT_PROBLEM);
 	}
 	const char * new_libncurses_path;
-	if (config_lookup_string(&config, "libncurses", &new_libncurses_path) == 0) {
+	if (config_lookup_string(&config, "libncurses", &new_libncurses_path) == CONFIG_FALSE) {
 		new_libncurses_path = default_libncurses_path;
 		warning(LIBNCURSES_CONFIG_PROBLEM);
 	}
@@ -596,12 +620,12 @@ problem_t init_loader_config(void) {
 	the bounds are finally checked.
 	*/
 	int new_states;
-	if (config_lookup_int(&config, "states", &new_states) == 0) {
+	if (config_lookup_int(&config, "states", &new_states) == CONFIG_FALSE) {
 		new_states = default_states;
 		//note(STATE_CONFIG_PROBLEM);
 	}
 	if (new_states < 1) {
-		new_states = 1;
+		new_states = MAX(1, new_states);
 		warning(STATE_AMOUNT_PROBLEM);
 	}
 	states = (unsigned int )new_states + 1;//reserves space for the active state
@@ -614,7 +638,7 @@ problem_t init_loader_config(void) {
 	the bounds are finally checked.
 	*/
 	int new_rows;
-	if (config_lookup_int(&config, "rows", &new_rows) == 0) {
+	if (config_lookup_int(&config, "rows", &new_rows) == CONFIG_FALSE) {
 		new_rows = default_rows;
 		note(ROW_CONFIG_PROBLEM);
 	}
@@ -632,7 +656,7 @@ problem_t init_loader_config(void) {
 	the bounds are finally checked.
 	*/
 	int new_cols;
-	if (config_lookup_int(&config, "cols", &new_cols) == 0) {
+	if (config_lookup_int(&config, "cols", &new_cols) == CONFIG_FALSE) {
 		new_cols = default_cols;
 		//note(COL_CONFIG_PROBLEM);
 	}
@@ -649,16 +673,61 @@ problem_t init_loader_config(void) {
 	the default location is then guessed.
 	*/
 	const char * new_shm_path;
-	if (config_lookup_string(&config, "shm", &new_shm_path) == 0) {
-		new_shm_path = default_shm_path;
+	if (config_lookup_string(&config, "shm", &new_shm_path) == CONFIG_FALSE) {
+		new_shm_path = default_config_path;//default_shm_path;
 		//note(SHM_CONFIG_PROBLEM);
 	}
 	shm_path = astrrep(new_shm_path, "~", home_path);
-	if (stat(shm_path, &buf) != 0) {//TODO bring memory mapped files back
+	if (stat(shm_path, &buf) == -1) {
 		free(shm_path);
 		shm_path = NULL;
 		return error(SHM_STAT_PROBLEM);
 	}
+
+	/*
+	TODO new things
+	intern unsigned int generations;
+		intern bool sql;
+		intern bool autoplay;
+	intern bool color;
+		intern char * iterator;
+		intern FILE * input_stream;
+		intern FILE ** output_streams;
+	intern FILE * error_stream;
+	intern FILE * warning_stream;
+	intern FILE * note_stream;
+	intern FILE * call_stream;
+	intern int time_key;
+	intern int untime_key;
+	intern int save_key;
+	intern int load_key;
+	intern int state_key;
+	intern int unstate_key;
+	intern int menu_key;
+	intern int unmenu_key;
+	intern int play_key;
+	intern int quit_key;
+	*/
+
+	/**
+	Toggles the simulated save-quit-load.
+	**/
+	int new_sql;
+	if (config_lookup_bool(&config, "sql", &new_sql) == CONFIG_FALSE) {
+		new_sql = default_sql;
+		//warning(SQL_CONFIG_PROBLEM);
+	}
+	sql = new_sql == CONFIG_TRUE;
+
+	/**
+	Sets the playback mode.
+	**/
+	int new_autoplay;
+	if (config_lookup_bool(&config, "autoplay", &new_autoplay) == CONFIG_FALSE) {
+		new_autoplay = default_autoplay;
+		//warning(AUTOPLAY_CONFIG_PROBLEM);
+	}
+	autoplay = new_autoplay == CONFIG_TRUE;
 
 	/*
 	Finds the iterator string.
@@ -667,7 +736,7 @@ problem_t init_loader_config(void) {
 	the default string is then assumed.
 	*/
 	const char * new_iterator;
-	if (config_lookup_string(&config, "iterator", &new_iterator) == 0) {
+	if (config_lookup_string(&config, "iterator", &new_iterator) == CONFIG_FALSE) {
 		new_iterator = default_iterator;
 		//note(ITERATOR_CONFIG_PROBLEM);
 	}
@@ -681,7 +750,7 @@ problem_t init_loader_config(void) {
 	the existence of the input file is then checked.
 	*/
 	const char * new_input_path;
-	if (config_lookup_string(&config, "input", &new_input_path) == 0) {
+	if (config_lookup_string(&config, "input", &new_input_path) == CONFIG_FALSE) {
 		new_input_path = default_input_path;
 		warning(INPUT_CONFIG_PROBLEM);
 	}
@@ -710,7 +779,7 @@ problem_t init_loader_config(void) {
 		the file is then used for that save state.
 	*/
 	const char * new_output_path;
-	if (config_lookup_string(&config, "output", &new_output_path) == 0) {
+	if (config_lookup_string(&config, "output", &new_output_path) == CONFIG_FALSE) {
 		new_output_path = default_output_path;
 		warning(OUTPUT_CONFIG_PROBLEM);
 	}
@@ -733,13 +802,6 @@ problem_t init_loader_config(void) {
 	}
 	free(output_path);
 
-	/**
-	Sets the playback mode.
-	**/
-	if (config_lookup_bool(&config, "output", &autoplay) == 0) {
-		autoplay = default_autoplay;
-	}
-
 	/*
 	Opens the log streams.
 
@@ -752,12 +814,12 @@ problem_t init_loader_config(void) {
 	FILE * new_warning_stream = warning_stream;
 	FILE * new_note_stream = note_stream;
 	FILE * new_call_stream = call_stream;
-	struct stat error_buf;//TODO check NULL problems and refine
+	struct stat error_buf;//TODO refine
 	struct stat warning_buf;
 	struct stat note_buf;
 	struct stat call_buf;
 	const char * new_error_path;
-	if (config_lookup_string(&config, "errors", &new_error_path) == 0) {
+	if (config_lookup_string(&config, "errors", &new_error_path) == CONFIG_FALSE) {
 		new_error_path = default_error_stream;
 		warning(ERROR_CONFIG_PROBLEM);
 	}

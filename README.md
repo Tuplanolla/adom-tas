@@ -136,6 +136,10 @@ The location of the shared memory segment
 
 Take note that you need all kinds of permissions to be able to use library preloading and other wack stuff.
 
+The whole thing comes with a resource file `ADOM.DBG`.
+If you put it in your working directory you can enable ADoM's debug mode.
+I have no idea what it does, but since I'm lazy I hope someone can figure it out and tell me.
+
 File Format
 -----------
 
@@ -541,4 +545,4 @@ Coward                  I: \M\Cf  F: 2/21  T: 0/7  D: 15  R: 0xe87de001  S: 2/9
 
 and contains the last recorded inputs (Alt Ctrl F), the amount of the last recorded frames (2) and the amount of all frames (21), the amount of the last elapsed turns (0) and the amount of all turns (7 ignoring negative turns), the time elapsed since the last frame (15 seconds), the current hash of the random number generator's state and the currently selected save state (#2) and the amount of all save states (9).
 
-The currently defined keys are F8 to play a recording (only on frame 0), F9 to save, F10 to load, F11 to change the system time, F12 to simulate actual save and load, Ctrl F12 to change the currently selected save state and _ to save a recording (and other unnecessary details).
+Currently F8 shifts time forwards, Shift F8 backwards, F9 saves, F10 loads, F11 selects the next state, Shift F11 the previous state, F12 opens the menu, Shift F12 closes it and Ctrl F12 plays back a recording. Emulating save, quit and load is bound to the save key (typically S).

@@ -47,7 +47,7 @@ CONFIG_PARSE_PROBLEM "Parsing the configuration file failed.";
 HOME_CONFIG_PROBLEM "Finding the location of the home directory in the configuration file failed.";
 HOME_GETENV_PROBLEM "Finding the location of the home directory in the environment variable failed.";
 HOME_GETPWUID_PROBLEM "Finding the location of the home directory in the environment variable failed. It will be guessed.";
-HOME_STAT_PROBLEM "Accessing the home directory failed. Shell expansions will be disabled.";
+HOME_STAT_PROBLEM "Accessing the home directory failed. Shell expansions will be unavailable.";
 LD_PRELOAD_CONFIG_PROBLEM "Finding the location of the library to preload in the configuration file failed.";
 LD_PRELOAD_GETENV_PROBLEM "Finding the location of the library to preload in the environment variable failed. It will be guessed.";
 LD_PRELOAD_STAT_PROBLEM "Accessing the library to preload failed.";
@@ -69,6 +69,7 @@ EXECUTABLE_PROCESS_STAT_PROBLEM "Accessing the executable's process lock file fa
 EXECUTABLE_KEYBIND_STAT_PROBLEM "Accessing the executable's keybinding file failed.";
 EXECUTABLE_VERSION_STAT_PROBLEM "Accessing the executable's version file failed.";
 EXECUTABLE_COUNT_STAT_PROBLEM "Accessing the executable's count file failed.";
+
 LIBC_CONFIG_PROBLEM "Finding the location of the C standard library in the configuration file failed. It will be guessed.";
 LIBC_STAT_PROBLEM "Accessing the C standard library failed.";
 LIBNCURSES_CONFIG_PROBLEM "Finding the location of the New Cursor Optimization library in the configuration file failed. It will be guessed.";
@@ -93,6 +94,8 @@ ERROR_CONFIG_PROBLEM
 ERROR_STAT_PROBLEM
 ERROR_OPEN_PROBLEM
 LOG_CHANGE_PROBLEM "The log locations changed.";
+
+AUTOPLAY_CONFIG_PROBLEM
 
 LIBC_DLOPEN_PROBLEM
 LIBNCURSES_DLOPEN_PROBLEM

@@ -16,7 +16,10 @@ Generates code automatically.
 Generates the <code>key_code</code> function.
 **/
 void key_code_meta(void) {
-	printf("const char * key_code(const int key) {\n"
+	printf("/*"
+			"Automatically generated; do not modify."
+			"*/"
+			"const char * key_code(const int key) {\n"
 			"\tswitch (key) {\n");
 	int key = 0;
 	do {
@@ -36,7 +39,7 @@ void key_code_meta(void) {
 		else if (key == KEY_C1) SNPRINTF("\\E");//keypad End
 		else if (key == KEY_C3) SNPRINTF("\\-");//keypad PageDown
 		else if (key >= 0x00 && key < 0x1f) SNPRINTF("\\C%c", (char )(0x60 + key));//control keys
-		else if (key >= KEY_F(1) && key <= KEY_F(64)) SNPRINTF("\\%u", (char )(key - KEY_F(0)));//function keys
+		else if (key >= KEY_F(1) && key <= KEY_F(4 * 12)) SNPRINTF("\\%u", (char )(key - KEY_F(0)));//function keys
 		else if (key > 0x20 && key < 0x80) SNPRINTF("%c", (char )key);//printable keys
 		else goto end;
 		unsigned int first = 0;

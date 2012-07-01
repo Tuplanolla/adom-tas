@@ -14,7 +14,7 @@ Provides general-purpose macros.
 #include "gnu.h"//__*__
 
 /**
-The boolean values.
+Boolean values.
 **/
 #undef FALSE
 #undef TRUE
@@ -134,5 +134,13 @@ Swaps two variables.
 			memcpy(&y, &x, sizeof (x));\
 			memcpy(&x, SWAP_z, sizeof (x));\
 		} while (FALSE)
+
+/**
+Extended characters for the New Cursor Optimization library.
+**/
+#undef MOD_SHIFT
+#define MOD_SHIFT 12
+#undef MOD_CTRL
+#define MOD_CTRL 24
 
 #endif
