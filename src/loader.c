@@ -135,21 +135,13 @@ problem_t init_parent(void) {
 	}
 
 	/*
-	Prepares recording.
-	*/
-	init_record(&record);
-
-	/*
 	Injects Assembly instructions to disable the save function of the executable.
 	*/
 	//inject_save(&injector);
 
-	/*if (signal(SIGWINCH, dreamcatcher) == SIG_ERR) fprintfl(note_stream, "No no resizing!");
-	if (signal(SIGCONT, terminator) == SIG_ERR) fprintfl(note_stream, "Can't catch CONT.");
-	if (signal(SIGINT, terminator) == SIG_ERR) fprintfl(note_stream, "Can't stop!");
-	if (signal(SIGTERM, terminator) == SIG_ERR) fprintfl(note_stream, "Can't catch anything.");*/
+	signal(SIGWINCH, SIG_IGN);
 
-	init_shm();
+	PROPAGATE(init_shm());
 
 	signal(SIGCHLD, SIG_IGN);//just in case
 	pid_t pid = fork();

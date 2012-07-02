@@ -15,182 +15,136 @@ Converts an error code to an error message.
 @return The error message.
 **/
 /*
-NO_PROBLEM "Nothing failed.";
-NULL_PROBLEM "Dereferencing a null pointer failed.";
-MALLOC_PROBLEM "Allocating memory failed.";
-
-//main.c
-PROCESS_UNLINK_PROBLEM "Removing the process lock file failed.";
-VERSION_OPEN_PROBLEM "Opening the version file for reading failed.";
-VERSION_READ_PROBLEM "Reading the version file failed.";
-VERSION_CLOSE_PROBLEM "Closing the version file failed.";
-VERSION_MISMATCH_PROBLEM "Verifying the version of the executable failed.";
-COUNT_OPEN_PROBLEM "Opening the count file for writing failed.";
-COUNT_WRITE_PROBLEM "Writing the count file failed.";
-COUNT_CLOSE_PROBLEM "Closing the count file failed.";
-LD_PRELOAD_SETENV_PROBLEM "Setting the library to preload in the environment variable failed.";
-EXEC_PROBLEM "Launching the executable failed.";
-
-//config.c
-INPUT_CLOSE_PROBLEM "Closing the input file failed.";
-OUTPUT_CLOSE_PROBLEM "Closing the output file failed.";
-ERROR_CLOSE_PROBLEM "Closing the error log file failed.";
-WARNING_CLOSE_PROBLEM "Closing the warning log file failed.";
-NOTE_CLOSE_PROBLEM "Closing the note log file failed.";
-CALL_CLOSE_PROBLEM "Closing the call log file failed.";
-
-CONFIG_OPEN_PROBLEM "Opening the configuration file for writing failed.";
-CONFIG_WRITE_PROBLEM "Writing the configuration file failed.";
-CONFIG_CLOSE_PROBLEM "Closing the configuration file failed.";
-CONFIG_STAT_PROBLEM "Finding the configuration file failed. It will be created from a template.";
-CONFIG_PARSE_PROBLEM "Parsing the configuration file failed.";
-HOME_CONFIG_PROBLEM "Finding the location of the home directory in the configuration file failed.";
-HOME_GETENV_PROBLEM "Finding the location of the home directory in the environment variable failed.";
-HOME_GETPWUID_PROBLEM "Finding the location of the home directory in the environment variable failed. It will be guessed.";
-HOME_STAT_PROBLEM "Accessing the home directory failed. Shell expansions will be unavailable.";
-LD_PRELOAD_CONFIG_PROBLEM "Finding the location of the library to preload in the configuration file failed.";
-LD_PRELOAD_GETENV_PROBLEM "Finding the location of the library to preload in the environment variable failed. It will be guessed.";
-LD_PRELOAD_STAT_PROBLEM "Accessing the library to preload failed.";
-EXECUTABLE_CONFIG_PROBLEM "Finding the location of the executable in the configuration file failed. It will be guessed.";
-EXECUTABLE_STAT_PROBLEM "Accessing the executable failed.";
-EXECUTABLE_TYPE_PROBLEM "Ensuring the executable is a file failed.";
-EXECUTABLE_PERMISSION_PROBLEM "Checking the permissions of the executable failed.";
-EXECUTABLE_SIZE_PROBLEM "Verifying the size of the executable failed.";
-EXECUTABLE_OPEN_PROBLEM "Opening the executable for reading failed.";
-EXECUTABLE_READ_PROBLEM "Reading the executable failed.";
-EXECUTABLE_HASH_PROBLEM "Verifying the hash code of the executable failed.";
-EXECUTABLE_CLOSE_PROBLEM "Closing the executable failed.";
-EXECUTABLE_DATA_CONFIG_PROBLEM "Finding the location of the executable's data directory in the configuration file failed. It will be guessed.";
-EXECUTABLE_DATA_HOME_PROBLEM "Guessing the location of the executable's data directory failed.";
-EXECUTABLE_DATA_STAT_PROBLEM "Accessing the executable's data directory failed.";
-EXECUTABLE_TEMPORARY_STAT_PROBLEM  "Accessing the executable's temporary file directory.";
-EXECUTABLE_CONFIG_STAT_PROBLEM "Accessing the executable's configuration file failed.";
-EXECUTABLE_PROCESS_STAT_PROBLEM "Accessing the executable's process lock file failed.";
-EXECUTABLE_KEYBIND_STAT_PROBLEM "Accessing the executable's keybinding file failed.";
-EXECUTABLE_VERSION_STAT_PROBLEM "Accessing the executable's version file failed.";
-EXECUTABLE_COUNT_STAT_PROBLEM "Accessing the executable's count file failed.";
-
-LIBC_CONFIG_PROBLEM "Finding the location of the C standard library in the configuration file failed. It will be guessed.";
-LIBC_STAT_PROBLEM "Accessing the C standard library failed.";
-LIBNCURSES_CONFIG_PROBLEM "Finding the location of the New Cursor Optimization library in the configuration file failed. It will be guessed.";
-LIBNCURSES_STAT_PROBLEM "Accessing the New Cursor Optimization library failed.";
-ROW_CONFIG_PROBLEM "Finding the height of the terminal in the configuration file failed. The default value will be assumed.";
-ROW_AMOUNT_PROBLEM "Setting the height of the terminal failed. The closest estimate will be used.";
-COL_CONFIG_PROBLEM "Finding the width of the terminal in the configuration file failed. The default value will be assumed.";
-COL_AMOUNT_PROBLEM "Setting the width of the terminal failed. The closest estimate will be used.";
-STATE_CONFIG_PROBLEM "Finding the amount of save states in the configuration file failed. The default value will be assumed.";
-STATE_AMOUNT_PROBLEM "Setting the amount of save states failed. The closest estimate will be used.";
-SHM_CONFIG_PROBLEM "Finding the location of the shared memory segment in the configuration file failed. The default value will be assumed.";
-SHM_STAT_PROBLEM "Accessing the shared memory segment failed.";
-ITERATOR_CONFIG_PROBLEM "Finding the iterator string in the configuration file failed. The default value will be assumed.";
-INPUT_CONFIG_PROBLEM "Finding the location of the input file in the configuration file failed. The default value will be assumed.";
-INPUT_STAT_PROBLEM
-INPUT_OPEN_PROBLEM
-OUTPUT_CONFIG_PROBLEM "Finding the location of the output files in the configuration file failed. The default values will be assumed.";
-OUTPUT_ITERATOR_PROBLEM
-OUTPUT_STAT_PROBLEM
-OUTPUT_OPEN_PROBLEM
-ERROR_CONFIG_PROBLEM
-ERROR_STAT_PROBLEM
-ERROR_OPEN_PROBLEM
-LOG_CHANGE_PROBLEM "The log locations changed.";
-
-AUTOPLAY_CONFIG_PROBLEM
-
+//loader.c
 LIBC_DLOPEN_PROBLEM
 LIBNCURSES_DLOPEN_PROBLEM
 LD_PRELOAD_UNSETENV_PROBLEM
 
-SHM_MALLOC_PROBLEM
-SHM_KEY_PROBLEM
-SHM_GET_PROBLEM
-SHM_ATTACH_PROBLEM
-SHM_DETACH_PROBLEM
-SHM_REMOVE_PROBLEM
-
+//fork.c
 FORK_PROBLEM
 
+//asm.c
 ASM_MEMCMP_PROBLEM
 ASM_MPROTECT_PROBLEM
 */
 const char * problem_message(const problem_t code) {
 	switch (code) {
 		case NO_PROBLEM: return "Nothing failed.";
-		case NULL_PROBLEM: return "NULL_PROBLEM";
-		case CONFIG_OPEN_PROBLEM: return "CONFIG_OPEN_PROBLEM";
-		case CONFIG_WRITE_PROBLEM: return "CONFIG_WRITE_PROBLEM";
-		case CONFIG_CLOSE_PROBLEM: return "CONFIG_CLOSE_PROBLEM";
-		case CONFIG_STAT_PROBLEM: return "CONFIG_STAT_PROBLEM";
-		case CONFIG_PARSE_PROBLEM: return "CONFIG_PARSE_PROBLEM";
-		case HOME_CONFIG_PROBLEM: return "HOME_CONFIG_PROBLEM";
-		case HOME_GETENV_PROBLEM: return "HOME_GETENV_PROBLEM";
-		case HOME_GETPWUID_PROBLEM: return "HOME_GETPWUID_PROBLEM";
-		case HOME_STAT_PROBLEM: return "HOME_STAT_PROBLEM";
-		case LD_PRELOAD_CONFIG_PROBLEM: return "LD_PRELOAD_CONFIG_PROBLEM";
-		case LD_PRELOAD_GETENV_PROBLEM: return "LD_PRELOAD_GETENV_PROBLEM";
-		case LD_PRELOAD_STAT_PROBLEM: return "LD_PRELOAD_STAT_PROBLEM";
-		case LD_PRELOAD_SETENV_PROBLEM: return "LD_PRELOAD_SETENV_PROBLEM";
-		case EXECUTABLE_CONFIG_PROBLEM: return "EXECUTABLE_CONFIG_PROBLEM";
-		case EXECUTABLE_STAT_PROBLEM: return "EXECUTABLE_STAT_PROBLEM";
-		case EXECUTABLE_TYPE_PROBLEM: return "EXECUTABLE_TYPE_PROBLEM";
-		case EXECUTABLE_PERMISSION_PROBLEM: return "EXECUTABLE_PERMISSION_PROBLEM";
-		case EXECUTABLE_SIZE_PROBLEM: return "EXECUTABLE_SIZE_PROBLEM";
-		case EXECUTABLE_OPEN_PROBLEM: return "EXECUTABLE_OPEN_PROBLEM";
-		case EXECUTABLE_READ_PROBLEM: return "EXECUTABLE_READ_PROBLEM";
-		case EXECUTABLE_HASH_PROBLEM: return "EXECUTABLE_HASH_PROBLEM";
-		case EXECUTABLE_CLOSE_PROBLEM: return "EXECUTABLE_CLOSE_PROBLEM";
-		case EXECUTABLE_DATA_CONFIG_PROBLEM: return "EXECUTABLE_DATA_CONFIG_PROBLEM";
-		case EXECUTABLE_DATA_HOME_PROBLEM: return "EXECUTABLE_DATA_HOME_PROBLEM";
-		case EXECUTABLE_DATA_STAT_PROBLEM: return "EXECUTABLE_DATA_STAT_PROBLEM";
-		case EXECUTABLE_PROCESS_STAT_PROBLEM: return "EXECUTABLE_PROCESS_STAT_PROBLEM";
-		case EXECUTABLE_VERSION_STAT_PROBLEM: return "EXECUTABLE_VERSION_STAT_PROBLEM";
-		case EXECUTABLE_COUNT_STAT_PROBLEM: return "EXECUTABLE_COUNT_STAT_PROBLEM";
-		case EXECUTABLE_KEYBIND_STAT_PROBLEM: return "EXECUTABLE_KEYBIND_STAT_PROBLEM";
-		case EXECUTABLE_CONFIG_STAT_PROBLEM: return "EXECUTABLE_CONFIG_STAT_PROBLEM";
-		case LIBC_CONFIG_PROBLEM: return "LIBC_CONFIG_PROBLEM";
-		case LIBC_STAT_PROBLEM: return "LIBC_STAT_PROBLEM";
-		case LIBNCURSES_CONFIG_PROBLEM: return "LIBNCURSES_CONFIG_PROBLEM";
-		case LIBNCURSES_STAT_PROBLEM: return "LIBNCURSES_STAT_PROBLEM";
-		case ROW_CONFIG_PROBLEM: return "ROW_CONFIG_PROBLEM";
-		case ROW_AMOUNT_PROBLEM: return "ROW_AMOUNT_PROBLEM";
-		case COL_CONFIG_PROBLEM: return "COL_CONFIG_PROBLEM";
-		case COL_AMOUNT_PROBLEM: return "COL_AMOUNT_PROBLEM";
-		case STATE_CONFIG_PROBLEM: return "STATE_CONFIG_PROBLEM";
-		case STATE_AMOUNT_PROBLEM: return "STATE_AMOUNT_PROBLEM";
-		case SHM_CONFIG_PROBLEM: return "SHM_CONFIG_PROBLEM";
-		case SHM_STAT_PROBLEM: return "SHM_STAT_PROBLEM";
-		case ITERATOR_CONFIG_PROBLEM: return "ITERATOR_CONFIG_PROBLEM";
-		case INPUT_CONFIG_PROBLEM: return "INPUT_CONFIG_PROBLEM";
-		case INPUT_STAT_PROBLEM: return "INPUT_STAT_PROBLEM";
-		case INPUT_OPEN_PROBLEM: return "INPUT_OPEN_PROBLEM";
-		case OUTPUT_CONFIG_PROBLEM: return "OUTPUT_CONFIG_PROBLEM";
-		case OUTPUT_ITERATOR_PROBLEM: return "OUTPUT_ITERATOR_PROBLEM";
-		case OUTPUT_STAT_PROBLEM: return "OUTPUT_STAT_PROBLEM";
-		case OUTPUT_OPEN_PROBLEM: return "OUTPUT_OPEN_PROBLEM";
-		case ERROR_CONFIG_PROBLEM: return "ERROR_CONFIG_PROBLEM";
-		case ERROR_STAT_PROBLEM: return "ERROR_STAT_PROBLEM";
-		case ERROR_OPEN_PROBLEM: return "ERROR_OPEN_PROBLEM";
-		case LOG_CHANGE_PROBLEM: return "LOG_CHANGE_PROBLEM";
-		case COUNT_OPEN_PROBLEM: return "COUNT_OPEN_PROBLEM";
-		case COUNT_WRITE_PROBLEM: return "COUNT_WRITE_PROBLEM";
-		case COUNT_CLOSE_PROBLEM: return "COUNT_CLOSE_PROBLEM";
-		case VERSION_OPEN_PROBLEM: return "VERSION_OPEN_PROBLEM";
-		case VERSION_READ_PROBLEM: return "VERSION_READ_PROBLEM";
-		case VERSION_CLOSE_PROBLEM: return "VERSION_CLOSE_PROBLEM";
-		case VERSION_MISMATCH_PROBLEM: return "VERSION_MISMATCH_PROBLEM";
-		case PROCESS_UNLINK_PROBLEM: return "PROCESS_UNLINK_PROBLEM";
-		case EXEC_PROBLEM: return "EXEC_PROBLEM";
+		case NULL_PROBLEM: return "Dereferencing a null pointer failed.";
+		case MALLOC_PROBLEM: return "Allocating memory failed.";
+
+		//main.c
+		case TEMPORARY_UNLINK_PROBLEM: return "Removing at least one of the temporary files failed.";
+		case PROCESS_UNLINK_PROBLEM: return "Removing the process lock file failed.";
+		case VERSION_OPEN_PROBLEM: return "Opening the version file for reading failed.";
+		case VERSION_READ_PROBLEM: return "Reading the version file failed.";
+		case VERSION_CLOSE_PROBLEM: return "Closing the version file failed.";
+		case VERSION_MISMATCH_PROBLEM: return "Verifying the version of the executable failed.";
+		case COUNT_OPEN_PROBLEM: return "Opening the count file for writing failed.";
+		case COUNT_WRITE_PROBLEM: return "Writing the count file failed.";
+		case COUNT_CLOSE_PROBLEM: return "Closing the count file failed.";
+		case LD_PRELOAD_SETENV_PROBLEM: return "Setting the library to preload in the environment variable failed.";
+		case EXEC_PROBLEM: return "Launching the executable failed.";
+
+		//config.c
+		case CONFIG_OPEN_PROBLEM: return "Opening the configuration file for writing failed.";
+		case CONFIG_WRITE_PROBLEM: return "Writing the configuration file failed.";
+		case CONFIG_CLOSE_PROBLEM: return "Closing the configuration file failed.";
+		case CONFIG_STAT_PROBLEM: return "Finding the configuration file failed. It will be created from a template.";
+		case CONFIG_PARSE_PROBLEM: return "Parsing the configuration file failed.";
+		case HOME_CONFIG_PROBLEM: return "Finding the location of the home directory in the configuration file failed.";
+		case HOME_GETENV_PROBLEM: return "Finding the location of the home directory in the environment variable failed.";
+		case HOME_GETPWUID_PROBLEM: return "Finding the location of the home directory in the environment variable failed. It will be guessed.";
+		case HOME_STAT_PROBLEM: return "Accessing the home directory failed. Shell expansions will be unavailable.";
+		case LD_PRELOAD_CONFIG_PROBLEM: return "Finding the location of the library to preload in the configuration file failed.";
+		case LD_PRELOAD_GETENV_PROBLEM: return "Finding the location of the library to preload in the environment variable failed. It will be guessed.";
+		case LD_PRELOAD_STAT_PROBLEM: return "Accessing the library to preload failed.";
+		case EXECUTABLE_CONFIG_PROBLEM: return "Finding the location of the executable in the configuration file failed. It will be guessed.";
+		case EXECUTABLE_STAT_PROBLEM: return "Accessing the executable failed.";
+		case EXECUTABLE_TYPE_PROBLEM: return "Ensuring the executable is a file failed.";
+		case EXECUTABLE_PERMISSION_PROBLEM: return "Checking the permissions of the executable failed.";
+		case EXECUTABLE_SIZE_PROBLEM: return "Verifying the size of the executable failed.";
+		case EXECUTABLE_OPEN_PROBLEM: return "Opening the executable for reading failed.";
+		case EXECUTABLE_READ_PROBLEM: return "Reading the executable failed.";
+		case EXECUTABLE_HASH_PROBLEM: return "Verifying the hash code of the executable failed.";
+		case EXECUTABLE_CLOSE_PROBLEM: return "Closing the executable failed.";
+		case EXECUTABLE_DATA_CONFIG_PROBLEM: return "Finding the location of the executable's data directory in the configuration file failed. It will be guessed.";
+		case EXECUTABLE_DATA_HOME_PROBLEM: return "Guessing the location of the executable's data directory failed.";
+		case EXECUTABLE_DATA_STAT_PROBLEM: return "Accessing the executable's data directory failed.";
+		case EXECUTABLE_TEMPORARY_STAT_PROBLEM: return  "Accessing at least one of the executable's temporary file failed.";
+		case EXECUTABLE_CONFIG_STAT_PROBLEM: return "Accessing the executable's configuration file failed.";
+		case EXECUTABLE_PROCESS_STAT_PROBLEM: return "Accessing the executable's process lock file failed.";
+		case EXECUTABLE_KEYBIND_STAT_PROBLEM: return "Accessing the executable's keybinding file failed.";
+		case EXECUTABLE_VERSION_STAT_PROBLEM: return "Accessing the executable's version file failed.";
+		case EXECUTABLE_COUNT_STAT_PROBLEM: return "Accessing the executable's count file failed.";
+
+		case LIBC_CONFIG_PROBLEM: return "Finding the location of the C standard library in the configuration file failed. It will be guessed.";
+		case LIBC_STAT_PROBLEM: return "Accessing the C standard library failed.";
+		case LIBNCURSES_CONFIG_PROBLEM: return "Finding the location of the New Cursor Optimization library in the configuration file failed. It will be guessed.";
+		case LIBNCURSES_STAT_PROBLEM: return "Accessing the New Cursor Optimization library failed.";
+		case ROW_CONFIG_PROBLEM: return "Finding the height of the terminal in the configuration file failed. The default value will be assumed.";
+		case ROW_AMOUNT_PROBLEM: return "Setting the height of the terminal failed. The closest estimate will be used.";
+		case COL_CONFIG_PROBLEM: return "Finding the width of the terminal in the configuration file failed. The default value will be assumed.";
+		case COL_AMOUNT_PROBLEM: return "Setting the width of the terminal failed. The closest estimate will be used.";
+		case STATE_CONFIG_PROBLEM: return "Finding the amount of save states in the configuration file failed. The default value will be assumed.";
+		case STATE_AMOUNT_PROBLEM: return "Setting the amount of save states failed. The closest estimate will be used.";
+		case SHM_CONFIG_PROBLEM: return "Finding the location of the shared memory segment in the configuration file failed. The default value will be assumed.";
+		case SHM_STAT_PROBLEM: return "Accessing the shared memory segment failed.";
+		case GENERATIONS_CONFIG_PROBLEM: return "Finding the amount of generated characters in the configuration file failed. The default value will be assumed.";
+		case SQL_CONFIG_PROBLEM: return "Finding whether the save-quit-load emulation is enabled in the configuration file failed. The default value will be assumed.";
+		case AUTOPLAY_CONFIG_PROBLEM: return "Finding the playback mode in the configuration file failed. The default value will be assumed.";
+		case COLOR_CONFIG_PROBLEM: return "Finding the color mode in the configuration file failed. The default value will be assumed.";
+		case ITERATOR_CONFIG_PROBLEM: return "Finding the iterator string in the configuration file failed. The default value will be assumed.";
+		case INPUT_CONFIG_PROBLEM: return "Finding the location of the input file in the configuration file failed. The default value will be assumed.";
+		case INPUT_STAT_PROBLEM: return "Accessing the input file failed.";
+		case OUTPUT_CONFIG_PROBLEM: return "Finding the locations of the output files in the configuration file failed. The default values will be assumed.";
+		case OUTPUT_STAT_PROBLEM: return "Accessing at least one of the output files failed.";
+		case ERROR_CONFIG_PROBLEM: return "Finding the location of the error log in the configuration file failed. The default value will be assumed.";
+		case ERROR_STAT_PROBLEM: return "Accessing the error log failed.";
+		case ERROR_OPEN_PROBLEM: return "Opening the error log for writing failed.";
+		case ERROR_CLOSE_PROBLEM: return "Closing the error log file failed.";
+		case WARNING_CONFIG_PROBLEM: return "Finding the location of the warning log in the configuration file failed. The default value will be assumed.";
+		case WARNING_STAT_PROBLEM: return "Accessing the warning log failed.";
+		case WARNING_OPEN_PROBLEM: return "Opening the warning log for writing failed.";
+		case WARNING_CLOSE_PROBLEM: return "Closing the warning log file failed.";
+		case NOTE_CONFIG_PROBLEM: return "Finding the location of the note log in the configuration file failed. The default value will be assumed.";
+		case NOTE_STAT_PROBLEM: return "Accessing the note log failed.";
+		case NOTE_OPEN_PROBLEM: return "Opening the note log for writing failed.";
+		case NOTE_CLOSE_PROBLEM: return "Closing the note log file failed.";
+		case CALL_CONFIG_PROBLEM: return "Finding the location of the call log in the configuration file failed. The default value will be assumed.";
+		case CALL_STAT_PROBLEM: return "Accessing the call log failed.";
+		case CALL_OPEN_PROBLEM: return "Opening the call log for writing failed.";
+		case CALL_CLOSE_PROBLEM: return "Closing the call log file failed.";
+		case LOG_CHANGE_PROBLEM: return "The log streams changed. Further messages will be redirected.";
+
+		//shm.c
+		case SHM_MALLOC_PROBLEM: return "Allocating shared memory failed.";
+		case SHM_KEY_PROBLEM: return "Generating a shared memory key failed.";
+		case SHM_GET_PROBLEM: return "Creating the shared memory segment failed.";
+		case SHM_ATTACH_PROBLEM: return "Attaching the shared memory segment failed.";
+		case SHM_DETACH_PROBLEM: return "Detaching the shared memory segment failed.";
+		case SHM_REMOVE_PROBLEM: return "Removing the shared memory segment failed.";
+
+		//put.c
+		case INPUT_OPEN_PROBLEM: return "Opening the input file for reading failed.";
+		case INPUT_READ_PROBLEM: return "Reading the output file failed.";
+		case INPUT_CLOSE_PROBLEM: return "Closing the input file failed.";
+		case OUTPUT_OPEN_PROBLEM: return "Opening the output file for writing failed.";
+		case OUTPUT_WRITE_PROBLEM: return "Writing the output file failed.";
+		case OUTPUT_CLOSE_PROBLEM: return "Closing the output file failed.";
+
+		//loader.c
 		case LIBC_DLOPEN_PROBLEM: return "LIBC_DLOPEN_PROBLEM";
 		case LIBNCURSES_DLOPEN_PROBLEM: return "LIBNCURSES_DLOPEN_PROBLEM";
 		case LD_PRELOAD_UNSETENV_PROBLEM: return "LD_PRELOAD_UNSETENV_PROBLEM";
-		case SHM_KEY_PROBLEM: return "SHM_KEY_PROBLEM";
-		case SHM_GET_PROBLEM: return "SHM_GET_PROBLEM";
-		case SHM_ATTACH_PROBLEM: return "SHM_ATTACH_PROBLEM";
-		case SHM_DETACH_PROBLEM: return "SHM_DETACH_PROBLEM";
-		case SHM_REMOVE_PROBLEM: return "SHM_REMOVE_PROBLEM";
+
+		//fork.c
 		case FORK_PROBLEM: return "FORK_PROBLEM";
+
+		//asm.c
 		case ASM_MEMCMP_PROBLEM: return "ASM_MEMCMP_PROBLEM";
 		case ASM_MPROTECT_PROBLEM: return "ASM_MPROTECT_PROBLEM";
+
 		default: return "Converting an error code to an error message failed.";
 	}
 }

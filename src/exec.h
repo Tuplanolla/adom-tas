@@ -10,7 +10,7 @@ Provides information about
 #ifndef EXEC_H
 #define EXEC_H
 
-#include <stdlib.h>//size_t
+#include <stddef.h>//size_t
 
 extern int turns;
 
@@ -23,8 +23,11 @@ extern const int executable_cols_min;
 extern const int executable_rows_max;
 extern const int executable_cols_max;
 
-extern const char * const executable_data_file;
+extern const char * const executable_data_directory;
+extern const char * const executable_temporary_directory;
 extern const char * const executable_temporary_file;
+extern const unsigned int executable_temporary_levels;
+extern const unsigned int executable_temporary_parts;
 extern const char * const executable_config_file;
 extern const char * const executable_process_file;
 extern const char * const executable_keybind_file;

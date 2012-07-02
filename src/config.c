@@ -37,6 +37,7 @@ intern const int default_states;
 intern const int default_rows;
 intern const int default_cols;
 intern const char * const default_shm_path;
+intern const int default_timestamp;
 intern const int default_generations;
 intern const int default_sql;
 intern const int default_autoplay;
@@ -71,8 +72,11 @@ intern const int executable_rows_min;
 intern const int executable_cols_min;
 intern const int executable_rows_max;
 intern const int executable_cols_max;
-intern const char * const executable_data_file;
+intern const char * const executable_data_directory;
+intern const char * const executable_temporary_directory;
 intern const char * const executable_temporary_file;
+intern const unsigned int executable_temporary_levels;
+intern const unsigned int executable_temporary_parts;
 intern const char * const executable_config_file;
 intern const char * const executable_process_file;
 intern const char * const executable_keybind_file;
@@ -86,6 +90,7 @@ intern char * home_path;
 intern char * executable_path;
 intern char * executable_data_path;
 intern char * executable_temporary_path;
+intern char ** executable_temporary_paths;
 intern char * executable_config_path;
 intern char * executable_process_path;
 intern char * executable_keybind_path;
@@ -98,13 +103,14 @@ intern unsigned int states;
 intern unsigned int rows;
 intern unsigned int cols;
 intern char * shm_path;
+intern time_t timestamp;
 intern unsigned int generations;
 intern bool sql;
 intern bool autoplay;
 intern bool color;
 intern char * iterator;
-intern FILE * input_stream;
-intern FILE ** output_streams;
+intern char * input_path;
+intern char ** output_paths;
 intern FILE * error_stream;
 intern FILE * warning_stream;
 intern FILE * note_stream;
@@ -126,11 +132,6 @@ The configuration.
 config_t config;
 
 /**
-A buffer for <code>stat</code> calls.
-**/
-struct stat buf;
-
-/**
 A buffer for <code>getpwuid</code> calls.
 **/
 struct passwd * pw;
@@ -144,60 +145,33 @@ problem_t uninit_config(void) {
 	/*
 	Closes files and deallocates manually allocated memory.
 	*/
-	if (home_path != NULL) {
-		free(home_path);
-	}
-	if (executable_path != NULL) {
-		free(executable_path);
-	}
-	if (executable_data_path != NULL) {
-		free(executable_data_path);
-	}
-	if (executable_config_path != NULL) {
-		free(executable_config_path);
-	}
-	if (executable_process_path != NULL) {
-		free(executable_process_path);
-	}
-	if (executable_keybind_path != NULL) {
-		free(executable_keybind_path);
-	}
-	if (executable_version_path != NULL) {
-		free(executable_version_path);
-	}
-	if (executable_count_path != NULL) {
-		free(executable_count_path);
-	}
-	if (loader_path != NULL) {
-		free(loader_path);
-	}
-	if (libc_path != NULL) {
-		free(libc_path);
-	}
-	if (libncurses_path != NULL) {
-		free(libncurses_path);
-	}
-	if (iterator != NULL) {
-		free(iterator);
-	}
-	if (input_stream != NULL) {
-		if (fclose(input_stream) == EOF) {
-			error(INPUT_CLOSE_PROBLEM);
+	free(home_path);
+	free(executable_path);
+	free(executable_data_path);
+	free(executable_temporary_path);
+	for (unsigned int level = 0; level < executable_temporary_levels; level++) {
+		const unsigned int offset = level * executable_temporary_parts;
+		for (unsigned int part = 0; part < executable_temporary_parts; part++) {
+			const unsigned int path = offset + part;
+			free(executable_temporary_paths[path]);
 		}
 	}
+	free(executable_temporary_paths);
+	free(executable_config_path);
+	free(executable_process_path);
+	free(executable_keybind_path);
+	free(executable_version_path);
+	free(executable_count_path);
+	free(loader_path);
+	free(libc_path);
+	free(libncurses_path);
+	free(shm_path);
+	free(iterator);
+	free(input_path);
 	for (unsigned int state = 0; state < states; state++) {
-		if (output_streams[state] != NULL) {
-			if (fclose(output_streams[state]) == EOF) {
-				error(OUTPUT_CLOSE_PROBLEM);
-			}
-		}
+		free(output_paths[state]);
 	}
-	if (output_streams != NULL) {
-		free(output_streams);
-	}
-	if (shm_path != NULL) {
-		free(shm_path);
-	}
+	free(output_paths);
 	if (error_stream != NULL) {
 		if (fclose(error_stream) == EOF) {
 			error(ERROR_CLOSE_PROBLEM);
@@ -246,7 +220,8 @@ problem_t init_config(void) {
 	otherwise
 		the configuration file is parsed.
 	*/
-	if (stat(default_config_path, &buf) == -1) {
+	struct stat config_stat;
+	if (stat(default_config_path, &config_stat) == -1) {
 		FILE * stream = fopen(default_config_path, "w");
 		if (stream == NULL) {
 			return error(CONFIG_OPEN_PROBLEM);
@@ -300,7 +275,8 @@ problem_t init_config(void) {
 		}
 		else {
 			strcpy(home_path, new_home_path);
-			if (stat(home_path, &buf) == -1) {
+			struct stat home_stat;
+			if (stat(home_path, &home_stat) == -1) {
 				free(home_path);
 				home_path = NULL;
 				warning(HOME_STAT_PROBLEM);
@@ -352,7 +328,8 @@ problem_t init_launcher_config(void) {
 	}
 	else {
 		loader_path = astrrep(new_loader_path, "~", home_path);
-		if (stat(loader_path, &buf) == -1) {
+		struct stat loader_stat;
+		if (stat(loader_path, &loader_stat) == -1) {
 			free(loader_path);
 			loader_path = NULL;
 			return error(LD_PRELOAD_STAT_PROBLEM);
@@ -379,23 +356,24 @@ problem_t init_launcher_config(void) {
 	}
 	else {
 		executable_path = astrrep(new_executable_path, "~", home_path);
-		if (stat(executable_path, &buf) == -1) {
+		struct stat executable_stat;
+		if (stat(executable_path, &executable_stat) == -1) {
 			free(executable_path);
 			executable_path = NULL;
 			return error(EXECUTABLE_STAT_PROBLEM);
 		}
-		else if (S_ISDIR(buf.st_mode)) {
+		else if (S_ISDIR(executable_stat.st_mode)) {
 			free(executable_path);
 			executable_path = NULL;
 			return error(EXECUTABLE_TYPE_PROBLEM);
 		}
-		else if ((buf.st_mode & (S_ISUID | S_ISGID)) != 0) {
+		else if ((executable_stat.st_mode & (S_ISUID | S_ISGID)) != 0) {
 			free(executable_path);
 			executable_path = NULL;
 			return error(EXECUTABLE_PERMISSION_PROBLEM);
 		}
 		else {
-			const size_t size = (size_t )buf.st_size;
+			const size_t size = (size_t )executable_stat.st_size;
 			if (size != executable_size) {
 				warning(EXECUTABLE_SIZE_PROBLEM);
 			}
@@ -441,14 +419,16 @@ problem_t init_launcher_config(void) {
 			executable_data_path = NULL;
 		}
 		else {
-			const size_t size = strlen(home_path) + 1 + strlen(executable_data_file) + 1;
+			const size_t size = strlen(home_path) + 1
+					+ strlen(executable_data_directory) + 1;
 			executable_data_path = malloc(size);
-			if (home_path == NULL) {
-				executable_data_path = NULL;
+			if (executable_data_path == NULL) {
 				error(MALLOC_PROBLEM);
 			}
 			else {
-				snprintf(executable_data_path, size, "%s/%s", home_path, executable_data_file);
+				snprintf(executable_data_path, size, "%s/%s",
+						home_path,
+						executable_data_directory);
 			}
 		}
 	}
@@ -458,10 +438,11 @@ problem_t init_launcher_config(void) {
 	if (executable_data_path == NULL) {
 		return error(NULL_PROBLEM);
 	}
-	else if (stat(executable_data_path, &buf) == -1) {
-		free(executable_data_path);
-		executable_data_path = NULL;
-		return error(EXECUTABLE_DATA_STAT_PROBLEM);
+	else {
+		struct stat executable_data_stat;
+		if (stat(executable_data_path, &executable_data_stat) == -1) {
+			warning(EXECUTABLE_DATA_STAT_PROBLEM);
+		}
 	}
 
 	/*
@@ -474,17 +455,60 @@ problem_t init_launcher_config(void) {
 		executable_temporary_path = NULL;
 	}
 	else {
-		const size_t size = strlen(executable_data_path) + 1 + strlen(executable_temporary_file) + 1;
+		const size_t size = strlen(executable_data_path) + 1
+				+ strlen(executable_temporary_directory) + 1;
 		executable_temporary_path = malloc(size);
 		if (executable_temporary_path == NULL) {
 			error(MALLOC_PROBLEM);
 		}
 		else {
-			snprintf(executable_temporary_path, size, "%s/%s", executable_data_path, executable_temporary_file);
-			if (stat(executable_temporary_path, &buf) == -1) {
-				free(executable_temporary_path);
-				executable_temporary_path = NULL;
+			snprintf(executable_temporary_path, size, "%s/%s",
+					executable_data_path,
+					executable_temporary_directory);
+			struct stat executable_temporary_stat;
+			if (stat(executable_temporary_path, &executable_temporary_stat) == -1) {
 				warning(EXECUTABLE_TEMPORARY_STAT_PROBLEM);
+			}
+		}
+	}
+
+	/*
+	Finds the temporary file paths of the executable.
+
+	The executable uses the format <code>"%s%0*d_%d"</code>.
+
+	The location of the directory is first guessed,
+	the existence of the directory is then checked and
+	the file paths are finally guessed.
+	*/
+	if (executable_temporary_path == NULL) {
+		executable_temporary_paths = NULL;
+	}
+	else {
+		executable_temporary_paths = malloc(executable_temporary_levels * executable_temporary_parts * sizeof *executable_temporary_paths);
+		if (executable_temporary_paths == NULL) {
+			error(MALLOC_PROBLEM);
+		}
+		else {
+			for (unsigned int level = 0; level < executable_temporary_levels; level++) {
+				const unsigned int offset = level * executable_temporary_parts;
+				for (unsigned int part = 0; part < executable_temporary_parts; part++) {
+					const unsigned int path = offset + part;
+					const size_t size = strlen(executable_temporary_path) + 1
+							+ strlen(executable_temporary_file)
+							+ 4 + 1;
+					executable_temporary_paths[path] = malloc(size);
+					if (executable_temporary_paths[path] == NULL) {
+						error(MALLOC_PROBLEM);
+					}
+					else {
+						snprintf(executable_temporary_paths[path], size, "%s/%s%02u_%01u",
+								executable_temporary_path,
+								executable_temporary_file,
+								level,
+								part);
+					}
+				}
 			}
 		}
 	}
@@ -504,16 +528,18 @@ problem_t init_launcher_config(void) {
 		executable_process_path = NULL;
 	}
 	else {
-		const size_t size = strlen(executable_data_path) + 1 + strlen(executable_process_file) + 1;
+		const size_t size = strlen(executable_data_path) + 1
+				+ strlen(executable_process_file) + 1;
 		executable_process_path = malloc(size);
 		if (executable_process_path == NULL) {
 			error(MALLOC_PROBLEM);
 		}
 		else {
-			snprintf(executable_process_path, size, "%s/%s", executable_data_path, executable_process_file);
-			if (stat(executable_process_path, &buf) == -1) {
-				free(executable_process_path);
-				executable_process_path = NULL;
+			snprintf(executable_process_path, size, "%s/%s",
+					executable_data_path,
+					executable_process_file);
+			struct stat executable_process_stat;
+			if (stat(executable_process_path, &executable_process_stat) == -1) {
 				//note(EXECUTABLE_PROCESS_STAT_PROBLEM);
 			}
 		}
@@ -534,16 +560,18 @@ problem_t init_launcher_config(void) {
 		executable_version_path = NULL;
 	}
 	else {
-		const size_t size = strlen(executable_data_path) + 1 + strlen(executable_version_file) + 1;
+		const size_t size = strlen(executable_data_path) + 1
+				+ strlen(executable_version_file) + 1;
 		executable_version_path = malloc(size);
 		if (executable_version_path == NULL) {
 			error(MALLOC_PROBLEM);
 		}
 		else {
-			snprintf(executable_version_path, size, "%s/%s", executable_data_path, executable_version_file);
-			if (stat(executable_version_path, &buf) == -1) {
-				free(executable_version_path);
-				executable_version_path = NULL;
+			snprintf(executable_version_path, size, "%s/%s",
+					executable_data_path,
+					executable_version_file);
+			struct stat executable_version_stat;
+			if (stat(executable_version_path, &executable_version_stat) == -1) {
 				warning(EXECUTABLE_VERSION_STAT_PROBLEM);
 			}
 		}
@@ -559,16 +587,18 @@ problem_t init_launcher_config(void) {
 		executable_count_path = NULL;
 	}
 	else {
-		const size_t size = strlen(executable_data_path) + 1 + strlen(executable_count_file) + 1;
+		const size_t size = strlen(executable_data_path) + 1
+				+ strlen(executable_count_file) + 1;
 		executable_count_path = malloc(size);
 		if (executable_count_path == NULL) {
 			error(MALLOC_PROBLEM);
 		}
 		else {
-			snprintf(executable_count_path, size, "%s/%s", executable_data_path, executable_count_file);
-			if (stat(executable_count_path, &buf) == -1) {
-				free(executable_count_path);
-				executable_count_path = NULL;
+			snprintf(executable_count_path, size, "%s/%s",
+					executable_data_path,
+					executable_count_file);
+			struct stat executable_count_stat;
+			if (stat(executable_count_path, &executable_count_stat) == -1) {
 				warning(EXECUTABLE_COUNT_STAT_PROBLEM);
 			}
 		}
@@ -595,18 +625,21 @@ problem_t init_loader_config(void) {
 		warning(LIBC_CONFIG_PROBLEM);
 	}
 	libc_path = astrrep(new_libc_path, "~", home_path);
-	if (stat(libc_path, &buf) == -1) {
+	struct stat libc_stat;
+	if (stat(libc_path, &libc_stat) == -1) {
 		free(libc_path);
 		libc_path = NULL;
 		return error(LIBC_STAT_PROBLEM);
 	}
+
 	const char * new_libncurses_path;
 	if (config_lookup_string(&config, "libncurses", &new_libncurses_path) == CONFIG_FALSE) {
 		new_libncurses_path = default_libncurses_path;
 		warning(LIBNCURSES_CONFIG_PROBLEM);
 	}
 	libncurses_path = astrrep(new_libncurses_path, "~", home_path);
-	if (stat(libncurses_path, &buf) != 0) {
+	struct stat libncurses_stat;
+	if (stat(libncurses_path, &libncurses_stat) != 0) {
 		free(libncurses_path);
 		libncurses_path = NULL;
 		return error(LIBNCURSES_STAT_PROBLEM);
@@ -622,7 +655,7 @@ problem_t init_loader_config(void) {
 	int new_states;
 	if (config_lookup_int(&config, "states", &new_states) == CONFIG_FALSE) {
 		new_states = default_states;
-		//note(STATE_CONFIG_PROBLEM);
+		//warning(STATE_CONFIG_PROBLEM);
 	}
 	if (new_states < 1) {
 		new_states = MAX(1, new_states);
@@ -658,7 +691,7 @@ problem_t init_loader_config(void) {
 	int new_cols;
 	if (config_lookup_int(&config, "cols", &new_cols) == CONFIG_FALSE) {
 		new_cols = default_cols;
-		//note(COL_CONFIG_PROBLEM);
+		//warning(COL_CONFIG_PROBLEM);
 	}
 	if (new_cols < executable_cols_min || new_cols > executable_cols_max) {
 		new_cols = MIN(MAX(executable_cols_min, new_cols), executable_cols_max);
@@ -675,39 +708,35 @@ problem_t init_loader_config(void) {
 	const char * new_shm_path;
 	if (config_lookup_string(&config, "shm", &new_shm_path) == CONFIG_FALSE) {
 		new_shm_path = default_config_path;//default_shm_path;
-		//note(SHM_CONFIG_PROBLEM);
+		//warning(SHM_CONFIG_PROBLEM);
 	}
 	shm_path = astrrep(new_shm_path, "~", home_path);
-	if (stat(shm_path, &buf) == -1) {
+	struct stat shm_stat;
+	if (stat(shm_path, &shm_stat) == -1) {
 		free(shm_path);
 		shm_path = NULL;
 		return error(SHM_STAT_PROBLEM);
 	}
 
-	/*
-	TODO new things
-	intern unsigned int generations;
-		intern bool sql;
-		intern bool autoplay;
-	intern bool color;
-		intern char * iterator;
-		intern FILE * input_stream;
-		intern FILE ** output_streams;
-	intern FILE * error_stream;
-	intern FILE * warning_stream;
-	intern FILE * note_stream;
-	intern FILE * call_stream;
-	intern int time_key;
-	intern int untime_key;
-	intern int save_key;
-	intern int load_key;
-	intern int state_key;
-	intern int unstate_key;
-	intern int menu_key;
-	intern int unmenu_key;
-	intern int play_key;
-	intern int quit_key;
-	*/
+	/**
+	Sets the initial system time.
+	**/
+	int new_timestamp;
+	if (config_lookup_bool(&config, "timestamp", &new_timestamp) == CONFIG_FALSE) {
+		new_timestamp = default_timestamp;
+		//warning(TIMESTAMP_CONFIG_PROBLEM);
+	}
+	timestamp = (time_t )new_timestamp;
+
+	/**
+	Sets the amount of generated characters.
+	**/
+	int new_generations;
+	if (config_lookup_bool(&config, "generations", &new_generations) == CONFIG_FALSE) {
+		new_generations = default_generations;
+		//warning(GENERATIONS_CONFIG_PROBLEM);
+	}
+	generations = (unsigned int )new_generations;
 
 	/**
 	Toggles the simulated save-quit-load.
@@ -729,6 +758,16 @@ problem_t init_loader_config(void) {
 	}
 	autoplay = new_autoplay == CONFIG_TRUE;
 
+	/**
+	Sets the color mode.
+	**/
+	int new_color;
+	if (config_lookup_bool(&config, "color", &new_color) == CONFIG_FALSE) {
+		new_color = default_color;
+		//warning(COLOR_CONFIG_PROBLEM);
+	}
+	color = new_color == CONFIG_TRUE;
+
 	/*
 	Finds the iterator string.
 
@@ -738,7 +777,7 @@ problem_t init_loader_config(void) {
 	const char * new_iterator;
 	if (config_lookup_string(&config, "iterator", &new_iterator) == CONFIG_FALSE) {
 		new_iterator = default_iterator;
-		//note(ITERATOR_CONFIG_PROBLEM);
+		//warning(ITERATOR_CONFIG_PROBLEM);
 	}
 	iterator = malloc(strlen(new_iterator) + 1);
 	strcpy(iterator, new_iterator);
@@ -754,17 +793,13 @@ problem_t init_loader_config(void) {
 		new_input_path = default_input_path;
 		warning(INPUT_CONFIG_PROBLEM);
 	}
-	char * input_path = astrrep(new_input_path, "~", home_path);
-	if (stat(input_path, &buf) != 0) {
+	input_path = astrrep(new_input_path, "~", home_path);
+	struct stat input_stat;
+	if (stat(input_path, &input_stat) == -1) {
+		free(input_path);
+		input_path = NULL;
 		warning(INPUT_STAT_PROBLEM);
 	}
-	else {
-		input_stream = fopen(input_path, "rb");
-		if (input_stream == NULL) {
-			error(INPUT_OPEN_PROBLEM);
-		}
-	}
-	free(input_path);
 
 	/*
 	Opens the output streams.
@@ -783,24 +818,51 @@ problem_t init_loader_config(void) {
 		new_output_path = default_output_path;
 		warning(OUTPUT_CONFIG_PROBLEM);
 	}
-	char * output_path = astrrep(new_output_path, "~", home_path);
-	output_streams = malloc(states * sizeof *output_streams);
-	for (unsigned int state = 1; state < states; state++) {
-		const size_t size = uintlen(state) + 1;
-		char * output_state = malloc(size);
-		snprintf(output_state, size, "%u", state);
-		char * path = astrrep(output_path, iterator, output_state);
-		free(output_state);
-		if (stat(path, &buf) == 0) {
+	char * const output_path = astrrep(new_output_path, "~", home_path);
+	output_paths = malloc(states * sizeof *output_paths);
+	if (output_paths == NULL) {
+		error(MALLOC_PROBLEM);
+	}
+	else {
+		bool exists = FALSE;
+		for (unsigned int state = 1; state < states; state++) {
+			const size_t size = uintlen(state) + 1;
+			char * const iterand = malloc(size);
+			if (iterand == NULL) {
+				error(MALLOC_PROBLEM);
+			}
+			else {
+				snprintf(iterand, size, "%u", state);
+				output_paths[state] = astrrep(output_path, iterator, iterand);
+				free(iterand);
+				struct stat output_stat;
+				if (stat(output_paths[state], &output_stat) == 0) {
+					exists = TRUE;
+				}
+			}
+		}
+		if (exists) {
 			warning(OUTPUT_STAT_PROBLEM);
 		}
-		output_streams[state] = fopen(path, "wb");
-		free(path);
-		if (output_streams[state] == NULL) {
-			error(OUTPUT_OPEN_PROBLEM);
-		}
 	}
-	free(output_path);
+
+	/*
+	TODO new things
+	intern FILE * error_stream;
+	intern FILE * warning_stream;
+	intern FILE * note_stream;
+	intern FILE * call_stream;
+	intern int time_key;
+	intern int untime_key;
+	intern int save_key;
+	intern int load_key;
+	intern int state_key;
+	intern int unstate_key;
+	intern int menu_key;
+	intern int unmenu_key;
+	intern int play_key;
+	intern int quit_key;
+	*/
 
 	/*
 	Opens the log streams.
@@ -810,23 +872,16 @@ problem_t init_loader_config(void) {
 	the log file is then created and
 	the log stream is finally opened.
 	*/
-	FILE * new_error_stream = error_stream;
-	FILE * new_warning_stream = warning_stream;
-	FILE * new_note_stream = note_stream;
-	FILE * new_call_stream = call_stream;
-	struct stat error_buf;//TODO refine
-	struct stat warning_buf;
-	struct stat note_buf;
-	struct stat call_buf;
 	const char * new_error_path;
 	if (config_lookup_string(&config, "errors", &new_error_path) == CONFIG_FALSE) {
 		new_error_path = default_error_stream;
 		warning(ERROR_CONFIG_PROBLEM);
 	}
-	char * error_path = astrrep(new_error_path, "~", home_path);
-	new_error_stream = stdstr(error_path);
+	char * const error_path = astrrep(new_error_path, "~", home_path);
+	FILE * new_error_stream = stdstr(error_path);
+	struct stat error_stat;
 	if (new_error_stream == NULL) {
-		if (stat(error_path, &buf) == 0) {
+		if (stat(error_path, &error_stat) == 0) {
 			//note(ERROR_STAT_PROBLEM);
 		}
 		new_error_stream = fopen(error_path, "w");
@@ -836,7 +891,96 @@ problem_t init_loader_config(void) {
 		}
 	}
 	free(error_path);
-	//buf.st_dev && buf.st_ino
+
+	const char * new_warning_path;
+	if (config_lookup_string(&config, "warnings", &new_warning_path) == CONFIG_FALSE) {
+		new_warning_path = default_warning_stream;
+		warning(ERROR_CONFIG_PROBLEM);
+	}
+	char * const warning_path = astrrep(new_warning_path, "~", home_path);
+	FILE * new_warning_stream = stdstr(warning_path);
+	struct stat warning_stat;
+	if (new_warning_stream == NULL) {
+		if (stat(warning_path, &warning_stat) == 0) {
+			//note(WARNING_STAT_PROBLEM);
+		}
+		if (warning_stat.st_dev == error_stat.st_dev
+				&& warning_stat.st_ino == error_stat.st_ino) {
+			new_warning_stream = new_error_stream;
+		}
+		else {
+			new_warning_stream = fopen(warning_path, "w");
+			if (new_warning_stream == NULL) {
+				new_warning_stream = NULL;
+				warning(WARNING_OPEN_PROBLEM);
+			}
+		}
+	}
+	free(warning_path);
+
+	const char * new_note_path;
+	if (config_lookup_string(&config, "notes", &new_note_path) == CONFIG_FALSE) {
+		new_note_path = default_note_stream;
+		note(ERROR_CONFIG_PROBLEM);
+	}
+	char * const note_path = astrrep(new_note_path, "~", home_path);
+	FILE * new_note_stream = stdstr(note_path);
+	struct stat note_stat;
+	if (new_note_stream == NULL) {
+		if (stat(note_path, &note_stat) == 0) {
+			//note(NOTE_STAT_PROBLEM);
+		}
+		if (note_stat.st_dev == error_stat.st_dev
+				&& note_stat.st_ino == error_stat.st_ino) {
+			new_note_stream = new_error_stream;
+		}
+		else if (note_stat.st_dev == warning_stat.st_dev
+				&& note_stat.st_ino == warning_stat.st_ino) {
+			new_note_stream = new_warning_stream;
+		}
+		else {
+			new_note_stream = fopen(note_path, "w");
+			if (new_note_stream == NULL) {
+				new_note_stream = NULL;
+				note(NOTE_OPEN_PROBLEM);
+			}
+		}
+	}
+	free(note_path);
+
+	const char * new_call_path;
+	if (config_lookup_string(&config, "calls", &new_call_path) == CONFIG_FALSE) {
+		new_call_path = default_call_stream;
+		note(ERROR_CONFIG_PROBLEM);
+	}
+	char * const call_path = astrrep(new_call_path, "~", home_path);
+	FILE * new_call_stream = stdstr(call_path);
+	struct stat call_stat;
+	if (new_call_stream == NULL) {
+		if (stat(call_path, &call_stat) == 0) {
+			//call(CALL_STAT_PROBLEM);
+		}
+		if (call_stat.st_dev == error_stat.st_dev
+				&& call_stat.st_ino == error_stat.st_ino) {
+			new_call_stream = new_error_stream;
+		}
+		else if (call_stat.st_dev == warning_stat.st_dev
+				&& call_stat.st_ino == warning_stat.st_ino) {
+			new_call_stream = new_warning_stream;
+		}
+		else if (call_stat.st_dev == note_stat.st_dev
+				&& call_stat.st_ino == note_stat.st_ino) {
+			new_call_stream = new_note_stream;
+		}
+		else {
+			new_call_stream = fopen(call_path, "w");
+			if (new_call_stream == NULL) {
+				new_call_stream = NULL;
+				note(CALL_OPEN_PROBLEM);
+			}
+		}
+	}
+	free(call_path);
 	if (new_error_stream != error_stream
 			|| new_warning_stream != warning_stream
 			|| new_note_stream != note_stream
@@ -847,9 +991,17 @@ problem_t init_loader_config(void) {
 		note_stream = new_note_stream;
 		call_stream = new_call_stream;
 	}
-	warning_stream = NULL;
-	note_stream = NULL;
-	call_stream = NULL;
+
+	time_key = default_time_key;//TODO read keys
+	untime_key = default_untime_key;
+	save_key = default_save_key;
+	load_key = default_load_key;
+	state_key = default_state_key;
+	unstate_key = default_unstate_key;
+	menu_key = default_menu_key;
+	unmenu_key = default_unmenu_key;
+	play_key = default_play_key;
+	quit_key = default_quit_key;
 
 	PROPAGATE(end_init_config());
 

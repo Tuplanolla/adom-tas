@@ -145,8 +145,14 @@ File Format
 
 Recordings are saved to `*.tas` files in a custom format. The files consist of
 
-* a four-byte `char *` header `54 41 53 00` and
-* five-byte `frame_t` chunks consisting of
+* a four-byte `char *` header (always `54 41 53 00` for "TAS"),
+* a multibyte `char *` executable name (for example `61 64 6f 6d 00` for ADoM),
+* a one-byte `unsigned char` category (either `00` for anything, `01` for minimum actual turns or `02` for minimum ideal time),
+* a multibyte `char *` author (for example `54 75 70 6c 61 6e 6f 6c 6c 61 00` for "Tuplanolla"),
+* a four-byte `unsigned int` frames,
+* a four-byte `unsigned int` time,
+* a four-byte `unsigned int` turns and
+* executable-specific five-byte `frame_t` chunks consisting of
 	* a one-byte `unsigned char` duration and
 	* a four-byte `time_t` excerpt.
 

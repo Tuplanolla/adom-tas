@@ -56,9 +56,8 @@ Returns the hash code of a byte array.
 int hash(const unsigned char * const array, const size_t size) {
 	const int prime = 31;
 	int result = 1;
-	for (size_t index = 0; index < size; index++) {
-		result = prime * result + array[index];
-		index++;
+	for (size_t byte = 0; byte < size; byte++) {
+		result = prime * result + array[byte];
 	}
 	return result;
 }

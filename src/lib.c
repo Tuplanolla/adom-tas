@@ -38,35 +38,49 @@ intern WREFRESH um_wrefresh;
 intern WGETCH um_wgetch;
 intern EXIT um_exit;
 
-intern turns;
+intern unsigned int turns;//TODO refactor everything
 
 intern char * home_path;
 intern char * executable_path;
 intern char * executable_data_path;
+intern char * executable_temporary_path;
+intern char * executable_config_path;
 intern char * executable_process_path;
+intern char * executable_keybind_path;
 intern char * executable_version_path;
 intern char * executable_count_path;
-intern char * executable_keybind_path;
-intern char * executable_config_path;
 intern char * loader_path;
 intern char * libc_path;
 intern char * libncurses_path;
-intern unsigned int generations;
 intern unsigned int states;
 intern unsigned int rows;
 intern unsigned int cols;
-intern char * iterator;
-intern FILE * input_stream;
-intern FILE ** output_streams;
 intern char * shm_path;
+intern unsigned int generations;
+intern bool sql;
+intern bool autoplay;
+intern bool color;
+intern char * iterator;
+intern char * input_path;
+intern char ** output_paths;
 intern FILE * error_stream;
 intern FILE * warning_stream;
 intern FILE * note_stream;
 intern FILE * call_stream;
+intern int time_key;
+intern int untime_key;
+intern int save_key;
+intern int load_key;
+intern int state_key;
+intern int unstate_key;
+intern int menu_key;
+intern int unmenu_key;
+intern int play_key;
+intern int quit_key;
 
 intern shm_t shm;
 
-record_t record;
+intern record_t record;
 
 bool initialized = FALSE;
 
@@ -78,13 +92,12 @@ Annotates and initializes overloaded functions.
 /**
 Very important temporary variables.
 **/
-record_t record;
 unsigned int globstate = 1;
 time_t current_time = 0;//0x7fe81780
 
 void injector(void) {
 	iarc4((unsigned int )current_time, executable_arc4_calls_automatic_load);
-	add_seed_frame(&record, current_time);
+	add_seed_frame(current_time);
 	wrefresh(stdscr);
 }
 
@@ -254,8 +267,8 @@ int wrefresh(WINDOW * win) { OVERLOAD
 
 	TODO make non-static with padding
 	*/
-	const int TERM_COL = 77;
-	const int TERM_ROW = 25;
+	#define TERM_COL 77
+	#define TERM_ROW 25
 	int ws_x = TERM_COL, ws_y = TERM_ROW-1;
 	char ws_str[TERM_COL], ws_buf[TERM_COL];
 	#define wrefresh_ADDSTR(format, length, ...) \
@@ -268,7 +281,7 @@ int wrefresh(WINDOW * win) { OVERLOAD
 		mvwaddnstr(win, ws_y, ws_x, ws_buf, TERM_COL-ws_x);\
 		ws_x--;
 	wrefresh_ADDSTR("S: %u/%u", 6, globstate, states-1);
-	wrefresh_ADDSTR("D: %u", 13, (unsigned int )(current_time - record.time));
+	wrefresh_ADDSTR("D: %u", 13, (unsigned int )(current_time - record.timestamp));
 	wrefresh_ADDSTR("R: 0x%08x", 13, hash(executable_arc4_s, 0x100));
 	wrefresh_ADDSTR("T: ?/%u", 13, *executable_turns + turns);
 	wrefresh_ADDSTR("F: ?/%u", 13, record.count);
@@ -279,10 +292,10 @@ int wrefresh(WINDOW * win) { OVERLOAD
 	*/
 	char some[TERM_COL];//a hack
 	strcpy(some, "P:");
-	for (unsigned int index = 0; index < states; index++) {
+	for (unsigned int indecks = 0; indecks < states; indecks++) {
 		char somer[TERM_COL];
-		bool somery = shm.pids[index] != 0;
-		sprintf(somer, "%s %c%d%c", some, somery ? '[' : ' ', (unsigned short )shm.pids[index], somery ? ']' : ' ');
+		bool somery = shm.pids[indecks] != 0;
+		sprintf(somer, "%s %c%d%c", some, somery ? '[' : ' ', (unsigned short )shm.pids[indecks], somery ? ']' : ' ');
 		strcpy(some, somer);
 	}
 	mvwaddnstr(win, 21, 10, some, TERM_COL-20);
@@ -329,9 +342,9 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		}
 	}
 	int key = um_wgetch(win);
-	if (key == KEY_F(8)) {
+	if (key == play_key) {
 		if (record.count == 0) {//move to playback
-			freadp(input_stream, &record);
+			freadp(input_path);
 			playbacking = TRUE;
 			playback_frame = record.first;
 		}
@@ -339,23 +352,28 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		wrefresh(win);
 		return 0;
 	}
-	else if (key == KEY_F(9)) {//saves
+	else if (key == save_key) {//saves
+		fwritep(output_paths[globstate]);//TODO move
 		save(globstate);
 		wrefresh(win);
 		return 0;
 	}
-	else if (key == KEY_F(10)) {//loads
+	else if (key == load_key) {//loads
 		load(globstate);
 		wrefresh(win);
 		return 0;//redundant
 	}
-	else if (key == KEY_F(36)) {//changes the state (Ctrl F12 now)
+	else if (key == state_key) {
 		globstate = globstate%(unsigned int )((int )states-1)+1;//++
-		//globstate = (unsigned int )(((int )globstate-2)%((int )states-1))+1;//--
 		wrefresh(win);
 		return 0;
 	}
-	else if (key == KEY_F(5)) {//opens a dialog
+	else if (key == unstate_key) {
+		globstate = (unsigned int )(((int )globstate-2)%((int )states-1))+1;//--
+		wrefresh(win);
+		return 0;
+	}
+	else if (key == menu_key) {
 		int y, x;
 		getyx(win, y, x);
 		WINDOW * subwin = newwin(rows/2+rows%2+2, cols/2+cols%2+2, rows/4-2, cols/4-1);
@@ -401,13 +419,14 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		wrefresh(win);
 		return 0;
 	}
-	else if (key == KEY_F(11)) {//changes the time
+	else if (key == time_key) {//changes the time
 		current_time++;
 		wrefresh(win);
 		return 0;
 	}
-	else if (key == '_') {//dumps everything
-		fwritep(output_streams[0], &record);//TODO move
+	else if (key == time_key) {//changes the time
+		current_time--;
+		wrefresh(win);
 		return 0;
 	}
 	else if (key == 'Q') {//quits everything (stupid idea or implementation)
@@ -442,7 +461,7 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		strcat(name, code);//TODO turn this into a macro
 	}
 	unsigned char duration = frame_rate/2;
-	add_key_frame(&record, duration, key);//meta, colon and w are undisplayed but still recorded (for now)
+	add_key_frame(duration, key);//meta, colon and w are undisplayed but still recorded (for now)
 	//wrefresh(win);
 	return key;
 }

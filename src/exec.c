@@ -62,8 +62,11 @@ intern const int executable_cols_max = 127;
 /**
 The data files of the executable.
 **/
-intern const char * const executable_data_file = ".adom.data";
-intern const char * const executable_temporary_file = "tmpdat";
+intern const char * const executable_data_directory = ".adom.data";
+intern const char * const executable_temporary_directory = "tmpdat";
+intern const char * const executable_temporary_file = "adom_tdl";
+intern const unsigned int executable_temporary_levels = 51;
+intern const unsigned int executable_temporary_parts = 4;
 intern const char * const executable_config_file = ".adom.cfg";
 intern const char * const executable_process_file = ".adom.prc";
 intern const char * const executable_keybind_file = ".adom.kbd";
@@ -103,7 +106,7 @@ void sarc4(const int seed) {
 		i++;
 	} while(i != 0x00);
 	do {
-		j += arc4_s[i] + ((const unsigned char * )&seed)[i % sizeof seed];
+		j = (unsigned char )(j + (arc4_s[i] + ((const unsigned char * )&seed)[i % sizeof seed]));
 		SWAP(arc4_s[i], arc4_s[j]);
 		i++;
 	} while (i != 0x00);
@@ -117,7 +120,7 @@ The order of operations is wrong to replicate the behavior of the executable.
 @return The byte r.
 **/
 unsigned char arc4(void) {
-	arc4_j += arc4_s[arc4_i];//should be at point A
+	arc4_j = (unsigned char )(arc4_j + arc4_s[arc4_i]);//should be at point A
 	SWAP(arc4_s[arc4_i], arc4_s[arc4_j]);//should be at point B
 	arc4_i++;
 	//point A

@@ -5,32 +5,44 @@ Manages inputs and outputs.
 #define PUT_C
 
 #include <stddef.h>//size_t, NULL
-#include <stdio.h>//*read, *write, FILE
+#include <stdio.h>//*open, *close, *read, *write, FILE
 
 #include "util.h"//FALSE, TRUE
-#include "problem.h"//..., *_PROBLEM?
-#include "record.h"//*_frame, record_t
+#include "problem.h"//*_PROBLEM
+#include "log.h"//error, warning, note
+#include "record.h"//record*
 
 #include "put.h"
+
+intern record_t record;
 
 /**
 Saves a record.
 
 @param stream The destination stream.
 @param record The record.
-@return The amount of frames written.
+@return The error code.
 **/
-size_t fwritep(FILE * const stream, record_t * const record) {//TODO refactor
-	size_t result = 0;
-	frame_t * frame = record->first;
+problem_t fwritep(const char * const path) {//TODO refactor
+	FILE * const stream = fopen(path, "wb");
+	if (stream == NULL) {
+		return error(OUTPUT_OPEN_PROBLEM);
+	}
+	frame_t * frame = record.first;
 	while (frame != NULL) {
-		size_t subresult;
-		subresult += fwrite(&frame->duration, sizeof frame->duration, 1, stream);
-		subresult += fwrite(&frame->value, sizeof frame->value, 1, stream);
-		result++;
+		size_t result;
+		result = fwrite(&frame->duration, sizeof frame->duration, 1, stream);
+		result += fwrite(&frame->value, sizeof frame->value, 1, stream);
+		if (result != 2) {
+			error(OUTPUT_WRITE_PROBLEM);
+			break;
+		}
 		frame = frame->next;
 	}
-	return result;
+	if (fclose(stream) == EOF) {
+		return error(OUTPUT_CLOSE_PROBLEM);
+	}
+	return NO_PROBLEM;
 }
 
 /**
@@ -38,21 +50,29 @@ Loads a record.
 
 @param stream The source stream.
 @param record The record.
-@return The amount of frames read.
+@return The error code.
 **/
-size_t freadp(FILE * const stream, record_t * const record) {
-	size_t result = 0;
+problem_t freadp(const char * const path) {
+	FILE * const stream = fopen(path, "rb");
+	if (stream == NULL) {
+		return error(INPUT_OPEN_PROBLEM);
+	}
 	while (TRUE) {
-		size_t subresult = 0;
+		size_t result;
 		unsigned char duration;
 		int value;
-		subresult += fread(&duration, sizeof duration, (size_t )1, stream);
-		subresult += fread(&value, sizeof value, (size_t )1, stream);
-		if (subresult == 0) break;
-		add_frame(record, duration, value);
-		result++;
+		result = fread(&duration, sizeof duration, 1, stream);
+		result += fread(&value, sizeof value, 1, stream);
+		if (result != 2) {
+			error(INPUT_READ_PROBLEM);
+			break;
+		}
+		add_frame(duration, value);
 	}
-	return result;
+	if (fclose(stream) == EOF) {
+		return error(INPUT_CLOSE_PROBLEM);
+	}
+	return NO_PROBLEM;
 }
 
 #endif

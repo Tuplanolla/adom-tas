@@ -26,6 +26,7 @@ extern const int default_states;
 extern const int default_rows;
 extern const int default_cols;
 extern const char * const default_shm_path;
+extern const int default_timestamp;
 extern const int default_generations;
 extern const int default_sql;
 extern const int default_autoplay;

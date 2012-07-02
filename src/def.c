@@ -28,6 +28,7 @@ intern const int default_states = 9;
 intern const int default_rows = 25;
 intern const int default_cols = 77;
 intern const char * const default_shm_path = "adom-tas.shm";
+intern const int default_timestamp = 0;
 intern const int default_generations = 100;
 intern const int default_sql = TRUE;
 intern const int default_autoplay = FALSE;
@@ -51,15 +52,6 @@ intern const int default_play_key = MOD_CTRL+KEY_F(13);
 intern const int default_quit_key = MOD_SHIFT+MOD_CTRL+KEY_F(13);
 intern const char * const default_config_path = "adom-tas.cfg";
 intern const char * const default_config =
-		/*
-		header
-		game
-		category
-		author
-		frames
-		time
-		turns
-		*/
 		"#required\n"
 		"executable   = \"adom/adom\"\n"
 		"data         = \"~/.adom.data\"\n"
@@ -74,6 +66,7 @@ intern const char * const default_config =
 		"#cols        = 77\n"
 		"#shm         = \"adom-tas.shm\"\n"
 		"#generations = 100\n"
+		"#timestamp   = 0\n"
 		"#sql         = true\n"
 		"#autoplay    = false\n"
 		"#color       = true\n"

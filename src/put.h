@@ -8,7 +8,7 @@ Provides input and output.
 
 #include "record.h"//record_t
 
-size_t freadp(FILE * stream, record_t * record);
-size_t fwritep(FILE * stream, record_t * record);
+size_t freadp(const char * path);
+size_t fwritep(const char * path);
 
 #endif
