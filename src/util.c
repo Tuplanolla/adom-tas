@@ -131,7 +131,7 @@ Copies a file.
 @param src The source.
 @return 0 if successful and -1 otherwise.
 **/
-int copy(const char * const dest, const char * const src) {//TODO fix
+int copy(const char * const dest, const char * const src) {
 	if (dest == NULL || src == NULL) {
 		return -1;
 	}
@@ -162,6 +162,12 @@ int copy(const char * const dest, const char * const src) {//TODO fix
 		}
 	}
 	free(buf);
+	if (fclose(in) == EOF) {
+		result = -1;
+	}
+	if (fclose(out) == EOF) {
+		result = -1;
+	}
 	return result;
 }
 

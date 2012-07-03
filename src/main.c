@@ -22,7 +22,6 @@ Launches the executable.
 The configuration variables.
 **/
 intern char * executable_path;
-intern char * executable_temporary_path;
 intern char ** executable_temporary_paths;
 intern char * executable_config_path;
 intern char * executable_process_path;
@@ -67,8 +66,8 @@ int main(const int argc, char * const argv[]) {
 			for (unsigned int part = 0; part < executable_temporary_parts; part++) {
 				const unsigned int path = offset + part;
 				if (executable_temporary_paths[path] != NULL) {
-					struct stat buf;
-					if (stat(executable_temporary_paths[path], &buf) == 0) {
+					struct stat temporary_stat;
+					if (stat(executable_temporary_paths[path], &temporary_stat) == 0) {
 						if (unlink(executable_temporary_paths[path]) != 0) {
 							return error(TEMPORARY_UNLINK_PROBLEM);
 						}
@@ -82,8 +81,8 @@ int main(const int argc, char * const argv[]) {
 	Removes the process lock.
 	*/
 	if (executable_process_path != NULL) {
-		struct stat buf;
-		if (stat(executable_process_path, &buf) == 0) {
+		struct stat process_stat;
+		if (stat(executable_process_path, &process_stat) == 0) {
 			if (unlink(executable_process_path) != 0) {
 				return error(PROCESS_UNLINK_PROBLEM);
 			}

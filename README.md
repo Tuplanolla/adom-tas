@@ -1,98 +1,140 @@
-ADoM TAS (adom-tas)
-===================
+# ADoM TAS (adom-tas)
 
-Tools for speedrunning ADoM (Ancient Domains of Mystery).
+ADoM TAS stands for Ancient Domains of Mystery Tool-Assisted Speedruns.
+It makes recording deterministic runs as input sequences possible and thus
+allows creating theoretically perfect speedruns and other demonstrations.
+The name is not very descriptive since it's built around an acronym.
 
-Meta
-----
+## Meta
 
 This readme is incomplete.
 
-Installation
-------------
+## Installation
 
-ADoM TAS is only for Linux since it relies on injecting assembly instructions to another Linux executable.
+ADoM TAS is written in C and only works on Linux since it
+ relies on injecting assembly instructions to another executable and
+ makes heavy use of features like `fork` and `execve`.
+ADoM TAS comes with a copy of ADoM that's
+ unaltered and
+ packaged as it was originally distributed
+  as outlined in its license.
+ADoM TAS can be installed from
+ binaries (already compiled executables) or
+ sources (text files that need to be compiled).
+In either case it's recommended to
+ browse through the whole installation instructions and
+ possibly the troubleshoot section.
 
-The following examples are for installing it from source on (a freshly installed) Arch Linux.
+The following examples are from a (freshly installed) Arch Linux.
 
-Install the tools to build things with:
+### Binaries
+
+Binaries only need to be downloaded and extracted.
+
+	[user@arch ~]$ wget https://github.com/Tuplanolla/adom-tas/blob/master/adom-tas.tar.gz
+	[user@arch ~]$ tar -x -f adom-tas.tar.gz
+
+### Sources
+
+Building ADoM TAS relies on the GNU Compiler Collection and GNU Make although
+ any other C compiler and build automation tool should work as well.
 
 	[user@arch ~]$ pacman -S gcc make
 
-Install the tools to build the documentation with if you feel like it:
-
-	[user@arch ~]$ pacman -S doxygen
-
-Install the dependencies (not libcurses or libconfig++) using your package manager of choice:
+The libraries ADoM TAS depends on are
+ the Standard C library `libc`,
+ the New Cursor Optimization library `libncurses` and
+ a configuration file library `libconfig`.
 
 	[user@arch ~]$ pacman -S libc libncurses libconfig
 
-Install the tools to clone the repository:
+Acquiring ADoM TAS from GitHub also requires
+ SSH and
+ Git.
 
 	[user@arch ~]$ pacman -S ssh git
 
-Clone the repository:
+Once the required packages are installed the repository can be cloned
 
 	[user@arch ~]$ git clone git@github.com:Tuplanolla/adom-tas.git
 
-Build the files:
+and ADoM TAS can be built.
 
 	[user@arch ~]$ cd adom-tas
 	[user@arch adom-tas]$ make
 
-Build the documentation if you feel like it:
+The binaries go in the `bin` directory and
+temporary objects that can be removed after compilation in the `obj` directory.
 
-	[user@arch adom-tas]$ doxygen
+### Running
 
-Run the launcher to generate a template configuration file in the current working directory:
+Running the launcher for the first time will
+ generate a template configuration file in the current working directory and
+ terminate with a note.
 
 	[user@arch adom-tas]$ bin/adom-tas
 
-Edit the configuration file (more about it later):
+The configuration file may need to be edited.
+The process of doing so is addressed in its own section.
 
 	[user@arch adom-tas]$ nano adom-tas.cfg
 
-Run the launcher normally:
+After taking care of the configuration file the launcher will start properly.
 
 	[user@arch adom-tas]$ bin/adom-tas
 
-If you want to encode video files you'll need extra packages:
+Encoding video files requires
+ the Teletypewriter Recorder `ttyrec` for `*.tty` files and
+ FFmpeg `ffmpeg` for `*.avi` files.
+Some formats also require
+ the Audio/Video Codec library `libavcodec` or
+ the Audio/Video Filter library `libavfilter`.
 
 	[user@arch ~]$ pacman -S ttyrec ffmpeg
 
-Recording is managed by scripts (the arguments are command to run and the output file):
+Recording is managed by shell scripts.
 
 	[user@arch adom-tas]$ bin/ttyrec.sh -e bin/adom-tas -o output.tty
 	[user@arch adom-tas]$ bin/ffmpeg.sh -e bin/adom-tas -o output.avi
 
-More options can be found by using the help switch:
+Advanced options like quality and filtering are also available
 
-	[user@arch adom-tas]$ bin/ffmpeg.sh -h
 	[user@arch adom-tas]$ bin/ffmpeg.sh -e "ttyplay output.tty" -r 32 -m 16 -s sd -o output.avi
 
-It is currently recommended to first record a `tty` file and then convert it to an `avi` file since `adom-tas` is only synchronized with `nanosleep` and frame times add to processing time.
+and can be found in the help.
 
-Installing the whole thing from the binaries will eventually be possible:
+	[user@arch adom-tas]$ bin/ffmpeg.sh -h
 
-	[user@arch ~]$ wget adom-tas.tar.gz
-	[user@arch ~]$ tar -x -f adom-tas.tar.gz
+It is currently recommended to
+ first record a `tty` file and
+ then convert it to an `avi` file
+  since `adom-tas` is only synchronized with `nanosleep` so
+  frame processing times skew the frame durations.
 
-A copy of ADoM is included.
-The package is unaltered as required by its license.
+### Development
 
-Configuration
--------------
+Generating automated documentation requires Doxygen.
+
+	[user@arch ~]$ pacman -S doxygen
+
+There's nothing more than that to it.
+
+	[user@arch adom-tas]$ doxygen
+
+## Configuration
+
+This is where the documentation gets haphazard.
 
 ADoM TAS uses a single configuration file.
-When it is run it checks for the configuration file `adom-tas.cfg`.
+When it's run it checks for the configuration file `adom-tas.cfg`.
 If the name is displeasing it can be changed by
- modifying the variable `default_config_path` in the file `default.h` and
+ modifying the variable `default_config_path` in the file `def*.c` and
  rebuilding ADoM TAS.
 The file will be only checked in the current working directory.
 If the file is not found it will be created from a template and ADoM TAS will terminate.
 
 The extension is `*.cfg` since
- libconfig uses it by default and
+ the configuration file library uses it by default and
  `*.conf` was originally planned to be reserved for a configuration language.
 
 The configuration file contains
@@ -112,8 +154,9 @@ The configuration file contains
 * the reserved location for the shared memory segment `shm` (`adom-tas.shm` by default),
 * the location of the `error` log (`stderr` by default),
 * the location of the `warning` log (`stderr` by default),
-* the location of the `note` log (`stderr` by default) and
-* the location of the `call` log (`null` by default).
+* the location of the `note` log (`stderr` by default),
+* the location of the `call` log (`null` by default)
+* and more.
 
 The standard streams are `stdin`, `stdout`, `stderr` and `null`.
 The configuration should be correct initially and errors will be reported otherwise.
@@ -140,56 +183,116 @@ The whole thing comes with a resource file `ADOM.DBG`.
 If you put it in your working directory you can enable ADoM's debug mode.
 I have no idea what it does, but since I'm lazy I hope someone can figure it out and tell me.
 
-File Format
------------
+## User Interface
 
-Recordings are saved to `*.tas` files in a custom format. The files consist of
+The user interface deserves a mention since it's so intuitive.
 
-* a four-byte `char *` header (always `54 41 53 00` for "TAS"),
-* a multibyte `char *` executable name (for example `61 64 6f 6d 00` for ADoM),
-* a one-byte `unsigned char` category (either `00` for anything, `01` for minimum actual turns or `02` for minimum ideal time),
-* a multibyte `char *` author (for example `54 75 70 6c 61 6e 6f 6c 6c 61 00` for "Tuplanolla"),
-* a four-byte `unsigned int` frames,
-* a four-byte `unsigned int` time,
-* a four-byte `unsigned int` turns and
-* executable-specific five-byte `frame_t` chunks consisting of
-	* a one-byte `unsigned char` duration and
-	* a four-byte `time_t` excerpt.
+The status bar looks like
 
-Schedule
---------
+	Drunk Coward  I: \M\Cf  F: 2/21  T: 0/7  D: 15  R: 0xe87de001  S: 2/9
+
+and contains
+ the last recorded inputs (Alt Ctrl F),
+ the amount of last recorded frames (2) and
+  the amount of all frames (21),
+ the amount of actual turns elapsed since the last input (0) and
+  the amount of all actual turns (7),
+ the time elapsed since the last emulated save-quit-load process (15 seconds),
+ the current hash of the random number generator's state and
+ the currently selected save state (#2) and
+  the amount of all save states (9).
+
+By default
+ `F8` shifts time forwards,
+ `Shift F8` shifts it backwards,
+ `F9` saves,
+ `F10` loads,
+ `F11` selects the next save state,
+ `Shift F11` the previous save state,
+ `F12` opens the save state menu,
+ `Shift F12` closes it,
+ `Ctrl F12` plays back a recording (only on the first frame) and
+ the save key (typically `S`) emulates the save-quit-load process.
+
+## Troubleshooting
+
+Compilation failed with `No such file or directory`? Consider
+
+* ensuring the installed libraries are
+	* `libncurses` instead of `libcurses` and
+	* `libconfig` instead of `libconfig++`,
+* making sure the commands `rm`, `mkdir` and `cp` are unaltered.
+
+Running failed with `Parsing the configuration file failed`? Consider
+
+* making sure the syntax is correct with
+	* an equals sign `=` between keys and values and
+	* strings enclosed in quotation marks `"`,
+* updating libconfig,
+* taking care of legacy problems by
+	* adding semicolons `;` to the end of each line and
+	* ensuring the last line ends with a line break `\n`,
+* removing uncommon whitespace characters like no-break spaces `\xa0`,
+* generating a new configuration file or
+* asking for help.
+
+## File Format
+
+Recordings are saved to `*.tas` files in a custom format. The files contain
+
+* a 4-byte `char *` header (always `54 41 53 00` for "TAS"),
+* a 256-byte `char *` executable name (for example `61 64 6f 6d 00` for ADoM),
+* a 4-byte `unsigned int` category (where `00 00 00 00` is uncategorized),
+* a 256-byte `char *` author (for example `54 75 70 6c 61 6e 6f 6c 6c 61 00` for "Tuplanolla"),
+* a 4-byte `unsigned int` frames,
+* a 4-byte `unsigned int` time,
+* a 4-byte `unsigned int` turns,
+* padding to 1024-byte alignment and
+* executable-specific `frame_t` chunks.
+
+For ADoM the categories are
+
+* `01 00 00 00` for minimum actual turns (without negative turns) and
+* `02 00 00 00` for minimum ideal time (without saving, quitting and loading)
+
+and the chunks consist of
+
+* a 1-byte `unsigned char` duration and
+* a 4-byte `time_t` excerpt.
+
+## Notes
+
+A character is considered generated when the text "You are now a fully learned wizard." appears.
+
+## Schedule
 
 This project is in active development and was expected to be finished by 2012-07-01.
-However only the first working binaries were built.
+The first working binaries were built 2012-07-02.
+The rest should be done by 2012-08-01.
 
-Motivation
-----------
+## Motivation
 
 What is ADoM?
 ADoM is a bad game that's fun to break.
 What are tool-assisted speedruns?
-Completing video games without actually having to play them.
+Completing video games without actually having to play them normally.
 
-History
--------
+## History
 
 All things ye olde and boring.
 
-Philosophy
-----------
+## Philosophy
 
 A reference to the Arch Way.
 
-Conventions
------------
+## Conventions
 
 The naming conventions used in the project follow those of the implementations of the functions.
 
 The syntatic conventions in the other hand follow the simplest possible consistent set of rules that allows condensed code.
 Keywords are always followed by spaces, pointers are always separated from the type and the identifier, comments and casts are removable using the simplest possible algorithm to leave no traces, etc.
 
-Making of
----------
+## Making of
 
 When writing a recorder the most important thing is entropy.
 Since recordings are basically inputs sent to the game the game acts like an automata:
@@ -398,29 +501,7 @@ More about that and more about fixing what was just written later.
 
 Note that it turned out to not be a proper ARC4; the order of operations was atypical.
 
-Notes
------
-
-A character is considered generated when the text "You are now a fully learned wizard." appears.
-
-Troubleshooting
----------------
-
-Parsing the configuration file failed with `CONFIG_PARSE_PROBLEM`? Consider
-
-* making sure the syntax is correct with
-	* an equals sign `=` between keys and values and
-	* strings enclosed in quotation marks `"`,
-* updating libconfig,
-* taking care of legacy problems by
-	* adding semicolons `;` to the end of each line and
-	* ensuring the last line ends with a line break `\n`,
-* removing uncommon whitespace characters like no-break spaces `\xa0`,
-* generating a new configuration file or
-* asking for help.
-
-Checklist
----------
+## Checklist
 
 	[X] Install
 		[X] Linux
@@ -473,6 +554,7 @@ Checklist
 			[X] Save state
 			[X] Time manipulation
 			[X] Random number generator state
+		[ ] Implement a journaled character roller
 		[ ] Implement cheats that disable the recording
 		[X] Refine sloppy implementations
 	[X] Refactor everything
@@ -484,8 +566,7 @@ Checklist
 		[ ] Executable
 		[ ] Meta
 
-Progression
------------
+## Progression
 
 The typical usage of ADoM TAS creates a process tree:
 
@@ -538,18 +619,3 @@ The typical usage of ADoM TAS creates a process tree:
 	                 |           `----[ ]
 	                 `----(7)
 	                       `----(8)
-
-User Interface
---------------
-
-The user interface deserves a mention here since it's so intuitive.
-
-The status bar will look like
-
-<pre>
-Coward                  I: \M\Cf  F: 2/21  T: 0/7  D: 15  R: 0xe87de001  S: 2/9
-</pre>
-
-and contains the last recorded inputs (Alt Ctrl F), the amount of the last recorded frames (2) and the amount of all frames (21), the amount of the last elapsed turns (0) and the amount of all turns (7 ignoring negative turns), the time elapsed since the last frame (15 seconds), the current hash of the random number generator's state and the currently selected save state (#2) and the amount of all save states (9).
-
-Currently F8 shifts time forwards, Shift F8 backwards, F9 saves, F10 loads, F11 selects the next state, Shift F11 the previous state, F12 opens the menu, Shift F12 closes it and Ctrl F12 plays back a recording. Emulating save, quit and load is bound to the save key (typically S).

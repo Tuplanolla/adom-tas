@@ -52,7 +52,12 @@ problem_t save(const unsigned int state) {
 	if (pid == -1) {
 		return error(FORK_PROBLEM);
 	}
-	else if (pid != 0) {//parent
+	else if (pid == 0) {//child
+		signal(SIGWINCH, SIG_IGN);
+		attach_shm();
+		fprintfl(error_stream, "[inherit <- %d]", (unsigned short )getppid());
+	}
+	else {//parent
 		attach_shm();
 
 		int y, x;
@@ -82,12 +87,10 @@ problem_t save(const unsigned int state) {
 					error(MALLOC_PROBLEM);
 				}
 				else {
-					snprintf(state_path, size, "%s.%u",
+					snprintf(state_path, size, "%s_%u",
 							executable_temporary_paths[path],
 							state);
-						char buf[1024];//slow and bad
-						snprintf(buf, sizeof buf, "cp -u %s %s 1>/dev/null 2>/dev/null", executable_temporary_paths[path], state_path);
-						system(buf);//copy(state_path, executable_temporary_paths[path]);
+					copy(state_path, executable_temporary_paths[path]);
 					free(state_path);
 				}
 			}
@@ -112,10 +115,6 @@ problem_t save(const unsigned int state) {
 		wrefresh(stdscr);
 		//tail recursion!
 	}
-	else {//child
-		attach_shm();
-		fprintfl(error_stream, "[inherit <- %d]", (unsigned short )getppid());
-	}
 	return NO_PROBLEM;
 }
 
@@ -135,13 +134,10 @@ problem_t load(const unsigned int state) {
 					error(MALLOC_PROBLEM);
 				}
 				else {
-					snprintf(state_path, size, "%s.%u",
+					snprintf(state_path, size, "%s_%u",
 							executable_temporary_paths[path],
 							state);
-						char buf[1024];//slower and worse
-						snprintf(buf, sizeof buf, "cp -u %s %s 1>/dev/null 2>/dev/null", state_path, executable_temporary_paths[path]);
-						system(buf);
-					//copy(executable_temporary_paths[path], state_path);
+					copy(executable_temporary_paths[path], state_path);
 					free(state_path);
 				}
 			}

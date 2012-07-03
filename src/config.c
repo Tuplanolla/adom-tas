@@ -847,24 +847,6 @@ problem_t init_loader_config(void) {
 	}
 
 	/*
-	TODO new things
-	intern FILE * error_stream;
-	intern FILE * warning_stream;
-	intern FILE * note_stream;
-	intern FILE * call_stream;
-	intern int time_key;
-	intern int untime_key;
-	intern int save_key;
-	intern int load_key;
-	intern int state_key;
-	intern int unstate_key;
-	intern int menu_key;
-	intern int unmenu_key;
-	intern int play_key;
-	intern int quit_key;
-	*/
-
-	/*
 	Opens the log streams.
 
 	The configuration file is first parsed,
