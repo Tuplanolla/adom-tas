@@ -14,19 +14,6 @@ Converts an error code to an error message.
 @param code The error code.
 @return The error message.
 **/
-/*
-//loader.c
-LIBC_DLOPEN_PROBLEM
-LIBNCURSES_DLOPEN_PROBLEM
-LD_PRELOAD_UNSETENV_PROBLEM
-
-//fork.c
-FORK_PROBLEM
-
-//asm.c
-ASM_MEMCMP_PROBLEM
-ASM_MPROTECT_PROBLEM
-*/
 const char * problem_message(const problem_t code) {
 	switch (code) {
 		case NO_PROBLEM: return "Nothing failed.";
@@ -56,6 +43,11 @@ const char * problem_message(const problem_t code) {
 		case HOME_GETENV_PROBLEM: return "Finding the location of the home directory in the environment variable failed.";
 		case HOME_GETPWUID_PROBLEM: return "Finding the location of the home directory in the environment variable failed. It will be guessed.";
 		case HOME_STAT_PROBLEM: return "Accessing the home directory failed. Shell expansions will be unavailable.";
+		case EXECUTABLE_DATA_CONFIG_PROBLEM: return "Finding the location of the executable's data directory in the configuration file failed. It will be guessed.";
+		case EXECUTABLE_DATA_HOME_PROBLEM: return "Guessing the location of the executable's data directory failed.";
+		case EXECUTABLE_DATA_STAT_PROBLEM: return "Accessing the executable's data directory failed.";
+		case EXECUTABLE_TEMPORARY_STAT_PROBLEM: return  "Accessing at least one of the executable's temporary file failed.";
+
 		case LD_PRELOAD_CONFIG_PROBLEM: return "Finding the location of the library to preload in the configuration file failed.";
 		case LD_PRELOAD_GETENV_PROBLEM: return "Finding the location of the library to preload in the environment variable failed. It will be guessed.";
 		case LD_PRELOAD_STAT_PROBLEM: return "Accessing the library to preload failed.";
@@ -68,10 +60,6 @@ const char * problem_message(const problem_t code) {
 		case EXECUTABLE_READ_PROBLEM: return "Reading the executable failed.";
 		case EXECUTABLE_HASH_PROBLEM: return "Verifying the hash code of the executable failed.";
 		case EXECUTABLE_CLOSE_PROBLEM: return "Closing the executable failed.";
-		case EXECUTABLE_DATA_CONFIG_PROBLEM: return "Finding the location of the executable's data directory in the configuration file failed. It will be guessed.";
-		case EXECUTABLE_DATA_HOME_PROBLEM: return "Guessing the location of the executable's data directory failed.";
-		case EXECUTABLE_DATA_STAT_PROBLEM: return "Accessing the executable's data directory failed.";
-		case EXECUTABLE_TEMPORARY_STAT_PROBLEM: return  "Accessing at least one of the executable's temporary file failed.";
 		case EXECUTABLE_CONFIG_STAT_PROBLEM: return "Accessing the executable's configuration file failed.";
 		case EXECUTABLE_PROCESS_STAT_PROBLEM: return "Accessing the executable's process lock file failed.";
 		case EXECUTABLE_KEYBIND_STAT_PROBLEM: return "Accessing the executable's keybinding file failed.";

@@ -34,7 +34,7 @@ intern const size_t executable_size = 2452608;
 /**
 The hash code of the executable.
 **/
-intern const int executable_hash = 952942381;
+intern const int executable_hash = 893530599;
 
 /**
 The version of the executable.

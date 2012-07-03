@@ -284,6 +284,115 @@ problem_t init_config(void) {
 		}
 	}
 
+	/*
+	Finds the data directory path of the executable.
+
+	The configuration file is first searched,
+	the location of the directory is then guessed and
+	the existence of the directory is finally checked.
+	*/
+	const char * new_executable_data_path;
+	if (config_lookup_string(&config, "data", &new_executable_data_path) == CONFIG_FALSE) {
+		new_executable_data_path = NULL;
+		//warning(EXECUTABLE_DATA_CONFIG_PROBLEM);
+		if (home_path == NULL) {
+			executable_data_path = NULL;
+		}
+		else {
+			const size_t size = strlen(home_path) + 1
+					+ strlen(executable_data_directory) + 1;
+			executable_data_path = malloc(size);
+			if (executable_data_path == NULL) {
+				error(MALLOC_PROBLEM);
+			}
+			else {
+				snprintf(executable_data_path, size, "%s/%s",
+						home_path,
+						executable_data_directory);
+			}
+		}
+	}
+	else {
+		executable_data_path = astrrep(new_executable_data_path, "~", home_path);
+	}
+	if (executable_data_path == NULL) {
+		return error(NULL_PROBLEM);
+	}
+	else {
+		struct stat executable_data_stat;
+		if (stat(executable_data_path, &executable_data_stat) == -1) {
+			warning(EXECUTABLE_DATA_STAT_PROBLEM);
+		}
+	}
+
+	/*
+	Finds the temporary file directory path of the executable.
+
+	The location of the directory is first guessed and
+	the existence of the directory is then checked.
+	*/
+	if (executable_data_path == NULL) {
+		executable_temporary_path = NULL;
+	}
+	else {
+		const size_t size = strlen(executable_data_path) + 1
+				+ strlen(executable_temporary_directory) + 1;
+		executable_temporary_path = malloc(size);
+		if (executable_temporary_path == NULL) {
+			error(MALLOC_PROBLEM);
+		}
+		else {
+			snprintf(executable_temporary_path, size, "%s/%s",
+					executable_data_path,
+					executable_temporary_directory);
+			struct stat executable_temporary_stat;
+			if (stat(executable_temporary_path, &executable_temporary_stat) == -1) {
+				warning(EXECUTABLE_TEMPORARY_STAT_PROBLEM);
+			}
+		}
+	}
+
+	/*
+	Finds the temporary file paths of the executable.
+
+	The executable uses the format <code>"%s%0*d_%d"</code>.
+
+	The location of the directory is first guessed,
+	the existence of the directory is then checked and
+	the file paths are finally guessed.
+	*/
+	if (executable_temporary_path == NULL) {
+		executable_temporary_paths = NULL;
+	}
+	else {
+		executable_temporary_paths = malloc(executable_temporary_levels * executable_temporary_parts * sizeof *executable_temporary_paths);
+		if (executable_temporary_paths == NULL) {
+			error(MALLOC_PROBLEM);
+		}
+		else {
+			for (unsigned int level = 0; level < executable_temporary_levels; level++) {
+				const unsigned int offset = level * executable_temporary_parts;
+				for (unsigned int part = 0; part < executable_temporary_parts; part++) {
+					const unsigned int path = offset + part;
+					const size_t size = strlen(executable_temporary_path) + 1
+							+ strlen(executable_temporary_file)
+							+ 4 + 1;
+					executable_temporary_paths[path] = malloc(size);
+					if (executable_temporary_paths[path] == NULL) {
+						error(MALLOC_PROBLEM);
+					}
+					else {
+						snprintf(executable_temporary_paths[path], size, "%s/%s%02u_%01u",
+								executable_temporary_path,
+								executable_temporary_file,
+								level,
+								part);
+					}
+				}
+			}
+		}
+	}
+
 	return NO_PROBLEM;
 }
 
@@ -398,115 +507,6 @@ problem_t init_launcher_config(void) {
 						if (fclose(stream) == EOF) {
 							error(EXECUTABLE_CLOSE_PROBLEM);
 						}
-					}
-				}
-			}
-		}
-	}
-
-	/*
-	Finds the data directory path of the executable.
-
-	The configuration file is first searched,
-	the location of the directory is then guessed and
-	the existence of the directory is finally checked.
-	*/
-	const char * new_executable_data_path;
-	if (config_lookup_string(&config, "data", &new_executable_data_path) == CONFIG_FALSE) {
-		new_executable_data_path = NULL;
-		//warning(EXECUTABLE_DATA_CONFIG_PROBLEM);
-		if (home_path == NULL) {
-			executable_data_path = NULL;
-		}
-		else {
-			const size_t size = strlen(home_path) + 1
-					+ strlen(executable_data_directory) + 1;
-			executable_data_path = malloc(size);
-			if (executable_data_path == NULL) {
-				error(MALLOC_PROBLEM);
-			}
-			else {
-				snprintf(executable_data_path, size, "%s/%s",
-						home_path,
-						executable_data_directory);
-			}
-		}
-	}
-	else {
-		executable_data_path = astrrep(new_executable_data_path, "~", home_path);
-	}
-	if (executable_data_path == NULL) {
-		return error(NULL_PROBLEM);
-	}
-	else {
-		struct stat executable_data_stat;
-		if (stat(executable_data_path, &executable_data_stat) == -1) {
-			warning(EXECUTABLE_DATA_STAT_PROBLEM);
-		}
-	}
-
-	/*
-	Finds the temporary file directory path of the executable.
-
-	The location of the directory is first guessed and
-	the existence of the directory is then checked.
-	*/
-	if (executable_data_path == NULL) {
-		executable_temporary_path = NULL;
-	}
-	else {
-		const size_t size = strlen(executable_data_path) + 1
-				+ strlen(executable_temporary_directory) + 1;
-		executable_temporary_path = malloc(size);
-		if (executable_temporary_path == NULL) {
-			error(MALLOC_PROBLEM);
-		}
-		else {
-			snprintf(executable_temporary_path, size, "%s/%s",
-					executable_data_path,
-					executable_temporary_directory);
-			struct stat executable_temporary_stat;
-			if (stat(executable_temporary_path, &executable_temporary_stat) == -1) {
-				warning(EXECUTABLE_TEMPORARY_STAT_PROBLEM);
-			}
-		}
-	}
-
-	/*
-	Finds the temporary file paths of the executable.
-
-	The executable uses the format <code>"%s%0*d_%d"</code>.
-
-	The location of the directory is first guessed,
-	the existence of the directory is then checked and
-	the file paths are finally guessed.
-	*/
-	if (executable_temporary_path == NULL) {
-		executable_temporary_paths = NULL;
-	}
-	else {
-		executable_temporary_paths = malloc(executable_temporary_levels * executable_temporary_parts * sizeof *executable_temporary_paths);
-		if (executable_temporary_paths == NULL) {
-			error(MALLOC_PROBLEM);
-		}
-		else {
-			for (unsigned int level = 0; level < executable_temporary_levels; level++) {
-				const unsigned int offset = level * executable_temporary_parts;
-				for (unsigned int part = 0; part < executable_temporary_parts; part++) {
-					const unsigned int path = offset + part;
-					const size_t size = strlen(executable_temporary_path) + 1
-							+ strlen(executable_temporary_file)
-							+ 4 + 1;
-					executable_temporary_paths[path] = malloc(size);
-					if (executable_temporary_paths[path] == NULL) {
-						error(MALLOC_PROBLEM);
-					}
-					else {
-						snprintf(executable_temporary_paths[path], size, "%s/%s%02u_%01u",
-								executable_temporary_path,
-								executable_temporary_file,
-								level,
-								part);
 					}
 				}
 			}

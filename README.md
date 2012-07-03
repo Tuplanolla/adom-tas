@@ -159,7 +159,8 @@ Recordings are saved to `*.tas` files in a custom format. The files consist of
 Schedule
 --------
 
-This project is in active development and expected to be finished by 2012-07-01.
+This project is in active development and was expected to be finished by 2012-07-01.
+However only the first working binaries were built.
 
 Motivation
 ----------
@@ -445,7 +446,7 @@ Checklist
 		[X] Implement slow load (file-memory)
 		[X] Make processes independent
 		[X] Make processes actually work
-		[ ] Save temporary files
+		[X] Save temporary files
 		[X] Refine sloppy implementations
 	[ ] Implement recording tools
 		[X] Find the input handler

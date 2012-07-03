@@ -29,9 +29,16 @@ Works like cutlery.
 #include "log.h"
 #include "config.h"
 #include "shm.h"
+#include "exec.h"
 #include "loader.h"
 
 #include "fork.h"
+
+intern const unsigned int executable_temporary_levels;
+intern const unsigned int executable_temporary_parts;
+
+intern char ** executable_temporary_paths;
+intern FILE * error_stream;
 
 intern shm_t shm;
 
@@ -64,6 +71,28 @@ problem_t save(const unsigned int state) {
 		fprintfl(error_stream, "[stop]");
 		shm.pids[0] = pid;
 
+		for (unsigned int level = 0; level < executable_temporary_levels; level++) {
+			const unsigned int offset = level * executable_temporary_parts;
+			for (unsigned int part = 0; part < executable_temporary_parts; part++) {
+				const unsigned int path = offset + part;
+				const size_t size = strlen(executable_temporary_paths[path]) + 1
+						+ uintlen(state) + 1;
+				char * const state_path = malloc(size);
+				if (state_path == NULL) {
+					error(MALLOC_PROBLEM);
+				}
+				else {
+					snprintf(state_path, size, "%s.%u",
+							executable_temporary_paths[path],
+							state);
+						char buf[1024];//slow and bad
+						snprintf(buf, sizeof buf, "cp -u %s %s 1>/dev/null 2>/dev/null", executable_temporary_paths[path], state_path);
+						system(buf);//copy(state_path, executable_temporary_paths[path]);
+					free(state_path);
+				}
+			}
+		}
+
 		struct timespec req;
 		req.tv_sec = 0;
 		req.tv_nsec = 1000000000l/16;
@@ -95,6 +124,29 @@ Loads the game from memory.
 **/
 problem_t load(const unsigned int state) {
 	if (shm.pids[state] != 0) {
+		for (unsigned int level = 0; level < executable_temporary_levels; level++) {
+			const unsigned int offset = level * executable_temporary_parts;
+			for (unsigned int part = 0; part < executable_temporary_parts; part++) {
+				const unsigned int path = offset + part;
+				const size_t size = strlen(executable_temporary_paths[path]) + 1
+						+ uintlen(state) + 1;
+				char * const state_path = malloc(size);
+				if (state_path == NULL) {
+					error(MALLOC_PROBLEM);
+				}
+				else {
+					snprintf(state_path, size, "%s.%u",
+							executable_temporary_paths[path],
+							state);
+						char buf[1024];//slower and worse
+						snprintf(buf, sizeof buf, "cp -u %s %s 1>/dev/null 2>/dev/null", state_path, executable_temporary_paths[path]);
+						system(buf);
+					//copy(executable_temporary_paths[path], state_path);
+					free(state_path);
+				}
+			}
+		}//dry code
+
 		const int killable = shm.pids[0];
 		const int continuable = shm.pids[state];
 		shm.pids[0] = continuable;

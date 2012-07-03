@@ -32,6 +32,7 @@ size_t intlen(int x);
 size_t uintlen(unsigned int x);
 int hash(const unsigned char * array, size_t size);
 char * astrrep(const char * haystack, const char * needle, const char * replacement) __attribute__ ((malloc));
+int copy(const char * dest, const char * src);
 FILE * stdstr(const char * str);
 
 /**

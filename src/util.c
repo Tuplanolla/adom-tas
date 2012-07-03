@@ -6,9 +6,10 @@ Provides general-purpose functions.
 #ifndef UTIL_C
 #define UTIL_C
 
-#include <stdlib.h>//*alloc, size_t, NULL
-#include <stdio.h>//*print*, std*, FILE
+#include <stdlib.h>//*alloc, free, size_t, NULL
+#include <stdio.h>//*open, *close, *read, *write, *print*, std*, FILE
 #include <string.h>//str*
+#include <unistd.h>//*page*
 
 #include "util.h"
 
@@ -120,6 +121,47 @@ char * astrrep(const char * const haystack, const char * const needle, const cha
 	result_position += replacement_length;
 	const size_t needle_end_distance = (size_t )(result_position - result);
 	strncpy(result_position, haystack_position, result_size - needle_end_distance);
+	return result;
+}
+
+/**
+Copies a file.
+
+@param dest The destination.
+@param src The source.
+@return 0 if successful and -1 otherwise.
+**/
+int copy(const char * const dest, const char * const src) {//TODO fix
+	if (dest == NULL || src == NULL) {
+		return -1;
+	}
+	FILE * const in = fopen(src, "rb");
+	if (in == NULL) {
+		return -1;
+	}
+	FILE * const out = fopen(dest, "wb");
+	if (out == NULL) {
+		return -1;
+	}
+	const size_t size = (size_t )getpagesize();
+	unsigned char * const buf = malloc(size);
+	if (buf == NULL) {
+		return -1;
+	}
+	int result;
+	while (TRUE) {
+		const size_t bytes = fread(buf, 1, size, in);
+		if (fwrite(buf, bytes, 1, out) != 1) {
+			if (feof(in) != 0) {
+				result = 0;
+			}
+			else {
+				result = -1;
+			}
+			break;
+		}
+	}
+	free(buf);
 	return result;
 }
 

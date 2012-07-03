@@ -38,7 +38,7 @@ intern WREFRESH um_wrefresh;
 intern WGETCH um_wgetch;
 intern EXIT um_exit;
 
-intern unsigned int turns;//TODO refactor everything
+intern int turns;//TODO refactor everything
 
 intern char * home_path;
 intern char * executable_path;
