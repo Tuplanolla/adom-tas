@@ -9,6 +9,42 @@ The name is not very descriptive since it's built around an acronym.
 
 This readme is incomplete.
 
+### Schedule
+
+This project is in active development and was expected to be finished by 2012-07-01.
+The first working binaries were built 2012-07-02.
+The rest should be done by 2012-08-01.
+
+### Philosophy
+
+A reference to the Arch Way.
+
+### History
+
+All things ye olde and boring.
+
+## Motivation
+
+### ADoM
+
+ADoM is a roguelike and as such characterized by
+ turn-based movement,
+ random level generation,
+ permanent death,
+ textual graphics,
+ luck-based gameplay,
+ an unnecessarily complicated metagame,
+ an inconvenient user interface and
+ bad programming.
+Altogether it's an excellent game to
+ disassemble and
+ learn from other people's mistakes.
+
+### Tool-Assisted Speedruns
+
+Tool-assisted playing is about playing video games theoretically.
+It's the finest art.
+
 ## Installation
 
 ADoM TAS is written in C and only works on Linux since it
@@ -42,7 +78,7 @@ Building ADoM TAS relies on the GNU Compiler Collection and GNU Make although
 	[user@arch ~]$ pacman -S gcc make
 
 The libraries ADoM TAS depends on are
- the Standard C library `libc`,
+ the C standard library `libc`,
  the New Cursor Optimization library `libncurses` and
  a configuration file library `libconfig`.
 
@@ -83,6 +119,8 @@ After taking care of the configuration file the launcher will start properly.
 
 	[user@arch adom-tas]$ bin/adom-tas
 
+### Recording
+
 Encoding video files requires
  the Teletypewriter Recorder `ttyrec` for `*.tty` files and
  FFmpeg `ffmpeg` for `*.avi` files.
@@ -111,29 +149,31 @@ It is currently recommended to
   since `adom-tas` is only synchronized with `nanosleep` so
   frame processing times skew the frame durations.
 
-### Development
+### Documentation
 
-Generating automated documentation requires Doxygen.
+Automated documentation requires Doxygen,
+which may in turn require some extra components.
 
 	[user@arch ~]$ pacman -S doxygen
 
-There's nothing more than that to it.
+Generating the documentation is simple though.
 
 	[user@arch adom-tas]$ doxygen
 
 ## Configuration
 
-This is where the documentation gets haphazard.
-
-ADoM TAS uses a single configuration file.
-When it's run it checks for the configuration file `adom-tas.cfg`.
-If the name is displeasing it can be changed by
+ADoM TAS uses a configuration file since
+ command-line arguments are passed through to ADoM and
+ the configuration is mostly static.
+When ADoM TAS is run it
+ checks for the existence of its configuration file and
+ creates the file from a template if it doesn't exist.
+By default the configuration file is called `adom-tas.cfg`
+ in the current working directory,
+but the default location can be changed by
  modifying the variable `default_config_path` in the file `def*.c` and
  rebuilding ADoM TAS.
-The file will be only checked in the current working directory.
-If the file is not found it will be created from a template and ADoM TAS will terminate.
-
-The extension is `*.cfg` since
+The default file extension is `*.cfg` since
  the configuration file library uses it by default and
  `*.conf` was originally planned to be reserved for a configuration language.
 
@@ -144,28 +184,39 @@ The configuration file contains
 * the location of ADoM TAS's `loader`,
 * the location of the C standard library `libc`,
 * the location of the New Cursor Optimization library `libncurses` and
-* the amount of character `generations` (`100` by default),
+* the location of the `home` directory,
 * the amount of save `states` excluding the currently active state (at least `1` and `9` by default),
 * the height of the terminal in `rows` (at least `25`, at most `127` and `25` by default),
 * the width of the terminal `cols` in columns (at least `77`, at most `127` and `80` by default),
+* the location of the shared memory segment lock `shm` (`adom-tas.shm` by default),
+* the amount of character `generations` (`100` by default),
+* the `timestamp` of the initial system time (`0` by default),
+* whether the save-quit-load emulation is enabled (`true` by default),
+* whether playback starts automatically if an input file is present (`false` by default),
+* whether the user interface has colorful backgrounds (`true` by default),
 * the string `iterator` to replace with the save state number when processing output file names (`#` by default),
 * the location of the `input` file for playback (`input.tas` by default),
 * the location of the `output` files for recording (recommended to be `output.#.tas` and `output.tas` by default),
-* the reserved location for the shared memory segment `shm` (`adom-tas.shm` by default),
 * the location of the `error` log (`stderr` by default),
 * the location of the `warning` log (`stderr` by default),
 * the location of the `note` log (`stderr` by default),
-* the location of the `call` log (`null` by default)
-* and more.
+* the location of the `call` log (`/dev/null` by default)
+* the `key` numbers of various commands.
 
-The standard streams are `stdin`, `stdout`, `stderr` and `null`.
-The configuration should be correct initially and errors will be reported otherwise.
-Assuming you run ADoM TAS from the same directory you maked (sic) it in the only values that may be wrong are the library paths.
-If you have no idea what is going on use the following command to find them.
+The standard streams are `stdin`, `stdout` and `stderr`.
+All file paths can be
+ absolute,
+ relative or
+ linked and
+  the shell variable `~` is expanded to the home directory.
+
+The template configuration should work out of the box.
+If ADoM TAS is run from the same directory it's maked from (sic)
+ the only values that may be wrong are the library locations.
+The libraries can be searched for to make life easier.
 
 	[user@arch ~]$ find /lib /usr/lib -maxdepth 1 \( -name libc.so.\* -o -name libncurses.so.\* \) 2>/dev/null
 
-Make sure all the files exist.
 Both absolute and relative paths work.
 Symbolic links are also resolved.
 The shell variable `~` is recognized too, but only expanded once per value.
@@ -176,12 +227,6 @@ The location of the shared memory segment
  may or may not exist and
  may contain whatever
   as it's only used for identification.
-
-Take note that you need all kinds of permissions to be able to use library preloading and other wack stuff.
-
-The whole thing comes with a resource file `ADOM.DBG`.
-If you put it in your working directory you can enable ADoM's debug mode.
-I have no idea what it does, but since I'm lazy I hope someone can figure it out and tell me.
 
 ## User Interface
 
@@ -203,16 +248,19 @@ and contains
   the amount of all save states (9).
 
 By default
- `F8` shifts time forwards,
- `Shift F8` shifts it backwards,
- `F9` saves,
- `F10` loads,
- `F11` selects the next save state,
- `Shift F11` the previous save state,
- `F12` opens the save state menu,
- `Shift F12` closes it,
- `Ctrl F12` plays back a recording (only on the first frame) and
- the save key (typically `S`) emulates the save-quit-load process.
+
+* `F8` shifts time forwards,
+* `Shift F8` shifts it backwards,
+* `F9` saves the current save state,
+* `F10` loads it,
+* `F11` selects the next save state,
+* `Shift F11` the previous save state,
+* `F12` opens the save state menu,
+* `Shift F12` closes it,
+* `Ctrl F12` plays back a recording (only on the first frame),
+* `Ctrl F13` plays a recording (if the key exists),
+* `Ctrl Shift F13` quits and
+* the save key (typically `S`) emulates the save-quit-load process.
 
 ## Troubleshooting
 
@@ -232,18 +280,56 @@ Running failed with `Parsing the configuration file failed`? Consider
 * taking care of legacy problems by
 	* adding semicolons `;` to the end of each line and
 	* ensuring the last line ends with a line break `\n`,
-* removing uncommon whitespace characters like no-break spaces `\xa0`,
-* generating a new configuration file or
+* removing uncommon whitespace characters like no-break spaces `\xa0` or
+* generating a new configuration file.
+
+Something else happened? Consider
+
+* trying to understand the error message better,
+* looking it up in the well-documented source code or
 * asking for help.
 
-## File Format
+## Notes
+
+A character is considered generated when
+ the text "You are now a fully learned wizard." appears.
+Putting the resource file `ADOM.DBG` in the current working directory will
+ enable ADoM's debug mode.
+I have no idea what it does,
+but hopefully someone can figure it out and tell me.
+
+## Development
+
+### Conventions
+
+The naming conventions used in the project follow those of
+ the implementations and
+ the man pages
+  of similar functions in the C standard library.
+
+The syntax conventions in the other hand follow
+ the simplest possible consistent set of rules that allows
+  condensed and
+  patterned
+   code.
+Keywords are always followed by spaces and functions never,
+binary operators are always separated by spaces and unary never,
+pointers are always separated from their types and identifiers
+ since their binding varies depending on the context,
+comments and casts are removable using the simplest possible pattern to
+ leave no traces of their existence and
+continued lines are always indented twice to
+ separate them from scopes they may start
+to name a few.
+
+### File Format
 
 Recordings are saved to `*.tas` files in a custom format. The files contain
 
 * a 4-byte `char *` header (always `54 41 53 00` for "TAS"),
-* a 256-byte `char *` executable name (for example `61 64 6f 6d 00` for ADoM),
+* a 256-byte `char *` executable name (for example `61 64 6f 6d 00 ...` for ADoM),
 * a 4-byte `unsigned int` category (where `00 00 00 00` is uncategorized),
-* a 256-byte `char *` author (for example `54 75 70 6c 61 6e 6f 6c 6c 61 00` for "Tuplanolla"),
+* a 256-byte `char *` author (for example `54 75 70 6c 61 6e 6f 6c 6c 61 00 ...` for "Tuplanolla"),
 * a 4-byte `unsigned int` frames,
 * a 4-byte `unsigned int` time,
 * a 4-byte `unsigned int` turns,
@@ -254,53 +340,25 @@ For ADoM the categories are
 
 * `01 00 00 00` for minimum actual turns (without negative turns) and
 * `02 00 00 00` for minimum ideal time (without saving, quitting and loading)
+* although all categories up to `ff 00 00 00` are reserved for challenge games
 
 and the chunks consist of
 
 * a 1-byte `unsigned char` duration and
 * a 4-byte `time_t` excerpt.
 
-## Notes
+### Making of ...
 
-A character is considered generated when the text "You are now a fully learned wizard." appears.
-
-## Schedule
-
-This project is in active development and was expected to be finished by 2012-07-01.
-The first working binaries were built 2012-07-02.
-The rest should be done by 2012-08-01.
-
-## Motivation
-
-What is ADoM?
-ADoM is a bad game that's fun to break.
-What are tool-assisted speedruns?
-Completing video games without actually having to play them normally.
-
-## History
-
-All things ye olde and boring.
-
-## Philosophy
-
-A reference to the Arch Way.
-
-## Conventions
-
-The naming conventions used in the project follow those of the implementations of the functions.
-
-The syntatic conventions in the other hand follow the simplest possible consistent set of rules that allows condensed code.
-Keywords are always followed by spaces, pointers are always separated from the type and the identifier, comments and casts are removable using the simplest possible algorithm to leave no traces, etc.
-
-## Making of
+This section is supposed to be about insightful revelations about
+ how things are done,
+ but currently it's just a mess.
 
 When writing a recorder the most important thing is entropy.
 Since recordings are basically inputs sent to the game the game acts like an automata:
 even the slightest difference can cause desynchronization.
-It's not wanted so all sources of entropy need to be understood and controlled (since they're external).
+It's not desirable, so all sources of entropy need to be understood and controlled (since they're external it's not cheating).
 
 Let's decipher the random number generator with GDB.
-Let's fix this mess later.
 
 	[user@arch ~]$ rm -f .adom.data/.adom.prc
 	[user@arch ~]$ cd adom
@@ -327,7 +385,7 @@ Let's look for its seed.
 	(gdb) run
 	(gdb) info break 4
 
-It is called once as well.
+It's called once as well.
 Time is a typical source of entropy.
 Let's check for it.
 
@@ -423,7 +481,7 @@ That call is the actual system call to get the time so let's step past it and ch
 	fs      0x00000000   0
 	gs      0x00000033  +51
 
-`eax` contains an epoch time for 2012-06-01 17:46:40 UTC.
+`eax` seems to contain an epoch time for 2012-06-01 17:46:40 UTC.
 
 	(gdb) set $eax = 0
 
@@ -496,12 +554,17 @@ Let's get out of here.
 	(gdb) quit
 
 The state files `first_s`, `second_s` and `third_s` can now be analyzed and help write a replica ARC4.
+They can be found in the project resources for completeness' sake.
 Later states can be calculated with brute force once the first few states can be simulated reliably.
 More about that and more about fixing what was just written later.
 
 Note that it turned out to not be a proper ARC4; the order of operations was atypical.
 
-## Checklist
+Why isn't real life this easy?
+
+## Some Diagrams
+
+### Checklist
 
 	[X] Install
 		[X] Linux
@@ -555,6 +618,7 @@ Note that it turned out to not be a proper ARC4; the order of operations was aty
 			[X] Time manipulation
 			[X] Random number generator state
 		[ ] Implement a journaled character roller
+		[ ] Roll 4294967295 characters
 		[ ] Implement cheats that disable the recording
 		[X] Refine sloppy implementations
 	[X] Refactor everything
@@ -562,11 +626,11 @@ Note that it turned out to not be a proper ARC4; the order of operations was aty
 	[ ] Document
 		[ ] Code
 		[X] Documentation
-		[ ] Project
+		[X] Project
 		[ ] Executable
 		[ ] Meta
 
-## Progression
+### Progression
 
 The typical usage of ADoM TAS creates a process tree:
 
