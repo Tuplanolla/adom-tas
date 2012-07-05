@@ -1,14 +1,11 @@
 /**
-Sets the default values of various variables.
-
+@see def.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef DEF_H
 #define DEF_H
 
 #include <stddef.h>//size_t
-
-#include "util.h"//bool
 
 extern const char * const project_name;
 
@@ -38,15 +35,22 @@ extern const char * const default_error_stream;
 extern const char * const default_warning_stream;
 extern const char * const default_note_stream;
 extern const char * const default_call_stream;
-extern const int default_time_key;
-extern const int default_untime_key;
 extern const int default_save_key;
 extern const int default_load_key;
 extern const int default_state_key;
 extern const int default_unstate_key;
+extern const int default_duration_key;
+extern const int default_unduration_key;
+extern const int default_time_key;
+extern const int default_untime_key;
 extern const int default_menu_key;
-extern const int default_unmenu_key;
+extern const int default_condense_key;
+extern const int default_hide_key;
 extern const int default_play_key;
+extern const int default_stop_key;
 extern const int default_quit_key;
+
+extern const char * const default_config_path;
+extern const char * const default_config;
 
 #endif

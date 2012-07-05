@@ -16,27 +16,7 @@ Launches the executable.
 #include "problem.h"//*_PROBLEM
 #include "log.h"//error, warning, note, PROPAGATE
 #include "exec.h"//executable_*
-#include "config.h"//*_config, executable_*, generations
-
-/**
-The configuration variables.
-**/
-intern char * executable_path;
-intern char ** executable_temporary_paths;
-intern char * executable_config_path;
-intern char * executable_process_path;
-intern char * executable_keybind_path;
-intern char * executable_version_path;
-intern char * executable_count_path;
-intern char * loader_path;
-intern unsigned int generations;
-
-/**
-The variables of the executable.
-**/
-intern const unsigned char executable_version[4];
-intern const unsigned int executable_temporary_levels;
-intern const unsigned int executable_temporary_parts;
+#include "config.h"//*
 
 /**
 Prepares and launches the executable.

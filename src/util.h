@@ -13,16 +13,17 @@ Provides general-purpose macros.
 
 #include "gnu.h"//__*__
 
+#undef FALSE
+#undef TRUE
+#undef bool
+
 /**
 Boolean values.
 **/
-#undef FALSE
-#undef TRUE
 enum bool_e {
 	FALSE,
 	TRUE
 };
-#undef bool
 typedef enum bool_e bool;
 
 /**
@@ -38,7 +39,6 @@ FILE * stdstr(const char * str);
 /**
 An annotation to use with an <code>extern</code> variable.
 **/
-#undef intern
 #define intern
 
 /**
@@ -52,7 +52,6 @@ if (shm == SUBNULL) {
 }
 </pre>
 **/
-#undef SUBNULL
 #define SUBNULL ((void * )-1)
 
 /**
@@ -63,7 +62,6 @@ Works in conjuction with the <code>BITS</code> macro:
 printf("0x%x = 0b"BYTE, 42, BITS(42));
 </pre>
 **/
-#undef BYTE
 #define BYTE "%d%d%d%d%d%d%d%d"
 
 /**
@@ -72,7 +70,6 @@ Returns the bits of a byte.
 @param byte The byte.
 @return An argument list of the bits.
 **/
-#undef BITS
 #define BITS(byte) \
 		byte & 0b10000000 ? 1 : 0,\
 		byte & 0b01000000 ? 1 : 0,\
@@ -83,24 +80,22 @@ Returns the bits of a byte.
 		byte & 0b00000010 ? 1 : 0,\
 		byte & 0b00000001 ? 1 : 0
 
-/*
+/**
 Returns the smaller of two numbers.
 
 @param x The first number.
 @param y The second number.
 @return The smaller number.
-*/
-#undef MIN
+**/
 #define MIN(x, y) (x < y ? x : y)
 
-/*
+/**
 Returns the bigger of two numbers.
 
 @param x The first number.
 @param y The second number.
 @return The bigger number.
-*/
-#undef MAX
+**/
 #define MAX(x, y) (x > y ? x : y)
 
 /**
@@ -109,7 +104,6 @@ Returns the page boundary of a pointer.
 @param pointer The pointer.
 @return A pointer to the page boundary.
 **/
-#undef PAGE
 #define PAGE(pointer) ((void * )(((ptrdiff_t )(pointer)) - ((ptrdiff_t )(pointer)) % getpagesize()))
 
 /**
@@ -118,7 +112,6 @@ Returns the page size of an object.
 @param object The object.
 @return The page size of the object.
 **/
-#undef PAGE_SIZE
 #define PAGE_SIZE(object) ((size_t )((1 + ((int )sizeof (object) - 1) / getpagesize()) * getpagesize()))
 
 /**
@@ -128,7 +121,6 @@ Swaps two variables.
 @param y The second variable.
 @return An argument list of the bits.
 **/
-#undef SWAP
 #define SWAP(x, y) do {\
 			unsigned char SWAP_z[sizeof (x) == sizeof (y) ? sizeof (x) : 0];\
 			memcpy(SWAP_z, &y, sizeof (x));\
@@ -137,11 +129,13 @@ Swaps two variables.
 		} while (FALSE)
 
 /**
-Extended characters for the New Cursor Optimization library.
+The Shift modifier for the New Cursor Optimization library.
 **/
-#undef MOD_SHIFT
 #define MOD_SHIFT 12
-#undef MOD_CTRL
+
+/**
+The Ctrl modifier for the New Cursor Optimization library.
+**/
 #define MOD_CTRL 24
 
 #endif

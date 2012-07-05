@@ -1,10 +1,5 @@
 /**
-Provides information about
-	the files,
-	the variables and
-	the behavior
-		of the executable.
-
+@see exec.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef EXEC_H
@@ -19,8 +14,8 @@ extern const int executable_hash;
 extern const unsigned char executable_version[4];
 
 extern const int executable_rows_min;
-extern const int executable_cols_min;
 extern const int executable_rows_max;
+extern const int executable_cols_min;
 extern const int executable_cols_max;
 
 extern const char * const executable_data_directory;
@@ -45,16 +40,9 @@ extern const unsigned int executable_arc4_calls_menu;
 extern const unsigned int executable_arc4_calls_automatic_load;
 extern const unsigned int executable_arc4_calls_manual_load;
 
-/**
-Simulates the random number generator of the executable.
-**/
 void sarc4(int seed);
 unsigned char arc4(void);
 void iarc4(unsigned int seed, unsigned int bytes);
-
-/**
-Simulates the key number interpreter of the executable.
-**/
 const char * key_code(int key);
 
 #endif

@@ -1,5 +1,10 @@
 /**
-Simulates
+Provides information about
+	the files,
+	the memory and
+	the behavior
+		of the executable and
+emulates
 	the random number generator and
 	the key number interpreter
 		of the executable.
@@ -17,7 +22,7 @@ Simulates
 
 #include "util.h"//intern, SWAP
 
-#include "exec.h"//executable_*
+#include "exec.h"
 
 /**
 The actual turn count.
@@ -52,46 +57,120 @@ A pointer to the save count.
 intern int * const executable_saves = (void * )0x082b6140;
 
 /**
-The minimum and maximum height and width of the terminal.
+The minimum height of the terminal.
 **/
 intern const int executable_rows_min = 25;
+
+/**
+The maximum height of the terminal.
+**/
 intern const int executable_cols_min = 77;
+
+/**
+The minimum width of the terminal.
+**/
 intern const int executable_rows_max = 127;
+/**
+The maximum width of the terminal.
+**/
 intern const int executable_cols_max = 127;
 
 /**
-The data files of the executable.
+The name of the data directory.
 **/
 intern const char * const executable_data_directory = ".adom.data";
+
+/**
+The name of the temporary file directory.
+**/
 intern const char * const executable_temporary_directory = "tmpdat";
+
+/**
+The name prefix of temporary files.
+**/
 intern const char * const executable_temporary_file = "adom_tdl";
+
+/**
+The amount of temporary file groups.
+**/
 intern const unsigned int executable_temporary_levels = 51;
+
+/**
+The amount of temporary files in groups.
+**/
 intern const unsigned int executable_temporary_parts = 4;
+
+/**
+The name of the configuration file.
+**/
 intern const char * const executable_config_file = ".adom.cfg";
+
+/**
+The name of the process lock file.
+**/
 intern const char * const executable_process_file = ".adom.prc";
+
+/**
+The name of the keybinding file.
+**/
 intern const char * const executable_keybind_file = ".adom.kbd";
+
+/**
+The name of the version file.
+**/
 intern const char * const executable_version_file = ".adom.ver";
+
+/**
+The name of the count file.
+**/
 intern const char * const executable_count_file = ".adom.cnt";
 
 /**
-The random number generator variables of the executable.
+The random number generator's state S.
 **/
 intern unsigned char * const executable_arc4_s = (void * )0x082ada40;
+
+/**
+The random number generator's first iterator i.
+**/
 intern unsigned char * const executable_arc4_i = (void * )0x082adb40;
+
+/**
+The random number generator's second iterator j.
+**/
 intern unsigned char * const executable_arc4_j = (void * )0x082adb41;
 
 /**
-The amounts of random number generator calls measured in the executable.
+The amount of random number generator calls measured before
+	reaching the splash screen or the main menu.
 **/
 intern const unsigned int executable_arc4_calls_menu = 4 * 1214;
+
+/**
+The amount of random number generator calls measured before
+	loading a game automatically.
+**/
 intern const unsigned int executable_arc4_calls_automatic_load = 4 * 1419;
+
+/**
+The amount of random number generator calls measured before
+	loading a game manually.
+**/
 intern const unsigned int executable_arc4_calls_manual_load = 4 * 1623;
 
 /**
-The current state S and iterators i and j of the random number generator.
+The emulated random number generator's state S.
 **/
 intern unsigned char arc4_s[0x100];
+
+/**
+The emulated random number generator's first iterator i.
+**/
 intern unsigned char arc4_i = 0x00;
+
+/**
+The emulated random number generator's second iterator j.
+**/
 intern unsigned char arc4_j = 0x00;
 
 /**
@@ -100,7 +179,8 @@ Seeds the current state S.
 @param seed The seed k.
 **/
 void sarc4(const int seed) {
-	unsigned char i = 0x00, j = 0x00;
+	unsigned char i = 0x00;
+	unsigned char j = 0x00;
 	do {
 		arc4_s[i] = i;
 		i++;

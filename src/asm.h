@@ -1,5 +1,6 @@
 /**
-Injects not-medicine.
+@see asm.c
+@author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef ASM_H
 #define ASM_H

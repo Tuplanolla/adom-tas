@@ -1,10 +1,11 @@
 /**
-Provides input and output.
+@see put.c
+@author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef PUT_H
 #define PUT_H
 
-#include <stdio.h>//FILE
+#include <stddef.h>//size_t
 
 #include "record.h"//record_t
 

@@ -27,63 +27,6 @@ Some redundant conditions are used to
 #include "config.h"
 
 /**
-The default configuration variables.
-**/
-intern const char * const default_executable_path;
-intern const char * const default_loader_path;
-intern const char * const default_libc_path;
-intern const char * const default_libncurses_path;
-intern const int default_states;
-intern const int default_rows;
-intern const int default_cols;
-intern const char * const default_shm_path;
-intern const int default_timestamp;
-intern const int default_generations;
-intern const int default_sql;
-intern const int default_autoplay;
-intern const int default_color;
-intern const char * const default_iterator;
-intern const char * const default_input_path;
-intern const char * const default_output_path;
-intern const char * const default_error_stream;
-intern const char * const default_warning_stream;
-intern const char * const default_note_stream;
-intern const char * const default_call_stream;
-intern const int default_time_key;
-intern const int default_untime_key;
-intern const int default_save_key;
-intern const int default_load_key;
-intern const int default_state_key;
-intern const int default_unstate_key;
-intern const int default_menu_key;
-intern const int default_unmenu_key;
-intern const int default_play_key;
-intern const int default_quit_key;
-intern const char * const default_config_path;
-intern const char * const default_config;
-
-/**
-The variables of the executable.
-**/
-intern const size_t executable_size;
-intern const int executable_hash;
-intern const unsigned char executable_version[4];
-intern const int executable_rows_min;
-intern const int executable_cols_min;
-intern const int executable_rows_max;
-intern const int executable_cols_max;
-intern const char * const executable_data_directory;
-intern const char * const executable_temporary_directory;
-intern const char * const executable_temporary_file;
-intern const unsigned int executable_temporary_levels;
-intern const unsigned int executable_temporary_parts;
-intern const char * const executable_config_file;
-intern const char * const executable_process_file;
-intern const char * const executable_keybind_file;
-intern const char * const executable_version_file;
-intern const char * const executable_count_file;
-
-/**
 The configuration variables.
 **/
 intern char * home_path;
@@ -115,26 +58,25 @@ intern FILE * error_stream;
 intern FILE * warning_stream;
 intern FILE * note_stream;
 intern FILE * call_stream;
-intern int time_key;
-intern int untime_key;
 intern int save_key;
 intern int load_key;
 intern int state_key;
 intern int unstate_key;
+intern int duration_key;
+intern int unduration_key;
+intern int time_key;
+intern int untime_key;
 intern int menu_key;
-intern int unmenu_key;
+intern int condense_key;
+intern int hide_key;
 intern int play_key;
+intern int stop_key;
 intern int quit_key;
 
 /**
 The configuration.
 **/
 config_t config;
-
-/**
-A buffer for <code>getpwuid</code> calls.
-**/
-struct passwd * pw;
 
 /**
 Uninitializes the configuration variables.
@@ -250,6 +192,7 @@ problem_t init_config(void) {
 	the existence of the directory is finally checked.
 	*/
 	const char * new_home_path;
+	struct passwd * pw;
 	if (config_lookup_string(&config, "home", &new_home_path) == CONFIG_FALSE) {
 		//warning(HOME_CONFIG_PROBLEM);
 		new_home_path = getenv("HOME");
@@ -658,7 +601,7 @@ problem_t init_loader_config(void) {
 		//warning(STATE_CONFIG_PROBLEM);
 	}
 	if (new_states < 1) {
-		new_states = MAX(1, new_states);
+		new_states = 1;
 		warning(STATE_AMOUNT_PROBLEM);
 	}
 	states = (unsigned int )new_states + 1;//reserves space for the active state
@@ -673,7 +616,7 @@ problem_t init_loader_config(void) {
 	int new_rows;
 	if (config_lookup_int(&config, "rows", &new_rows) == CONFIG_FALSE) {
 		new_rows = default_rows;
-		note(ROW_CONFIG_PROBLEM);
+		//warning(ROW_CONFIG_PROBLEM);
 	}
 	if (new_rows < executable_rows_min || new_rows > executable_rows_max) {
 		new_rows = MIN(MAX(executable_rows_min, new_rows), executable_rows_max);
@@ -739,7 +682,7 @@ problem_t init_loader_config(void) {
 	generations = (unsigned int )new_generations;
 
 	/**
-	Toggles the simulated save-quit-load.
+	Toggles the save-quit-load emulation.
 	**/
 	int new_sql;
 	if (config_lookup_bool(&config, "sql", &new_sql) == CONFIG_FALSE) {
@@ -869,7 +812,7 @@ problem_t init_loader_config(void) {
 		new_error_stream = fopen(error_path, "w");
 		if (new_error_stream == NULL) {
 			new_error_stream = NULL;
-			warning(ERROR_OPEN_PROBLEM);
+			error(ERROR_OPEN_PROBLEM);
 		}
 	}
 	free(error_path);
@@ -894,7 +837,7 @@ problem_t init_loader_config(void) {
 			new_warning_stream = fopen(warning_path, "w");
 			if (new_warning_stream == NULL) {
 				new_warning_stream = NULL;
-				warning(WARNING_OPEN_PROBLEM);
+				error(WARNING_OPEN_PROBLEM);
 			}
 		}
 	}
@@ -903,7 +846,7 @@ problem_t init_loader_config(void) {
 	const char * new_note_path;
 	if (config_lookup_string(&config, "notes", &new_note_path) == CONFIG_FALSE) {
 		new_note_path = default_note_stream;
-		note(ERROR_CONFIG_PROBLEM);
+		warning(ERROR_CONFIG_PROBLEM);
 	}
 	char * const note_path = astrrep(new_note_path, "~", home_path);
 	FILE * new_note_stream = stdstr(note_path);
@@ -924,7 +867,7 @@ problem_t init_loader_config(void) {
 			new_note_stream = fopen(note_path, "w");
 			if (new_note_stream == NULL) {
 				new_note_stream = NULL;
-				note(NOTE_OPEN_PROBLEM);
+				error(NOTE_OPEN_PROBLEM);
 			}
 		}
 	}
@@ -933,14 +876,14 @@ problem_t init_loader_config(void) {
 	const char * new_call_path;
 	if (config_lookup_string(&config, "calls", &new_call_path) == CONFIG_FALSE) {
 		new_call_path = default_call_stream;
-		note(ERROR_CONFIG_PROBLEM);
+		warning(ERROR_CONFIG_PROBLEM);
 	}
 	char * const call_path = astrrep(new_call_path, "~", home_path);
 	FILE * new_call_stream = stdstr(call_path);
 	struct stat call_stat;
 	if (new_call_stream == NULL) {
 		if (stat(call_path, &call_stat) == 0) {
-			//call(CALL_STAT_PROBLEM);
+			//note(CALL_STAT_PROBLEM);
 		}
 		if (call_stat.st_dev == error_stat.st_dev
 				&& call_stat.st_ino == error_stat.st_ino) {
@@ -958,7 +901,7 @@ problem_t init_loader_config(void) {
 			new_call_stream = fopen(call_path, "w");
 			if (new_call_stream == NULL) {
 				new_call_stream = NULL;
-				note(CALL_OPEN_PROBLEM);
+				error(CALL_OPEN_PROBLEM);
 			}
 		}
 	}
@@ -974,15 +917,19 @@ problem_t init_loader_config(void) {
 		call_stream = new_call_stream;
 	}
 
-	time_key = default_time_key;//TODO read keys
-	untime_key = default_untime_key;
-	save_key = default_save_key;
+	save_key = default_save_key;//TODO read keys
 	load_key = default_load_key;
 	state_key = default_state_key;
 	unstate_key = default_unstate_key;
+	duration_key = default_duration_key;
+	unduration_key = default_unduration_key;
+	time_key = default_time_key;
+	untime_key = default_untime_key;
 	menu_key = default_menu_key;
-	unmenu_key = default_unmenu_key;
+	condense_key = default_condense_key;
+	hide_key = default_hide_key;
 	play_key = default_play_key;
+	stop_key = default_stop_key;
 	quit_key = default_quit_key;
 
 	PROPAGATE(end_init_config());

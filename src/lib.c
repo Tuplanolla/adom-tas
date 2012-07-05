@@ -24,80 +24,37 @@ Provides reading for the whole family.
 #include "loader.h"
 #include "fork.h"
 #include "log.h"
+#include "config.h"
 
 #include "lib.h"
 
-intern UNLINK um_unlink;
-intern IOCTL um_ioctl;
-intern TIME um_time;
-intern LOCALTIME um_localtime;
-intern SRANDOM um_srandom;
-intern RANDOM um_random;
-intern INIT_PAIR um_init_pair;
-intern WREFRESH um_wrefresh;
-intern WGETCH um_wgetch;
-intern EXIT um_exit;
-
-intern int turns;//TODO refactor everything
-
-intern char * home_path;
-intern char * executable_path;
-intern char * executable_data_path;
-intern char * executable_temporary_path;
-intern char * executable_config_path;
-intern char * executable_process_path;
-intern char * executable_keybind_path;
-intern char * executable_version_path;
-intern char * executable_count_path;
-intern char * loader_path;
-intern char * libc_path;
-intern char * libncurses_path;
-intern unsigned int states;
-intern unsigned int rows;
-intern unsigned int cols;
-intern char * shm_path;
-intern unsigned int generations;
-intern bool sql;
-intern bool autoplay;
-intern bool color;
-intern char * iterator;
-intern char * input_path;
-intern char ** output_paths;
-intern FILE * error_stream;
-intern FILE * warning_stream;
-intern FILE * note_stream;
-intern FILE * call_stream;
-intern int time_key;
-intern int untime_key;
-intern int save_key;
-intern int load_key;
-intern int state_key;
-intern int unstate_key;
-intern int menu_key;
-intern int unmenu_key;
-intern int play_key;
-intern int quit_key;
-
-intern shm_t shm;
-
-intern record_t record;
+intern UNLINK um_unlink = NULL;
+intern IOCTL um_ioctl = NULL;
+intern TIME um_time = NULL;
+intern LOCALTIME um_localtime = NULL;
+intern SRANDOM um_srandom = NULL;
+intern RANDOM um_random = NULL;
+intern INIT_PAIR um_init_pair = NULL;
+intern WREFRESH um_wrefresh = NULL;
+intern WGETCH um_wgetch = NULL;
+intern EXIT um_exit = NULL;
 
 bool initialized = FALSE;
 
 /**
 Annotates and initializes overloaded functions.
 **/
-#define OVERLOAD if (!initialized) initialized = init_parent() == NO_PROBLEM;
+#define OVERLOAD if (!initialized) {initialized = TRUE; problem_t p = init_parent(); if (p != NO_PROBLEM) exit(p);}
 
 /**
 Very important temporary variables.
 **/
 unsigned int globstate = 1;
-time_t current_time = 0;//0x7fe81780
+//time_t timestamp = 0;//0x7fe81780
 
 void injector(void) {
-	iarc4((unsigned int )current_time, executable_arc4_calls_automatic_load);
-	add_seed_frame(current_time);
+	iarc4((unsigned int )timestamp, executable_arc4_calls_automatic_load);
+	add_seed_frame(timestamp);
 	wrefresh(stdscr);
 }
 
@@ -162,8 +119,8 @@ Replaces the system time with a fixed time.
 **/
 time_t time(time_t * t) { OVERLOAD
 	call("time(0x%08x).", (unsigned int )t);
-	if (t != NULL) *t = current_time;
-	return current_time;//reduces entropy
+	if (t != NULL) *t = timestamp;
+	return timestamp;//reduces entropy
 }
 
 /**
@@ -281,16 +238,16 @@ int wrefresh(WINDOW * win) { OVERLOAD
 		mvwaddnstr(win, ws_y, ws_x, ws_buf, TERM_COL-ws_x);\
 		ws_x--;
 	wrefresh_ADDSTR("S: %u/%u", 6, globstate, states-1);
-	wrefresh_ADDSTR("D: %u", 13, (unsigned int )(current_time - record.timestamp));
+	wrefresh_ADDSTR("D: %u", 13, (unsigned int )(timestamp - record.timestamp));
 	wrefresh_ADDSTR("R: 0x%08x", 13, hash(executable_arc4_s, 0x100));
-	wrefresh_ADDSTR("T: ?/%u", 13, *executable_turns + turns);
-	wrefresh_ADDSTR("F: ?/%u", 13, record.count);
+	wrefresh_ADDSTR("T: 0/%u", 13, *executable_turns + turns);
+	wrefresh_ADDSTR("F: 1/%u", 13, record.count);
 	wrefresh_ADDSTR("I: %s", 9, name);
 
 	/*
 	Draws the debug bar.
 	*/
-	char some[TERM_COL];//a hack
+	/*char some[TERM_COL];//a hack
 	strcpy(some, "P:");
 	for (unsigned int indecks = 0; indecks < states; indecks++) {
 		char somer[TERM_COL];
@@ -298,7 +255,7 @@ int wrefresh(WINDOW * win) { OVERLOAD
 		sprintf(somer, "%s %c%d%c", some, somery ? '[' : ' ', (unsigned short )shm.pids[indecks], somery ? ']' : ' ');
 		strcpy(some, somer);
 	}
-	mvwaddnstr(win, 21, 10, some, TERM_COL-20);
+	mvwaddnstr(win, 21, 10, some, TERM_COL-20);*/
 
 	/*
 	Restores the state of the window.
@@ -318,13 +275,13 @@ Reads a key code from a window.
 @param win The window to read from.
 @return The key code.
 **/
-int wgetch(WINDOW * win) { OVERLOAD//bloat
+int wgetch(WINDOW * win) { OVERLOAD//TODO remove bloat
 	call("wgetch(0x%08x).", (unsigned int )win);
 	if (playbacking) {
 		if (playback_frame != NULL) {//TODO move this
 			if (playback_frame->duration == 0) {
-				current_time += playback_frame->value;
-				iarc4((unsigned int )current_time, executable_arc4_calls_automatic_load);
+				timestamp += playback_frame->value;
+				iarc4((unsigned int )timestamp, executable_arc4_calls_automatic_load);
 				playback_frame = playback_frame->next;
 				return 0;
 			}
@@ -353,7 +310,7 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		return 0;
 	}
 	else if (key == save_key) {//saves
-		fwritep(output_paths[globstate]);//TODO move
+		fwritep(output_paths[globstate]);
 		save(globstate);
 		wrefresh(win);
 		return 0;
@@ -420,22 +377,22 @@ int wgetch(WINDOW * win) { OVERLOAD//bloat
 		return 0;
 	}
 	else if (key == time_key) {//changes the time
-		current_time++;
+		timestamp++;
 		wrefresh(win);
 		return 0;
 	}
-	else if (key == time_key) {//changes the time
-		current_time--;
+	else if (key == untime_key) {//changes the time
+		timestamp--;
 		wrefresh(win);
 		return 0;
 	}
-	else if (key == 'Q') {//quits everything (stupid idea or implementation)
+	else if (key == quit_key) {//quits everything (stupid idea or implementation)
 		endwin();
 		printf("Ctrl C will get you back to your beloved terminal if nothing else works.\n"); fflush(stdout);
-		for (unsigned int index = 1; index < states; index++) {
-			if (shm.pids[index] != 0) {
-				kill(shm.pids[index], SIGKILL);
-				shm.pids[index] = 0;
+		for (unsigned int state = 1; state < states; state++) {
+			if (shm.pids[state] != 0) {
+				kill(shm.pids[state], SIGKILL);
+				shm.pids[state] = 0;
 			}
 		}
 		kill(shm.ppid[0], SIGKILL);
@@ -478,5 +435,7 @@ void exit(int status) { OVERLOAD
 	//do something
 	um_exit(NO_PROBLEM);
 }
+
+//TODO intercept printf?
 
 #endif

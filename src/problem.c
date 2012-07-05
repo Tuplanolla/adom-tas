@@ -16,6 +16,7 @@ Converts an error code to an error message.
 **/
 const char * problem_message(const problem_t code) {
 	switch (code) {
+		//*.c
 		case NO_PROBLEM: return "Nothing failed.";
 		case NULL_PROBLEM: return "Dereferencing a null pointer failed.";
 		case MALLOC_PROBLEM: return "Allocating memory failed.";
@@ -84,9 +85,9 @@ const char * problem_message(const problem_t code) {
 		case COLOR_CONFIG_PROBLEM: return "Finding the color mode in the configuration file failed. The default value will be assumed.";
 		case ITERATOR_CONFIG_PROBLEM: return "Finding the iterator string in the configuration file failed. The default value will be assumed.";
 		case INPUT_CONFIG_PROBLEM: return "Finding the location of the input file in the configuration file failed. The default value will be assumed.";
-		case INPUT_STAT_PROBLEM: return "Accessing the input file failed.";
+		case INPUT_STAT_PROBLEM: return "The input file doesn't exist.";
 		case OUTPUT_CONFIG_PROBLEM: return "Finding the locations of the output files in the configuration file failed. The default values will be assumed.";
-		case OUTPUT_STAT_PROBLEM: return "Accessing at least one of the output files failed.";
+		case OUTPUT_STAT_PROBLEM: return "At least one of the output files already exists. It may be overwritten.";
 		case ERROR_CONFIG_PROBLEM: return "Finding the location of the error log in the configuration file failed. The default value will be assumed.";
 		case ERROR_STAT_PROBLEM: return "Accessing the error log failed.";
 		case ERROR_OPEN_PROBLEM: return "Opening the error log for writing failed.";
@@ -115,7 +116,7 @@ const char * problem_message(const problem_t code) {
 
 		//put.c
 		case INPUT_OPEN_PROBLEM: return "Opening the input file for reading failed.";
-		case INPUT_READ_PROBLEM: return "Reading the output file failed.";
+		case INPUT_READ_PROBLEM: return "Reading the input file failed.";
 		case INPUT_CLOSE_PROBLEM: return "Closing the input file failed.";
 		case OUTPUT_OPEN_PROBLEM: return "Opening the output file for writing failed.";
 		case OUTPUT_WRITE_PROBLEM: return "Writing the output file failed.";
@@ -132,6 +133,8 @@ const char * problem_message(const problem_t code) {
 		//asm.c
 		case ASM_MEMCMP_PROBLEM: return "ASM_MEMCMP_PROBLEM";
 		case ASM_MPROTECT_PROBLEM: return "ASM_MPROTECT_PROBLEM";
+
+		//lib.c
 
 		default: return "Converting an error code to an error message failed.";
 	}

@@ -1,4 +1,6 @@
 /**
+Logs messages.
+
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef LOG_C
@@ -18,11 +20,6 @@
 
 #include "log.h"
 
-intern FILE * error_stream;
-intern FILE * warning_stream;
-intern FILE * note_stream;
-intern FILE * call_stream;
-
 /**
 Formats and logs a message.
 
@@ -33,7 +30,10 @@ Formats and logs a message.
 **/
 int vfprintfl(FILE * const stream, const char * const fmt, va_list ap) {
 	/*
-	Creativity is required since <code>time</code> and <code>localtime</code> are unavailable.
+	Creativity is required since
+		<code>time</code> and
+		<code>localtime</code>
+			are unavailable.
 	*/
 	int result = 0;
 	struct timeval tv;
@@ -89,7 +89,9 @@ Logs a warning message and returns its error code.
 problem_t warning(const problem_t code) {
 	if (warning_stream != NULL) {
 		fprintfl(warning_stream, "%s%s%s",
-				log_warning, log_separator, problem_message(code));
+				log_warning,
+				log_separator,
+				problem_message(code));
 	}
 	return code;
 }
@@ -103,7 +105,9 @@ Logs a note message and returns its error code.
 problem_t note(const problem_t code) {
 	if (note_stream != NULL) {
 		fprintfl(note_stream, "%s%s%s",
-				log_note, log_separator, problem_message(code));
+				log_note,
+				log_separator,
+				problem_message(code));
 	}
 	return code;
 }
@@ -119,10 +123,15 @@ problem_t call(const char * const fmt, ...) {
 	if (call_stream != NULL) {
 		va_list	ap;
 		va_start(ap, fmt);
-		const size_t size = strlen(log_call)+strlen(log_separator)+strlen(fmt)+1;
-		char * call_fmt = malloc(size);
+		const size_t size = strlen(log_call) + strlen(log_separator) + strlen(fmt) + 1;
+		char * const call_fmt = malloc(size);
+		if (call_fmt == NULL) {
+			return error(MALLOC_PROBLEM);
+		}
 		snprintf(call_fmt, size, "%s%s%s",
-				log_call, log_separator, fmt);
+				log_call,
+				log_separator,
+				fmt);
 		vfprintfl(call_stream, call_fmt, ap);
 		free(call_fmt);
 		va_end(ap);

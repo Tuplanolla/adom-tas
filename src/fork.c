@@ -1,5 +1,7 @@
 /**
-Works like cutlery.
+Manages processes.
+
+@author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef FORK_C
 #define FORK_C
@@ -33,14 +35,6 @@ Works like cutlery.
 #include "loader.h"
 
 #include "fork.h"
-
-intern const unsigned int executable_temporary_levels;
-intern const unsigned int executable_temporary_parts;
-
-intern char ** executable_temporary_paths;
-intern FILE * error_stream;
-
-intern shm_t shm;
 
 /**
 Saves the game to memory.
@@ -112,7 +106,7 @@ problem_t save(const unsigned int state) {
 			}
 		}
 		wmove(stdscr, y, x);
-		wrefresh(stdscr);
+		wrefresh(stdscr);//TODO fix attribute corruption
 		//tail recursion!
 	}
 	return NO_PROBLEM;

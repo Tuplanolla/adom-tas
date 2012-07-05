@@ -36,19 +36,6 @@ Modifies the executable.
 #include "lib.h"
 #include "loader.h"
 
-intern UNLINK um_unlink = NULL;
-intern IOCTL um_ioctl = NULL;
-intern TIME um_time = NULL;
-intern LOCALTIME um_localtime = NULL;
-intern SRANDOM um_srandom = NULL;
-intern RANDOM um_random = NULL;
-intern INIT_PAIR um_init_pair = NULL;
-intern WREFRESH um_wrefresh = NULL;
-intern WGETCH um_wgetch = NULL;
-intern EXIT um_exit = NULL;
-intern shm_t shm;
-intern record_t record;
-
 void * libc_handle;
 void * libncurses_handle;
 
@@ -135,31 +122,37 @@ problem_t init_parent(void) {
 	}
 
 	/*
-	Injects Assembly instructions to disable the save function of the executable.
+	Enables save-quit-load emulation.
 	*/
-	//inject_save(&injector);
+	if (sql) {
+		inject_save(&injector);
+	}
 
-	signal(SIGWINCH, SIG_IGN);
-
+	/*
+	Initializes the shared memory segment.
+	*/
 	PROPAGATE(init_shm());
 
-	signal(SIGCHLD, SIG_IGN);//just in case
-	pid_t pid = fork();
-	if (pid == -1) {
-		error(FORK_PROBLEM);
+	shm.ppid[0] = fork();
+	if (shm.ppid[0] == -1) {
+		return error(FORK_PROBLEM);
 	}
-	else if (pid != 0) {//parent
-		PROPAGATE(attach_shm());//TODO why
-		shm.ppid[0] = getpid();
-		sigset_t mask;
-		sigfillset(&mask);
-		sigdelset(&mask, SIGINT);
-		sigsuspend(&mask);
-		return error(NO_PROBLEM);
-	}
-	else {//child
+	else if (shm.ppid[0] == 0) {//child
 		PROPAGATE(attach_shm());
 		shm.pids[0] = getpid();
+
+		signal(SIGWINCH, SIG_IGN);
+	}
+	else {//parent
+		signal(SIGCHLD, SIG_IGN);
+
+		sigset_t mask;
+		sigfillset(&mask);
+		sigdelset(&mask, SIGINT);//temporary
+		sigdelset(&mask, SIGTERM);
+		sigsuspend(&mask);
+
+		PROPAGATE(uninit_parent());
 	}
 
 	return NO_PROBLEM;

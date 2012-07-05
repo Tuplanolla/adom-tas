@@ -14,19 +14,21 @@ Manages inputs and outputs.
 
 #include "put.h"
 
-intern record_t record;
-
 /**
 Saves a record.
 
-@param stream The destination stream.
-@param record The record.
+@param path The record location.
 @return The error code.
 **/
-problem_t fwritep(const char * const path) {//TODO refactor
+problem_t fwritep(const char * const path) {
 	FILE * const stream = fopen(path, "wb");
 	if (stream == NULL) {
 		return error(OUTPUT_OPEN_PROBLEM);
+	}
+	unsigned char header[1024];
+	memset(header, 0, sizeof header);
+	if (fwrite(header, sizeof header, 1, stream)) {//TODO header
+		error(OUTPUT_WRITE_PROBLEM);
 	}
 	frame_t * frame = record.first;
 	while (frame != NULL) {
@@ -48,8 +50,7 @@ problem_t fwritep(const char * const path) {//TODO refactor
 /**
 Loads a record.
 
-@param stream The source stream.
-@param record The record.
+@param path The record location.
 @return The error code.
 **/
 problem_t freadp(const char * const path) {
@@ -57,17 +58,24 @@ problem_t freadp(const char * const path) {
 	if (stream == NULL) {
 		return error(INPUT_OPEN_PROBLEM);
 	}
+	if (fseek(stream, 1024, SEEK_SET) == -1) {//TODO fix
+		error(INPUT_READ_PROBLEM);
+	}
 	while (TRUE) {
-		size_t result;
 		unsigned char duration;
 		int value;
-		result = fread(&duration, sizeof duration, 1, stream);
+		size_t result = fread(&duration, sizeof duration, 1, stream);
 		result += fread(&value, sizeof value, 1, stream);
 		if (result != 2) {
-			error(INPUT_READ_PROBLEM);
 			break;
 		}
-		add_frame(duration, value);
+		if (add_frame(duration, value) == NULL) {
+			error(MALLOC_PROBLEM);
+			break;
+		}
+	}
+	if (feof(stream) == 0) {
+		error(INPUT_READ_PROBLEM);
 	}
 	if (fclose(stream) == EOF) {
 		return error(INPUT_CLOSE_PROBLEM);

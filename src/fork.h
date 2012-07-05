@@ -1,5 +1,6 @@
 /**
-Works like cutlery.
+@see fork.c
+@author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef FORK_H
 #define FORK_H

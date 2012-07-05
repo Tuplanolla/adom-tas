@@ -4,6 +4,11 @@ Provides reading for the whole family.
 #ifndef LIB_H
 #define LIB_H
 
+#include <stddef.h>//size_t
+#include <time.h>//time_t
+
+#include <curses.h>//WINDOW
+
 #include "gnu.h"//__*__
 
 typedef int (* UNLINK)(const char * path);

@@ -1,19 +1,16 @@
 /**
-Manages the configuration variables.
-
+@see config.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef CONFIG_H
 #define CONFIG_H
 
 #include <stdio.h>//FILE
+#include <time.h>//time_t
 
+#include "util.h"//bool
 #include "problem.h"//problem_t
-#include "record.h"//record_t
 
-/**
-The configuration variables.
-**/
 extern char * home_path;
 extern char * executable_path;
 extern char * executable_data_path;
@@ -43,20 +40,21 @@ extern FILE * error_stream;
 extern FILE * warning_stream;
 extern FILE * note_stream;
 extern FILE * call_stream;
-extern int time_key;
-extern int untime_key;
 extern int save_key;
 extern int load_key;
 extern int state_key;
 extern int unstate_key;
+extern int duration_key;
+extern int unduration_key;
+extern int time_key;
+extern int untime_key;
 extern int menu_key;
-extern int unmenu_key;
+extern int condense_key;
+extern int hide_key;
 extern int play_key;
+extern int stop_key;
 extern int quit_key;
 
-/**
-The configuration functions.
-**/
 problem_t init_launcher_config(void);
 problem_t init_loader_config(void);
 problem_t uninit_config(void);

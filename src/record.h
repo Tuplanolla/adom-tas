@@ -1,12 +1,13 @@
 /**
-Provides recording utilities.
+@see record.c
+@author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef RECORD_H
 #define RECORD_H
 
 #include <time.h>//time_t
 
-extern unsigned char frame_rate;
+#include "gnu.h"//__*__
 
 /**
 Represents a recorded frame.
@@ -55,14 +56,14 @@ Thus only five bytes are needed.
 **/
 struct frame_s {
 	unsigned char duration;
-	unsigned char padding[3];
+	unsigned char _[3];
 	int value;
 	struct frame_s * next;
 };
 typedef struct frame_s frame_t;
 
 /**
-Represents a recorded collection of frames.
+Represents a collection of recorded frames.
 
 @var first The first frame.
 @var last The last frame.
@@ -79,9 +80,10 @@ typedef struct record_s record_t;
 
 extern record_t record;
 
-void init_record();
-void clear_record();
-frame_t * add_frame(unsigned char duration, int value);
+extern unsigned char frame_rate;
+
+void clear_record(void);
+frame_t * add_frame(unsigned char duration, int value) __attribute__ ((malloc));
 frame_t * add_key_frame(unsigned char duration, int key);
 frame_t * add_seed_frame(time_t timestamp);
 

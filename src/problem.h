@@ -1,6 +1,5 @@
 /**
-Handles errors.
-
+@see problem.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef PROBLEM_H
@@ -126,6 +125,8 @@ enum problem_e {
 	//asm.c
 	ASM_MEMCMP_PROBLEM,
 	ASM_MPROTECT_PROBLEM
+
+	//lib.c
 };
 typedef enum problem_e problem_t;
 
@@ -145,7 +146,6 @@ problem_t method {
 
 @param code The error code.
 **/
-#undef PROPAGATE
 #define PROPAGATE(code) do {\
 		const problem_t PROPAGATE_code = code;\
 		if (PROPAGATE_code != NO_PROBLEM) return PROPAGATE_code;\

@@ -9,25 +9,18 @@ The name is not very descriptive since it's built around an acronym.
 
 This readme is incomplete.
 
-### Schedule
+## Schedule
 
-This project is in active development and was expected to be finished by 2012-07-01.
+This project is in active development and
+the first version was expected to be finished by 2012-07-01.
 The first working binaries were built 2012-07-02.
 The rest should be done by 2012-08-01.
-
-### Philosophy
-
-A reference to the Arch Way.
-
-### History
-
-All things ye olde and boring.
 
 ## Motivation
 
 ### ADoM
 
-ADoM is a roguelike and as such characterized by
+ADoM is a roguelike video game and as such characterized by
  turn-based movement,
  random level generation,
  permanent death,
@@ -74,6 +67,7 @@ Binaries only need to be downloaded and extracted.
 
 Building ADoM TAS relies on the GNU Compiler Collection and GNU Make although
  any other C compiler and build automation tool should work as well.
+GNU extensions are used, but not required.
 
 	[user@arch ~]$ pacman -S gcc make
 
@@ -209,6 +203,8 @@ All file paths can be
  relative or
  linked and
   the shell variable `~` is expanded to the home directory.
+The shared memory segment lock file has to exist,
+but its contents don't matter since it's only used for identification.
 
 The template configuration should work out of the box.
 If ADoM TAS is run from the same directory it's maked from (sic)
@@ -217,16 +213,8 @@ The libraries can be searched for to make life easier.
 
 	[user@arch ~]$ find /lib /usr/lib -maxdepth 1 \( -name libc.so.\* -o -name libncurses.so.\* \) 2>/dev/null
 
-Both absolute and relative paths work.
-Symbolic links are also resolved.
-The shell variable `~` is recognized too, but only expanded once per value.
-
-The input file is read when the playback key or signal is caught on the first frame.
+The input file is read when the playback key is pressed on the first frame.
 The output file is written when the corresponding save state is used.
-The location of the shared memory segment
- may or may not exist and
- may contain whatever
-  as it's only used for identification.
 
 ## User Interface
 
@@ -618,7 +606,7 @@ Why isn't real life this easy?
 			[X] Time manipulation
 			[X] Random number generator state
 		[ ] Implement a journaled character roller
-		[ ] Roll 4294967295 characters
+		[ ] Roll 4294967295 characters (65535 in reality)
 		[ ] Implement cheats that disable the recording
 		[X] Refine sloppy implementations
 	[X] Refactor everything

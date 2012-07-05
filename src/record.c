@@ -1,16 +1,23 @@
 /**
-Provides recording utilities.
+Manages records.
+
+Records are built around linked lists.
+
+@author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef RECORD_C
 #define RECORD_C
 
-#include <stdlib.h>//*alloc, free
+#include <stdlib.h>//*alloc, free, NULL
 #include <time.h>//time_t
 
 #include "util.h"//intern
 
 #include "record.h"
 
+/**
+The record.
+**/
 intern record_t record = {
 	.first = NULL,
 	.last = NULL,
@@ -19,7 +26,7 @@ intern record_t record = {
 };
 
 /**
-Sets the frame rate.
+The frame rate.
 
 Choosing <code>sqrt(1 << 8 * sizeof duration)</code> as the frame rate creates a balanced time distribution.
 For a byte the minimum frame time is 0.0625 seconds and the maximum 16 seconds.
@@ -28,18 +35,16 @@ intern unsigned char frame_rate = 16;
 
 /**
 Removes all frames from a record.
-
-@param record The target record.
 **/
-void clear_record() {
-	frame_t * current = record.first;
+void clear_record(void) {
+	frame_t * frame = record.first;
 	record.first = NULL;
 	record.last = NULL;
 	record.count = 0;
 	record.timestamp = 0;
-	while (current != NULL) {
-		frame_t * previous = current;
-		current = current->next;
+	while (frame != NULL) {
+		frame_t * previous = frame;
+		frame = frame->next;
 		free(previous);
 	}
 }
@@ -47,31 +52,32 @@ void clear_record() {
 /**
 Adds a frame to a record.
 
-@param record The target record.
 @param duration The input or the duration of the frame.
 @param value The key or the time difference of the frame.
-@return The new frame.
+@return The new frame if successful and <code>NULL</code> otherwise.
 **/
-frame_t * add_frame(const unsigned char duration, const int value) {//TODO __malloc__ and NULL_PROBLEM
-	frame_t * current = malloc(sizeof (frame_t));
-	current->duration = duration;
-	current->value = value;
-	current->next = NULL;
-	if (record.count == 0) {//the first
-		record.first = current;
+frame_t * add_frame(const unsigned char duration, const int value) {
+	frame_t * frame = malloc(sizeof (frame_t));
+	if (frame == NULL) {
+		return NULL;
 	}
-	else {//the rest
-		record.last->next = current;
+	frame->duration = duration;
+	frame->value = value;
+	frame->next = NULL;
+	if (record.count == 0) {
+		record.first = frame;
 	}
-	record.last = current;
+	else {
+		record.last->next = frame;
+	}
+	record.last = frame;
 	record.count++;
-	return current;
+	return frame;
 }
 
 /**
 Adds a <code>KEY_INPUT</code> frame to a record.
 
-@param record The target record.
 @param duration The duration of the frame.
 @param key The key of the frame.
 @return The new frame.
@@ -83,14 +89,13 @@ frame_t * add_key_frame(const unsigned char duration, const int key) {
 /**
 Adds a <code>TIME_INPUT</code> and <code>SEED_INPUT</code> frame to a record.
 
-@param record The target record.
-@param time The time of the frame.
+@param timestamp The time of the frame.
 @return The new frame.
 **/
 frame_t * add_seed_frame(const time_t timestamp) {
-	const time_t step_time = timestamp - record.timestamp;
+	const time_t difference = timestamp - record.timestamp;
 	record.timestamp = timestamp;
-	return add_frame(0, (int )step_time);
+	return add_frame(0, (int )difference);
 }
 
 #endif

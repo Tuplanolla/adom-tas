@@ -21,25 +21,35 @@ removes
 
 #include "util.h"//hash, intern, SUBNULL
 #include "problem.h"//problem_t, PROPAGATE, *_PROBLEM
-#include "log.h"//error
+#include "log.h"//error, warning, note
 #include "def.h"//project_name
-#include "config.h"//states, rows, cols, shm_path
+#include "config.h"//*
 
-#include "shm.h"//shm_t, shm
+#include "shm.h"
 
-intern unsigned int states;
-intern unsigned int rows;
-intern unsigned int cols;
-intern char * shm_path;
+/**
+Pointers to the shared memory segment.
+**/
 intern shm_t shm = {
 	.ppid = NULL,
 	.pids = NULL,
 	.chs = NULL
 };
-void * shm_heap = NULL;
 
+/**
+The shared memory key.
+**/
 key_t key = 0;
+
+/**
+The shared memory identifier.
+**/
 int shmid = -1;
+
+/**
+A pointer to the shared memory segment.
+**/
+void * shmaddr = NULL;
 
 /**
 Finds the shared memory segment.
@@ -47,6 +57,9 @@ Finds the shared memory segment.
 @return The error code.
 **/
 problem_t get_shm(const int shmflg) {
+	/*
+	Finds the shared memory segment.
+	*/
 	const size_t size = sizeof *shm.ppid
 			+ states * sizeof *shm.pids
 			+ states * rows * cols * sizeof ***shm.chs;
@@ -54,19 +67,21 @@ problem_t get_shm(const int shmflg) {
 	if (shmid == -1) {
 		return error(SHM_GET_PROBLEM);
 	}
-	shm_heap = shmat(shmid, NULL, 0);
-	if (shm_heap == SUBNULL) {
+	shmaddr = shmat(shmid, NULL, 0);
+	if (shmaddr == SUBNULL) {
 		return error(SHM_ATTACH_PROBLEM);
 	}
 
 	/*
-	Calculates the offsets for the pointers in the shared memory segment.
+	Calculates the offsets for the pointers to the shared memory segment.
+
+	The segment's location varies between processes.
 	*/
-	unsigned char * heap_pointer = (unsigned char * )shm_heap;
-	shm.ppid = (pid_t * )heap_pointer;
-	heap_pointer += (ptrdiff_t )sizeof *shm.ppid;
-	shm.pids = (pid_t * )heap_pointer;
-	heap_pointer += (ptrdiff_t )(states * sizeof *shm.pids);
+	unsigned char * position = (unsigned char * )shmaddr;
+	shm.ppid = (pid_t * )position;
+	position += (ptrdiff_t )sizeof *shm.ppid;
+	shm.pids = (pid_t * )position;
+	position += (ptrdiff_t )(states * sizeof *shm.pids);
 	shm.chs = malloc(states * sizeof *shm.chs);
 	if (shm.chs == NULL) {
 		return error(SHM_MALLOC_PROBLEM);
@@ -77,8 +92,8 @@ problem_t get_shm(const int shmflg) {
 			return error(SHM_MALLOC_PROBLEM);
 		}
 		for (unsigned int row = 0; row < rows; row++) {
-			shm.chs[state][row] = (chtype * )heap_pointer;
-			heap_pointer += (ptrdiff_t )(cols * sizeof ***shm.chs);
+			shm.chs[state][row] = (chtype * )position;
+			position += (ptrdiff_t )(cols * sizeof ***shm.chs);
 		}
 	}
 
@@ -108,7 +123,7 @@ problem_t init_shm(void) {
 	/*
 	Sets the default values of the objects in the shared memory segment.
 	*/
-	shm.ppid = 0;
+	shm.ppid[0] = (pid_t )0;
 	for (unsigned int state = 0; state < states; state++) {
 		shm.pids[state] = (pid_t )0;
 	}
@@ -129,6 +144,9 @@ Attaches the shared memory segment.
 @return The error code.
 **/
 problem_t attach_shm(void) {
+	/*
+	Accesses the shared memory segment.
+	*/
 	PROPAGATE(get_shm(SHM_R | SHM_W));
 
 	return NO_PROBLEM;
@@ -152,9 +170,12 @@ problem_t detach_shm(void) {
 		free(shm.chs);
 		shm.chs = NULL;
 	}
-	if (shmdt(shm_heap) == -1) {
+
+	if (shmdt(shmaddr) == -1) {
 		return error(SHM_DETACH_PROBLEM);
 	}
+	shmaddr = NULL;
+
 	return NO_PROBLEM;
 }
 
@@ -169,6 +190,7 @@ problem_t uninit_shm(void) {
 	}
 	key = 0;
 	shmid = -1;
+
 	return NO_PROBLEM;
 }
 

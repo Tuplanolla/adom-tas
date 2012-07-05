@@ -1,6 +1,5 @@
 /**
-Handles the shared memory segment.
-
+@see shm.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef SHM_H
@@ -71,9 +70,6 @@ typedef struct shm_s shm_t;
 
 extern shm_t shm;
 
-/**
-Manages the shared memory segment.
-**/
 problem_t init_shm(void);
 problem_t attach_shm(void);
 problem_t detach_shm(void);
