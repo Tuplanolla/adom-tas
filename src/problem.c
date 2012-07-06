@@ -1,6 +1,10 @@
 /**
 Handles errors.
 
+Errors are major problems.
+Warnings are minor problems.
+Notes are not problems.
+
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef PROBLEM_C
@@ -122,17 +126,19 @@ const char * problem_message(const problem_t code) {
 		case OUTPUT_WRITE_PROBLEM: return "Writing the output file failed.";
 		case OUTPUT_CLOSE_PROBLEM: return "Closing the output file failed.";
 
-		//loader.c
-		case LIBC_DLOPEN_PROBLEM: return "LIBC_DLOPEN_PROBLEM";
-		case LIBNCURSES_DLOPEN_PROBLEM: return "LIBNCURSES_DLOPEN_PROBLEM";
-		case LD_PRELOAD_UNSETENV_PROBLEM: return "LD_PRELOAD_UNSETENV_PROBLEM";
+		//lid.c
+		case LIBC_DLOPEN_PROBLEM: return "Opening the C standard library for linking failed.";
+		case LIBNCURSES_DLOPEN_PROBLEM: return "Opening the New Cursor Optimization library for linking failed.";
+		case LD_PRELOAD_UNSETENV_PROBLEM: return "Unsetting the library to preload in the environment variable failed.";
+		case LIBC_DLCLOSE_PROBLEM: return "Closing the C standard library failed.";
+		case LIBNCURSES_DLCLOSE_PROBLEM: return "Closing the New Cursor Optimization library failed.";
 
 		//fork.c
-		case FORK_PROBLEM: return "FORK_PROBLEM";
+		case FORK_PROBLEM: return "Creating a new process failed.";
 
 		//asm.c
-		case ASM_MEMCMP_PROBLEM: return "ASM_MEMCMP_PROBLEM";
-		case ASM_MPROTECT_PROBLEM: return "ASM_MPROTECT_PROBLEM";
+		case ASM_MPROTECT_PROBLEM: return "Unprotecting the instructions to overwrite failed.";
+		case ASM_MEMCMP_PROBLEM: return "Finding the instructions to overwrite failed.";
 
 		//lib.c
 

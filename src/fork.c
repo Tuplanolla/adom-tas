@@ -40,7 +40,7 @@ Manages processes.
 Saves the game to memory.
 **/
 problem_t save(const unsigned int state) {
-	signal(SIGCHLD, SIG_IGN);//just in case
+	beginning: signal(SIGCHLD, SIG_IGN);//just in case
 	fprintfl(error_stream, "[fork]");
 	pid_t pid = fork();//returns 0 in child, process id of child in parent, -1 on error
 	if (pid == -1) {
@@ -92,7 +92,7 @@ problem_t save(const unsigned int state) {
 
 		struct timespec req;
 		req.tv_sec = 0;
-		req.tv_nsec = 1000000000l/16;
+		req.tv_nsec = 1000000000l / 16;
 		while (shm.pids[0] != getpid()) {
 			nanosleep(&req, NULL);
 		}
@@ -107,7 +107,7 @@ problem_t save(const unsigned int state) {
 		}
 		wmove(stdscr, y, x);
 		wrefresh(stdscr);//TODO fix attribute corruption
-		//tail recursion!
+		goto beginning;//TODO proper recursion
 	}
 	return NO_PROBLEM;
 }

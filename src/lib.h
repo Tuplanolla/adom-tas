@@ -1,5 +1,6 @@
 /**
-Provides reading for the whole family.
+@see lib.c
+@author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef LIB_H
 #define LIB_H
@@ -10,29 +11,34 @@ Provides reading for the whole family.
 #include <curses.h>//WINDOW
 
 #include "gnu.h"//__*__
+#include "problem.h"//problem_t
 
-typedef int (* UNLINK)(const char * path);
-typedef int (* IOCTL)(int d, unsigned long request, ...);
-typedef time_t (* TIME)(time_t * timer);
-typedef struct tm * (* LOCALTIME)(const time_t * timep);
-typedef void (* SRANDOM)(unsigned int seed);
-typedef long (* RANDOM)(void);
-typedef int (* INIT_PAIR)(short pair, short f, short b);
-typedef int (* WREFRESH)(WINDOW * win);
-typedef int (* WGETCH)(WINDOW * win);
-typedef int (* EXIT)(int status) __attribute__ ((__noreturn__));
+typedef int (* printf_f)(const char * format, ...);
+typedef int (* unlink_f)(const char * path);
+typedef int (* ioctl_f)(int d, unsigned long request, ...);
+typedef time_t (* time_f)(time_t * timer);
+typedef struct tm * (* localtime_f)(const time_t * timep);
+typedef void (* srandom_f)(unsigned int seed);
+typedef long (* random_f)(void);
+typedef int (* init_pair_f)(short pair, short f, short b);
+typedef int (* wrefresh_f)(WINDOW * win);
+typedef int (* wgetch_f)(WINDOW * win);
+typedef int (* exit_f)(int status) __attribute__ ((__noreturn__));
 
-extern UNLINK um_unlink;
-extern IOCTL um_ioctl;
-extern TIME um_time;
-extern LOCALTIME um_localtime;
-extern SRANDOM um_srandom;
-extern RANDOM um_random;
-extern INIT_PAIR um_init_pair;
-extern WREFRESH um_wrefresh;
-extern WGETCH um_wgetch;
-extern EXIT um_exit;
+extern printf_f um_printf;
+extern unlink_f um_unlink;
+extern ioctl_f um_ioctl;
+extern time_f um_time;
+extern localtime_f um_localtime;
+extern srandom_f um_srandom;
+extern random_f um_random;
+extern init_pair_f um_init_pair;
+extern wrefresh_f um_wrefresh;
+extern wgetch_f um_wgetch;
+extern exit_f um_exit;
 
-void injector(void);
+problem_t init_lib(void);
+problem_t uninit_lib(void);
+void save_quit_load(void);
 
 #endif

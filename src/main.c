@@ -31,7 +31,7 @@ int main(const int argc, char * const argv[]) {
 	/*
 	Loads the configuration.
 	*/
-	PROPAGATE(init_launcher_config());
+	PROPAGATE(init_launcher_config());//TODO propagate properly
 	/*if (code != NO_PROBLEM) {
 		uninit_config();
 		return code;
@@ -90,6 +90,8 @@ int main(const int argc, char * const argv[]) {
 			}
 		}
 	}
+
+	//TODO enforce a configuration
 
 	/*
 	Sets the amount of generated characters.

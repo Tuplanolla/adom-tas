@@ -1,19 +1,22 @@
 /**
-Provides reading for the whole family.
+Does something important.
+
+@author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef LIB_C
 #define LIB_C
 
-#include <stdlib.h>//TODO get rid of the unnecessary
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
-#include <signal.h>
-#include <sys/ioctl.h>
+#include <stdarg.h>//va_*
+#include <stdlib.h>//*env, NULL
+#include <stdio.h>//*open, *close, *read, *write, FILE
+#include <string.h>//str*, mem*
+#include <unistd.h>//sleep, temporary kill
+#include <time.h>//time_t
+#include <signal.h>//temporary SIGKILL
+#include <dlfcn.h>//dl*, RTLD_*
+#include <sys/ioctl.h>//TIOC*
 
-#include <curses.h>
+#include <curses.h>//*w*, chtype, WINDOW, COLOR
 
 #include "util.h"
 #include "exec.h"
@@ -28,35 +31,22 @@ Provides reading for the whole family.
 
 #include "lib.h"
 
-intern UNLINK um_unlink = NULL;
-intern IOCTL um_ioctl = NULL;
-intern TIME um_time = NULL;
-intern LOCALTIME um_localtime = NULL;
-intern SRANDOM um_srandom = NULL;
-intern RANDOM um_random = NULL;
-intern INIT_PAIR um_init_pair = NULL;
-intern WREFRESH um_wrefresh = NULL;
-intern WGETCH um_wgetch = NULL;
-intern EXIT um_exit = NULL;
-
-bool initialized = FALSE;
-
-/**
-Annotates and initializes overloaded functions.
-**/
-#define OVERLOAD if (!initialized) {initialized = TRUE; problem_t p = init_parent(); if (p != NO_PROBLEM) exit(p);}
+intern printf_f um_printf = NULL;
+intern unlink_f um_unlink = NULL;
+intern ioctl_f um_ioctl = NULL;
+intern time_f um_time = NULL;
+intern localtime_f um_localtime = NULL;
+intern srandom_f um_srandom = NULL;
+intern random_f um_random = NULL;
+intern init_pair_f um_init_pair = NULL;
+intern wrefresh_f um_wrefresh = NULL;
+intern wgetch_f um_wgetch = NULL;
+intern exit_f um_exit = NULL;
 
 /**
-Very important temporary variables.
+The active save state.
 **/
-unsigned int globstate = 1;
-//time_t timestamp = 0;//0x7fe81780
-
-void injector(void) {
-	iarc4((unsigned int )timestamp, executable_arc4_calls_automatic_load);
-	add_seed_frame(timestamp);
-	wrefresh(stdscr);
-}
+unsigned int current_state = 1;
 
 bool was_meta = FALSE;//not good
 int was_colon = FALSE;//worse
@@ -64,6 +54,98 @@ bool condensed = FALSE;
 bool playbacking = FALSE;
 frame_t * playback_frame;
 char name[7];
+unsigned char dur = 16;
+
+/**
+Whether an overloaded function call is the first one.
+**/
+bool first = TRUE;
+
+void * libc_handle;
+void * libncurses_handle;
+
+problem_t init_lib(void) {
+	/*
+	Loads functions from dynamically linked libraries.
+
+	Requires either <code>RTLD_LAZY</code> or <code>RTLD_NOW</code>.
+	*/
+	const int mode = RTLD_NOW;
+
+	libc_handle = dlopen(libc_path, mode);
+	if (libc_handle == NULL) {
+		return error(LIBC_DLOPEN_PROBLEM);
+	}
+	um_printf = (printf_f )dlsym(libc_handle, "printf");
+	um_unlink = (unlink_f )dlsym(libc_handle, "unlink");
+	um_time = (time_f )dlsym(libc_handle, "time");
+	um_localtime = (localtime_f )dlsym(libc_handle, "localtime");
+	um_srandom = (srandom_f )dlsym(libc_handle, "srandom");
+	um_random = (random_f )dlsym(libc_handle, "random");
+	um_ioctl = (ioctl_f )dlsym(libc_handle, "ioctl");
+	um_exit = (exit_f )dlsym(libc_handle, "exit");
+
+	libncurses_handle = dlopen(libncurses_path, mode);
+	if (libncurses_handle == NULL) {
+		return error(LIBNCURSES_DLOPEN_PROBLEM);
+	}
+	um_init_pair = (init_pair_f )dlsym(libncurses_handle, "init_pair");
+	um_wrefresh = (wrefresh_f )dlsym(libncurses_handle, "wrefresh");
+	um_wgetch = (wgetch_f )dlsym(libncurses_handle, "wgetch");
+
+	/*
+	Prevents reloading libraries for child processes.
+	*/
+	if (unsetenv("LD_PRELOAD") == -1) {
+		warning(LD_PRELOAD_UNSETENV_PROBLEM);
+	}
+
+	return NO_PROBLEM;
+}
+
+/*
+Closes the dynamically linked libraries.
+*/
+problem_t uninit_lib(void) {
+	if (dlclose(libc_handle) != 0) {
+		return error(LIBC_DLCLOSE_PROBLEM);
+	}
+	if (dlclose(libncurses_handle) != 0) {
+		return error(LIBNCURSES_DLCLOSE_PROBLEM);
+	}
+
+	return NO_PROBLEM;
+}
+
+/**
+Emulates the process of saving, quitting and loading.
+**/
+void save_quit_load(void) {
+	iarc4((unsigned int )timestamp, executable_arc4_calls_automatic_load);
+	add_seed_frame(timestamp);
+	wrefresh(stdscr);
+}
+
+/**
+Prints a formatted string.
+
+Intercepts printing anything.
+
+@param format The string format.
+@return The amount of characters printed.
+**/
+int printf(const char * format, ...) {
+	if (first) {
+		first = FALSE;
+		const problem_t problem = init_parent();
+		if (problem != NO_PROBLEM) {
+			uninit_parent(problem);
+		}
+	}
+
+	call("printf(\"%s\", ...).", format);
+	return (int )strlen(format);//approximate
+}
 
 /**
 Removes a file.
@@ -71,12 +153,12 @@ Removes a file.
 Intercepts removing the debug file if it exists.
 
 @param path The path of the file to remove.
-@return Zero if no errors occurred and something else otherwise.
+@return 0 if no errors occurred and -1 otherwise.
 **/
-int unlink(const char * path) { OVERLOAD
+int unlink(const char * path) {
 	call("unlink(\"%s\").", path);
 	if (strcmp(path, "ADOM.DBG") == 0) {
-		//sleep(1);
+		sleep(1);
 		return 0;
 	}
 	return um_unlink(path);
@@ -91,19 +173,18 @@ Intercepting <code>SIGWINCH</code> elsewhere is also required.
 @param d An open file descriptor.
 @param request A request conforming to <code>ioctl_list</code>.
 @param ... A single pointer.
-@return Zero if no errors occurred and something else otherwise.
+@return 0 if no errors occurred and -1 otherwise.
 **/
-int ioctl(int d, unsigned long request, ...) { OVERLOAD
+int ioctl(int d, unsigned long request, ...) {
 	va_list	argp;
 	va_start(argp, request);
 	void * arg = va_arg(argp, void *);
 	call("ioctl(0x%08x, 0x%08x, 0x%08x).", (unsigned int )d, (unsigned int )request, (unsigned int )arg);
 	const int result = um_ioctl(d, request, arg);
 	if (request == TIOCGWINSZ) {
-		struct winsize * size;
-		size = (struct winsize * )arg;
+		struct winsize * size = (struct winsize * )arg;
 		size->ws_row = (unsigned short )rows;
-		size->ws_col = (unsigned short)cols;
+		size->ws_col = (unsigned short )cols;
 	}
 	va_end(argp);
 	return result;
@@ -117,7 +198,7 @@ Replaces the system time with a fixed time.
 @param t The fixed time to return.
 @return The fixed time.
 **/
-time_t time(time_t * t) { OVERLOAD
+time_t time(time_t * t) {
 	call("time(0x%08x).", (unsigned int )t);
 	if (t != NULL) *t = timestamp;
 	return timestamp;//reduces entropy
@@ -126,12 +207,12 @@ time_t time(time_t * t) { OVERLOAD
 /**
 Converts a <code>time_t</code> to a broken-down <code>struct tm</code>.
 
-Replaces <code>localtime</code> with <code>gmtime</code> and disregards timezones.
+Replaces <code>localtime</code> with <code>gmtime</code> to disregard timezones.
 
 @param timep The <code>time_t</code> to convert.
 @return The <code>struct tm</code>.
 **/
-struct tm * localtime(const time_t * timep) { OVERLOAD
+struct tm * localtime(const time_t * timep) {
 	call("localtime(0x%08x).", (unsigned int )timep);
 	return gmtime(timep);//reduces entropy
 }
@@ -141,7 +222,7 @@ Seeds the pseudorandom number generator.
 
 @param seed The seed.
 **/
-void srandom(unsigned int seed) { OVERLOAD
+void srandom(unsigned int seed) {
 	call("srandom(%u).", seed);
 	um_srandom(seed);
 }
@@ -151,12 +232,12 @@ Generates the next pseudorandom number.
 
 @return The number.
 **/
-long random(void) { OVERLOAD
+long random(void) {
 	call("random().");
 	return um_random();
 }
 
-short pairs = 0;
+unsigned int pairs = 0;
 
 /**
 Initializes a new color pair and tracks their amount.
@@ -164,9 +245,9 @@ Initializes a new color pair and tracks their amount.
 @param pair The index of the pair.
 @param f The foreground color.
 @param b The background color.
-@return Zero if no errors occurred and something else otherwise.
+@return 0 if no errors occurred and -1 otherwise.
 **/
-int init_pair(short pair, short f, short b) { OVERLOAD
+int init_pair(short pair, short f, short b) {
 	call("init_pair(%d, %d, %d).", pair, f, b);
 	pairs++;
 	return um_init_pair(pair, f, b);
@@ -180,10 +261,10 @@ Redraws the window.
 Draws the custom interface.
 
 @param win The window to redraw.
-@return Zero if no errors occurred and something else otherwise.
+@return 0 if no errors occurred and -1 otherwise.
 **/
 int previous_turns;
-int wrefresh(WINDOW * win) { OVERLOAD
+int wrefresh(WINDOW * win) {
 	call("wrefresh(0x%08x).", (unsigned int )win);
 
 	if (*executable_turns < previous_turns) turns++;
@@ -208,7 +289,7 @@ int wrefresh(WINDOW * win) { OVERLOAD
 	/*
 	Initializes the color pairs used by the interface.
 	*/
-	short ws_pair = pairs;
+	short ws_pair = (short )pairs;
 	#define wrefresh_INIT_PAIR(b) \
 		um_init_pair(ws_pair, COLOR_BLACK, b);\
 		ws_pair++;
@@ -218,6 +299,8 @@ int wrefresh(WINDOW * win) { OVERLOAD
 	wrefresh_INIT_PAIR(COLOR_CYAN);
 	wrefresh_INIT_PAIR(COLOR_BLUE);
 	wrefresh_INIT_PAIR(COLOR_MAGENTA);
+	wrefresh_INIT_PAIR(COLOR_RED);//again
+	wrefresh_INIT_PAIR(COLOR_YELLOW);//again
 
 	/*
 	Draws the status bar.
@@ -226,23 +309,25 @@ int wrefresh(WINDOW * win) { OVERLOAD
 	*/
 	#define TERM_COL 77
 	#define TERM_ROW 25
-	int ws_x = TERM_COL, ws_y = TERM_ROW-1;
+	int ws_x = TERM_COL, ws_y = TERM_ROW - 1;
 	char ws_str[TERM_COL], ws_buf[TERM_COL];
 	#define wrefresh_ADDSTR(format, length, ...) \
 		ws_pair--;\
 		wattrset(win, COLOR_PAIR(ws_pair));\
 		snprintf(ws_str, (size_t )TERM_COL, format, ##__VA_ARGS__);\
-		snprintf(ws_buf, (size_t )((condensed ? 1 : length)+1), "%-*s", length, ws_str);\
+		snprintf(ws_buf, (size_t )((condensed ? 1 : length) + 1), "%-*s", length, ws_str);\
 		ws_x -= length;\
 		/*ws_x--;*/\
 		mvwaddnstr(win, ws_y, ws_x, ws_buf, TERM_COL-ws_x);\
 		ws_x--;
-	wrefresh_ADDSTR("S: %u/%u", 6, globstate, states-1);
-	wrefresh_ADDSTR("D: %u", 13, (unsigned int )(timestamp - record.timestamp));
+	wrefresh_ADDSTR("P: #%u", 9, (unsigned int )getpid());
+	wrefresh_ADDSTR("S: %u/%u", 8, current_state, states - 1);
+	wrefresh_ADDSTR("V: +%u", 8, (unsigned int )(timestamp - record.timestamp));
 	wrefresh_ADDSTR("R: 0x%08x", 13, hash(executable_arc4_s, 0x100));
-	wrefresh_ADDSTR("T: 0/%u", 13, *executable_turns + turns);
-	wrefresh_ADDSTR("F: 1/%u", 13, record.count);
-	wrefresh_ADDSTR("I: %s", 9, name);
+	wrefresh_ADDSTR("D: %u", 8, dur);
+	wrefresh_ADDSTR("T: 0/%u", 8, *executable_turns + turns);
+	wrefresh_ADDSTR("F: 1/%u", 8, record.count);
+	wrefresh_ADDSTR("I: %s", 8, name);
 
 	/*
 	Draws the debug bar.
@@ -275,7 +360,7 @@ Reads a key code from a window.
 @param win The window to read from.
 @return The key code.
 **/
-int wgetch(WINDOW * win) { OVERLOAD//TODO remove bloat
+int wgetch(WINDOW * win) {//TODO remove bloat
 	call("wgetch(0x%08x).", (unsigned int )win);
 	if (playbacking) {
 		if (playback_frame != NULL) {//TODO move this
@@ -290,8 +375,8 @@ int wgetch(WINDOW * win) { OVERLOAD//TODO remove bloat
 				bool out_of_variable_names = FALSE;
 				if (playback_frame->duration >= frame_rate) out_of_variable_names = TRUE;
 				req.tv_sec = (time_t )(out_of_variable_names ? playback_frame->duration : 0);
-				req.tv_nsec = out_of_variable_names ? 0l : 1000000000l/frame_rate*playback_frame->duration;
-				nanosleep(&req, NULL);
+				req.tv_nsec = out_of_variable_names ? 0l : 1000000000l / frame_rate * playback_frame->duration;
+				nanosleep(&req, NULL);//TODO use a better timer
 				const int yield = playback_frame->value;
 				playback_frame = playback_frame->next;
 				return yield;
@@ -310,45 +395,45 @@ int wgetch(WINDOW * win) { OVERLOAD//TODO remove bloat
 		return 0;
 	}
 	else if (key == save_key) {//saves
-		fwritep(output_paths[globstate]);
-		save(globstate);
+		fwritep(output_paths[current_state]);
+		save(current_state);
 		wrefresh(win);
 		return 0;
 	}
 	else if (key == load_key) {//loads
-		load(globstate);
+		load(current_state);
 		wrefresh(win);
 		return 0;//redundant
 	}
 	else if (key == state_key) {
-		globstate = globstate%(unsigned int )((int )states-1)+1;//++
+		current_state = current_state%(unsigned int )((int )states-1)+1;//++
 		wrefresh(win);
 		return 0;
 	}
 	else if (key == unstate_key) {
-		globstate = (unsigned int )(((int )globstate-2)%((int )states-1))+1;//--
+		current_state = (unsigned int )(((int )current_state-2)%((int )states-1))+1;//--
 		wrefresh(win);
 		return 0;
 	}
 	else if (key == menu_key) {
 		int y, x;
 		getyx(win, y, x);
-		WINDOW * subwin = newwin(rows/2+rows%2+2, cols/2+cols%2+2, rows/4-2, cols/4-1);
+		WINDOW * subwin = newwin(rows / 2 + rows % 2 + 2, cols / 2 + cols % 2 + 2, rows / 4 - 2, cols / 4 - 1);
 		chtype ch = (chtype )' ' | COLOR_PAIR(37);
 		wborder(subwin, ch, ch, ch, ch, ch, ch, ch, ch);
 		um_wrefresh(subwin);
 		delwin(subwin);
-		subwin = newwin(3, cols/2+cols%2+2, rows*3/4+rows%2-1, cols/4-1);
+		subwin = newwin(3, cols / 2 + cols % 2 + 2, rows * 3 / 4 + rows % 2 - 1, cols / 4 - 1);
 		ch = (chtype )' ' | COLOR_PAIR(37);
 		wborder(subwin, ch, ch, ch, ch, ch, ch, ch, ch);
-		mvwhline(subwin, 1, 1, ch, cols/2+cols%2);
+		mvwhline(subwin, 1, 1, ch, cols / 2 + cols % 2);
 		wattrset(subwin, COLOR_PAIR(37));
 		unsigned int ws_x = 1;
 		size_t len = strlen("<");
 		mvwaddnstr(subwin, 1, ws_x, "<", len);
 		ws_x += len + 1;
 		unsigned int state = 1;
-		while (ws_x < cols/2+cols%2-2 && state < states) {
+		while (ws_x < cols / 2 + cols % 2 - 2 && state < states) {
 			len = uintlen(state) + 2;
 			char * buf = malloc(len + 1);
 			const bool occupied = shm.pids[state] != 0;
@@ -356,37 +441,47 @@ int wgetch(WINDOW * win) { OVERLOAD//TODO remove bloat
 			mvwaddnstr(subwin, 1, ws_x, buf, len);
 			free(buf);
 			const char * indicator = "^";
-			if (state == globstate) {//TODO intlen/2 as well
-				mvwaddnstr(subwin, 2, ws_x + 1 - strlen(indicator)/2, indicator, strlen(indicator));
+			if (state == current_state) {//TODO intlen / 2 as well
+				mvwaddnstr(subwin, 2, ws_x + 1 - strlen(indicator) / 2, indicator, strlen(indicator));
 			}
 			state++;
 			ws_x += len + 1;
 		}
 		len = strlen(">");
-		mvwaddnstr(subwin, 1, cols/2+cols%2+1-len, ">", len);
+		mvwaddnstr(subwin, 1, cols / 2 + cols % 2 + 1 - len, ">", len);
 		wattrset(subwin, A_NORMAL);
 		um_wrefresh(subwin);
 		delwin(subwin);
 		for (unsigned int row = 0; row < rows; row += 2) {
 			for (unsigned int col = 0; col < cols; col += 2) {
-				mvwaddch(win, row/2+rows/4-1, col/2+cols/4, shm.chs[globstate][row][col]);
+				mvwaddch(win, row / 2 + rows / 4 - 1, col / 2 + cols / 4, shm.chs[current_state][row][col]);
 			}
 		}
 		wmove(win, y, x);
 		wrefresh(win);
 		return 0;
 	}
-	else if (key == time_key) {//changes the time
+	else if (key == time_key) {
 		timestamp++;
 		wrefresh(win);
 		return 0;
 	}
-	else if (key == untime_key) {//changes the time
+	else if (key == untime_key) {
 		timestamp--;
 		wrefresh(win);
 		return 0;
 	}
-	else if (key == quit_key) {//quits everything (stupid idea or implementation)
+	else if (key == duration_key) {
+		if (dur < 128) dur = (unsigned char )dur * 2;
+		wrefresh(win);
+		return 0;
+	}
+	else if (key == unduration_key) {
+		if (dur > 1) dur = (unsigned char )dur / 2;
+		wrefresh(win);
+		return 0;
+	}
+	else if (key == quit_key) {//quits everything (stupid implementation)
 		endwin();
 		printf("Ctrl C will get you back to your beloved terminal if nothing else works.\n"); fflush(stdout);
 		for (unsigned int state = 1; state < states; state++) {
@@ -417,8 +512,7 @@ int wgetch(WINDOW * win) { OVERLOAD//TODO remove bloat
 		code = key_code(key);
 		strcat(name, code);//TODO turn this into a macro
 	}
-	unsigned char duration = frame_rate/2;
-	add_key_frame(duration, key);//meta, colon and w are undisplayed but still recorded (for now)
+	add_key_frame(dur, key);//meta, colon and w are undisplayed but still recorded (for now)
 	//wrefresh(win);
 	return key;
 }
@@ -427,15 +521,17 @@ int wgetch(WINDOW * win) { OVERLOAD//TODO remove bloat
 Exits immediately.
 
 Intercepts exiting prematurely.
+Currently keys are lost and the process jams.
+Intercepting endwin with a wgetch loop should fix the problem.
 
 @param status The return value.
 **/
-void exit(int status) { OVERLOAD
+void exit(int status) {
 	call("exit(%d).", status);
-	//do something
+	/*while (TRUE) {
+		sleep(1);
+	}*/
 	um_exit(NO_PROBLEM);
 }
-
-//TODO intercept printf?
 
 #endif

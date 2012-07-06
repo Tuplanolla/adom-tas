@@ -1,6 +1,7 @@
 /**
 Provides general-purpose macros.
 
+@see util.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef UTIL_H
@@ -122,10 +123,10 @@ Swaps two variables.
 @return An argument list of the bits.
 **/
 #define SWAP(x, y) do {\
-			unsigned char SWAP_z[sizeof (x) == sizeof (y) ? sizeof (x) : 0];\
-			memcpy(SWAP_z, &y, sizeof (x));\
+			unsigned char z[sizeof (x) == sizeof (y) ? sizeof (x) : 0];\
+			memcpy(z, &y, sizeof (x));\
 			memcpy(&y, &x, sizeof (x));\
-			memcpy(&x, SWAP_z, sizeof (x));\
+			memcpy(&x, z, sizeof (x));\
 		} while (FALSE)
 
 /**

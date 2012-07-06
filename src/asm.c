@@ -1,5 +1,5 @@
 /**
-Injects not-medicine.
+Injects assembly instructions.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
@@ -64,7 +64,7 @@ problem_t inject_save(void (* const function)(void)) {
 	new_instructions[8] = 0x00;
 	new_instructions[9] = 0x00;
 	const int prot = PROT_READ | PROT_WRITE | PROT_EXEC;
-	if (mprotect(PAGE(location), PAGE_SIZE(new_instructions), prot) != 0) {
+	if (mprotect(PAGE(location), PAGE_SIZE(new_instructions), prot) == -1) {
 		return error(ASM_MPROTECT_PROBLEM);
 	}
 	else {

@@ -1,15 +1,14 @@
 /**
-Modifies the executable.
+@see loader.h
+@author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef LOADER_H
 #define LOADER_H
 
 #include "problem.h"//problem_t
 
-void handle_parent(int sig);
-void handle_child(int sig);
 problem_t init_parent(void);
-problem_t uninit_child(void);
-problem_t uninit_parent(void);
+problem_t uninit_child(problem_t problem);
+problem_t uninit_parent(problem_t problem);
 
 #endif

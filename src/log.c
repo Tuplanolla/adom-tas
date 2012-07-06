@@ -31,8 +31,9 @@ Formats and logs a message.
 int vfprintfl(FILE * const stream, const char * const fmt, va_list ap) {
 	/*
 	Creativity is required since
-		<code>time</code> and
-		<code>localtime</code>
+		<code>time</code>,
+		<code>localtime</code> and
+		<code>printf</code>
 			are unavailable.
 	*/
 	int result = 0;

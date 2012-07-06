@@ -13,9 +13,9 @@ Generates code automatically.
 #include <curses.h>//KEY_*
 
 /**
-Generates the <code>key_code</code> function.
+Prints the <code>key_code</code> function to <code>stdout</code>.
 **/
-void key_code_meta(void) {
+void meta_key_code(void) {
 	printf("/*"
 			"Automatically generated; do not modify."
 			"*/"
@@ -66,15 +66,21 @@ void key_code_meta(void) {
 /**
 Generates code.
 
+The code can be redirected to a compiler:
+<pre>
+gcc src/meta.c -o /tmp/meta
+/tmp/meta example_function > src/meta/key_code.c
+</pre>
+
 @param argc The amount of functions to generate.
-@param argv The names of functions to generate.
+@param argv The names of the functions to generate.
 @return <code>EXIT_SUCCESS</code>.
 **/
 int main(int argc, const char * const argv[]) {
 	while (argc > 1) {
 		argc--;
 		if (strcmp(argv[argc], "key_code") == 0) {
-			key_code_meta();
+			meta_key_code();
 		}
 	}
 

@@ -1,16 +1,11 @@
 /**
-Logs events.
-
-Errors are major problems.
-Warnings are minor problems.
-Notes are not problems.
-
+@see log.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef LOG_H
 #define LOG_H
 
-#include <stdarg.h>//va_list
+#include <stdarg.h>//va_*
 #include <stdio.h>//FILE
 
 #include "gnu.h"//__*__

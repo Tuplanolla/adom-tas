@@ -3,6 +3,7 @@
 ADoM TAS stands for Ancient Domains of Mystery Tool-Assisted Speedruns.
 It makes recording deterministic runs as input sequences possible and thus
 allows creating theoretically perfect speedruns and other demonstrations.
+Its possibilities are not restricted to speedruns despite being the main focus.
 The name is not very descriptive since it's built around an acronym.
 
 ## Meta
@@ -35,8 +36,12 @@ Altogether it's an excellent game to
 
 ### Tool-Assisted Speedruns
 
-Tool-assisted playing is about playing video games theoretically.
-It's the finest art.
+Tool-assisted speedruns combine two concepts: tool-assisting and speedrunning.
+Tool-assisting means controlling time and the environment to
+make theoretically flawless execution possible.
+Speedrunning obviously means playing as fast as possible.
+Typically being fast means minimizing the time spent,
+but for turn-based games the goal may be different.
 
 ## Installation
 
@@ -62,6 +67,8 @@ Binaries only need to be downloaded and extracted.
 
 	[user@arch ~]$ wget https://github.com/Tuplanolla/adom-tas/blob/master/adom-tas.tar.gz
 	[user@arch ~]$ tar -x -f adom-tas.tar.gz
+
+They may be older than the sources.
 
 ### Sources
 
@@ -96,7 +103,7 @@ and ADoM TAS can be built.
 The binaries go in the `bin` directory and
 temporary objects that can be removed after compilation in the `obj` directory.
 
-### Running
+## Running
 
 Running the launcher for the first time will
  generate a template configuration file in the current working directory and
@@ -113,7 +120,7 @@ After taking care of the configuration file the launcher will start properly.
 
 	[user@arch adom-tas]$ bin/adom-tas
 
-### Recording
+## Recording
 
 Encoding video files requires
  the Teletypewriter Recorder `ttyrec` for `*.tty` files and
@@ -142,17 +149,6 @@ It is currently recommended to
  then convert it to an `avi` file
   since `adom-tas` is only synchronized with `nanosleep` so
   frame processing times skew the frame durations.
-
-### Documentation
-
-Automated documentation requires Doxygen,
-which may in turn require some extra components.
-
-	[user@arch ~]$ pacman -S doxygen
-
-Generating the documentation is simple though.
-
-	[user@arch adom-tas]$ doxygen
 
 ## Configuration
 
@@ -287,6 +283,16 @@ I have no idea what it does,
 but hopefully someone can figure it out and tell me.
 
 ## Development
+
+### Documentation
+
+It's possible to generate automated documentation for ADoM TAS with Doxygen.
+
+	[user@arch ~]$ pacman -S doxygen
+
+The process is similar to makeing (sic).
+
+	[user@arch adom-tas]$ doxygen
 
 ### Conventions
 
@@ -597,7 +603,7 @@ Why isn't real life this easy?
 		[X] Find the turn count variable
 		[X] Find a way to get around overloading macros
 		[X] Create an overlay bigger than 80x25
-		[X] Add a status bar (char[80] line)
+		[X] Add a status bar (char * line)
 		[X] Include in the status bar
 			[X] Last input
 			[X] Frame count
@@ -606,7 +612,7 @@ Why isn't real life this easy?
 			[X] Time manipulation
 			[X] Random number generator state
 		[ ] Implement a journaled character roller
-		[ ] Roll 4294967295 characters (65535 in reality)
+		[ ] Roll 4294967295 characters (closer to 65535 in reality)
 		[ ] Implement cheats that disable the recording
 		[X] Refine sloppy implementations
 	[X] Refactor everything
@@ -617,57 +623,3 @@ Why isn't real life this easy?
 		[X] Project
 		[ ] Executable
 		[ ] Meta
-
-### Progression
-
-The typical usage of ADoM TAS creates a process tree:
-
-	Start playing:
-	----[ ]
-	Save the first state:
-	----[1]
-	Keep playing:
-	----(1)
-	     `----[ ]
-	Save the second state:
-	----(1)
-	     `----[2]
-	Keep playing:
-	----(1)
-	     `----(2)
-	           `----[ ]
-	Save the first state again:
-	----.
-	     `----(2)
-	           `----[1]
-	Keep playing:
-	----.
-	     `----(2)
-	           `----(1)
-	                 `----[ ]
-	Load the first state:
-	----.
-	     `----(2)
-	           `----[1]
-	Keep playing:
-	----.
-	     `----(2)    .----[ ]
-	           `----(1)
-	Load the second state:
-	----.
-	     `----[2]
-	           `----(1)
-	Keep playing:
-	----.      .----[ ]
-	     `----(2)
-	           `----(1)
-	Repeat:
-	----.      .----(3)
-	     `----(2)    `----(4)
-	           |           `----.
-	           `----(1)          `----(5)
-	                 |----(6)
-	                 |     `----.
-	                 |           `----[ ]
-	                 `----(7)
-	                       `----(8)
