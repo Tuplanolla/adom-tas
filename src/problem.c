@@ -20,14 +20,25 @@ Converts an error code to an error message.
 **/
 const char * problem_message(const problem_t code) {
 	switch (code) {
-		//*.c
+		/*
+		*.c
+		*/
 		case NO_PROBLEM: return "Nothing failed.";
+		case ASSERT_PROBLEM: return "Evaluating an assertion failed.";
 		case NULL_PROBLEM: return "Dereferencing a null pointer failed.";
 		case MALLOC_PROBLEM: return "Allocating memory failed.";
 
-		//main.c
+		/*
+		main.c
+		*/
 		case TEMPORARY_UNLINK_PROBLEM: return "Removing at least one of the temporary files failed.";
+		case CONFIG_OPEN_PROBLEM: return "Opening the configuration file for writing failed.";
+		case CONFIG_WRITE_PROBLEM: return "Writing the configuration file failed.";
+		case CONFIG_CLOSE_PROBLEM: return "Closing the configuration file failed.";
 		case PROCESS_UNLINK_PROBLEM: return "Removing the process lock file failed.";
+		case KEYBIND_OPEN_PROBLEM: return "Opening the keybinding file for writing failed.";
+		case KEYBIND_WRITE_PROBLEM: return "Writing the keybinding file failed.";
+		case KEYBIND_CLOSE_PROBLEM: return "Closing the keybinding file failed.";
 		case VERSION_OPEN_PROBLEM: return "Opening the version file for reading failed.";
 		case VERSION_READ_PROBLEM: return "Reading the version file failed.";
 		case VERSION_CLOSE_PROBLEM: return "Closing the version file failed.";
@@ -38,12 +49,14 @@ const char * problem_message(const problem_t code) {
 		case LD_PRELOAD_SETENV_PROBLEM: return "Setting the library to preload in the environment variable failed.";
 		case EXEC_PROBLEM: return "Launching the executable failed.";
 
-		//config.c
-		case CONFIG_OPEN_PROBLEM: return "Opening the configuration file for writing failed.";
-		case CONFIG_WRITE_PROBLEM: return "Writing the configuration file failed.";
-		case CONFIG_CLOSE_PROBLEM: return "Closing the configuration file failed.";
-		case CONFIG_STAT_PROBLEM: return "Finding the configuration file failed. It will be created from a template.";
-		case CONFIG_PARSE_PROBLEM: return "Parsing the configuration file failed.";
+		/*
+		config.c
+		*/
+		case CONFIGURATION_OPEN_PROBLEM: return "Opening the configuration file for writing failed.";
+		case CONFIGURATION_WRITE_PROBLEM: return "Writing the configuration file failed.";
+		case CONFIGURATION_CLOSE_PROBLEM: return "Closing the configuration file failed.";
+		case CONFIGURATION_STAT_PROBLEM: return "Finding the configuration file failed. It will be created from a template.";
+		case CONFIGURATION_PARSE_PROBLEM: return "Parsing the configuration file failed.";
 		case HOME_CONFIG_PROBLEM: return "Finding the location of the home directory in the configuration file failed.";
 		case HOME_GETENV_PROBLEM: return "Finding the location of the home directory in the environment variable failed.";
 		case HOME_GETPWUID_PROBLEM: return "Finding the location of the home directory in the environment variable failed. It will be guessed.";
@@ -110,7 +123,9 @@ const char * problem_message(const problem_t code) {
 		case CALL_CLOSE_PROBLEM: return "Closing the call log file failed.";
 		case LOG_CHANGE_PROBLEM: return "The log streams changed. Further messages will be redirected.";
 
-		//shm.c
+		/*
+		shm.c
+		*/
 		case SHM_MALLOC_PROBLEM: return "Allocating shared memory failed.";
 		case SHM_KEY_PROBLEM: return "Generating a shared memory key failed.";
 		case SHM_GET_PROBLEM: return "Creating the shared memory segment failed.";
@@ -118,7 +133,9 @@ const char * problem_message(const problem_t code) {
 		case SHM_DETACH_PROBLEM: return "Detaching the shared memory segment failed.";
 		case SHM_REMOVE_PROBLEM: return "Removing the shared memory segment failed.";
 
-		//put.c
+		/*
+		put.c
+		*/
 		case INPUT_OPEN_PROBLEM: return "Opening the input file for reading failed.";
 		case INPUT_READ_PROBLEM: return "Reading the input file failed.";
 		case INPUT_CLOSE_PROBLEM: return "Closing the input file failed.";
@@ -126,21 +143,27 @@ const char * problem_message(const problem_t code) {
 		case OUTPUT_WRITE_PROBLEM: return "Writing the output file failed.";
 		case OUTPUT_CLOSE_PROBLEM: return "Closing the output file failed.";
 
-		//lid.c
+		/*
+		lib.c
+		*/
 		case LIBC_DLOPEN_PROBLEM: return "Opening the C standard library for linking failed.";
+		case LIBC_DLSYM_PROBLEM: return "Reading at least one of the symbols from the C standard library failed.";
 		case LIBNCURSES_DLOPEN_PROBLEM: return "Opening the New Cursor Optimization library for linking failed.";
+		case LIBNCURSES_DLSYM_PROBLEM: return "Reading at least one of the symbols from the New Cursor Optimization library failed.";
 		case LD_PRELOAD_UNSETENV_PROBLEM: return "Unsetting the library to preload in the environment variable failed.";
 		case LIBC_DLCLOSE_PROBLEM: return "Closing the C standard library failed.";
 		case LIBNCURSES_DLCLOSE_PROBLEM: return "Closing the New Cursor Optimization library failed.";
 
-		//fork.c
+		/*
+		fork.c
+		*/
 		case FORK_PROBLEM: return "Creating a new process failed.";
 
-		//asm.c
+		/*
+		asm.c
+		*/
 		case ASM_MPROTECT_PROBLEM: return "Unprotecting the instructions to overwrite failed.";
 		case ASM_MEMCMP_PROBLEM: return "Finding the instructions to overwrite failed.";
-
-		//lib.c
 
 		default: return "Converting an error code to an error message failed.";
 	}

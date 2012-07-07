@@ -42,6 +42,22 @@ then
 	exit "$COMMAND_PROBLEM"
 fi
 
+#Checks the existence of a compiler.
+GCC=`command -v "gcc"`
+if test -z "$GCC"
+then
+	echo "Finding \"gcc\" failed."
+	exit "$COMMAND_PROBLEM"
+fi
+
+#Checks the existence of a linker.
+LD=`command -v "ld"`
+if test -z "$LD"
+then
+	echo "Finding \"ld\" failed."
+	exit "$COMMAND_PROBLEM"
+fi
+
 #Compiles the library to preload.
 LD_PATH="/tmp/time"
 echo "#include <time.h>
@@ -49,15 +65,15 @@ time_t time(time_t * t) {
 	if (t != NULL) *t = 0;
 	return 0;
 }" >"$LD_PATH.c"
-cc -c "$LD_PATH.c" -o "$LD_PATH.o"
+"$GCC" -c "$LD_PATH.c" -o "$LD_PATH.o"
 rm -f "$LD_PATH.c"
-ld -shared "$LD_PATH.o" -o "$LD_PATH.so"
+"$LD" -shared "$LD_PATH.o" -o "$LD_PATH.so"
 rm -f "$LD_PATH.o"
 
 #Checks the existence of the library to preload.
 if test ! -f "$LD_PATH.so"
 then
-	echo "Compiling the library to preload failed."
+	echo "Compiling and linking the library to preload failed."
 	exit "$INTERNAL_PROBLEM"
 fi
 

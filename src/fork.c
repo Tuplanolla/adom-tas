@@ -8,19 +8,10 @@ Manages processes.
 
 #include <stdlib.h>//TODO get rid of the unnecessary
 #include <stdio.h>
-#include <stdarg.h>
 #include <string.h>
-#include <math.h>
 #include <time.h>
 #include <unistd.h>
-#include <dlfcn.h>
-#include <fcntl.h>
 #include <signal.h>
-#include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <sys/ipc.h>
-#include <sys/shm.h>
 #include <sys/types.h>
 
 #include <curses.h>
@@ -47,7 +38,6 @@ problem_t save(const unsigned int state) {
 		return error(FORK_PROBLEM);
 	}
 	else if (pid == 0) {//child
-		signal(SIGWINCH, SIG_IGN);
 		attach_shm();
 		fprintfl(error_stream, "[inherit <- %d]", (unsigned short )getppid());
 	}

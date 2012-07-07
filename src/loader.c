@@ -6,6 +6,7 @@ Does something unnecessary.
 #ifndef LOADER_C
 #define LOADER_C
 
+#include <stdlib.h>//exit
 #include <unistd.h>//fork
 #include <signal.h>//sig*, RTLD_*
 
@@ -45,7 +46,7 @@ problem_t uninit_child(const problem_t problem) {
 	/*
 	Exits gracefully.
 	*/
-	um_exit(problem);
+	exit(problem);
 
 	return NO_PROBLEM;
 }
@@ -63,7 +64,7 @@ problem_t uninit_parent(const problem_t problem) {
 	/*
 	Exits gracefully.
 	*/
-	um_exit(problem);
+	exit(problem);
 
 	return NO_PROBLEM;
 }
@@ -88,15 +89,14 @@ problem_t init_parent(void) {
 	*/
 	PROPAGATE(init_shm());
 
-	shm.ppid[0] = fork();
-	if (shm.ppid[0] == -1) {
+	const pid_t pid = fork();
+	if (pid == -1) {
 		return error(FORK_PROBLEM);
 	}
-	else if (shm.ppid[0] == 0) {//child
+	else if (pid == 0) {//child
 		PROPAGATE(attach_shm());
+		shm.ppid[0] = getppid();
 		shm.pids[0] = getpid();
-
-		signal(SIGWINCH, SIG_IGN);
 	}
 	else {//parent
 		signal(SIGCHLD, SIG_IGN);

@@ -166,21 +166,21 @@ problem_t init_config(void) {
 	if (stat(default_config_path, &config_stat) == -1) {
 		FILE * stream = fopen(default_config_path, "w");
 		if (stream == NULL) {
-			return error(CONFIG_OPEN_PROBLEM);
+			return error(CONFIGURATION_OPEN_PROBLEM);
 		}
 		else {
 			if ((size_t )fprintf(stream, "%s", default_config) != strlen(default_config)) {
-				error(CONFIG_WRITE_PROBLEM);
+				error(CONFIGURATION_WRITE_PROBLEM);
 			}
 			if (fclose(stream) == EOF) {
-				error(CONFIG_CLOSE_PROBLEM);
+				error(CONFIGURATION_CLOSE_PROBLEM);
 			}
 		}
-		return note(CONFIG_STAT_PROBLEM);
+		return note(CONFIGURATION_STAT_PROBLEM);
 	}
 	config_init(&config);
 	if (config_read_file(&config, default_config_path) == 0) {
-		return error(CONFIG_PARSE_PROBLEM);
+		return error(CONFIGURATION_PARSE_PROBLEM);
 	}
 
 	/*
@@ -194,7 +194,7 @@ problem_t init_config(void) {
 	const char * new_home_path;
 	struct passwd * pw;
 	if (config_lookup_string(&config, "home", &new_home_path) == CONFIG_FALSE) {
-		//warning(HOME_CONFIG_PROBLEM);
+		//warning(HOME_CONFIGURATION_PROBLEM);
 		new_home_path = getenv("HOME");
 		if (new_home_path == NULL) {
 			warning(HOME_GETENV_PROBLEM);

@@ -31,23 +31,30 @@ Does something important.
 
 #include "lib.h"
 
-intern printf_f um_printf = NULL;
-intern unlink_f um_unlink = NULL;
-intern ioctl_f um_ioctl = NULL;
-intern time_f um_time = NULL;
-intern localtime_f um_localtime = NULL;
-intern srandom_f um_srandom = NULL;
-intern random_f um_random = NULL;
-intern init_pair_f um_init_pair = NULL;
-intern wrefresh_f um_wrefresh = NULL;
-intern wgetch_f um_wgetch = NULL;
-intern exit_f um_exit = NULL;
+void dlnull(void) {
+	exit(error(ASSERT_PROBLEM));//TODO fix exit
+}
+
+intern printf_f um_printf = (printf_f )dlnull;
+intern unlink_f um_unlink = (unlink_f )dlnull;
+intern ioctl_f um_ioctl = (ioctl_f )dlnull;
+intern time_f um_time = (time_f )dlnull;
+intern localtime_f um_localtime = (localtime_f )dlnull;
+intern srandom_f um_srandom = (srandom_f )dlnull;
+intern random_f um_random = (random_f )dlnull;
+intern init_pair_f um_init_pair = (init_pair_f )dlnull;
+intern wrefresh_f um_wrefresh = (wrefresh_f )dlnull;
+intern wgetch_f um_wgetch = (wgetch_f )dlnull;
+intern endwin_f um_endwin = (endwin_f )dlnull;
 
 /**
 The active save state.
 **/
 unsigned int current_state = 1;
 
+/**
+The most important variables ever defined.
+**/
 bool was_meta = FALSE;//not good
 int was_colon = FALSE;//worse
 bool condensed = FALSE;
@@ -64,13 +71,16 @@ bool first = TRUE;
 void * libc_handle;
 void * libncurses_handle;
 
+/*
+Opens the dynamically linked libraries.
+*/
 problem_t init_lib(void) {
 	/*
-	Loads functions from dynamically linked libraries.
+	Loads the unmodified functions.
 
-	Requires either <code>RTLD_LAZY</code> or <code>RTLD_NOW</code>.
+	<code>RTLD_LAZY</code> is faster than <code>RTLD_NOW</code>.
 	*/
-	const int mode = RTLD_NOW;
+	const int mode = RTLD_LAZY;
 
 	libc_handle = dlopen(libc_path, mode);
 	if (libc_handle == NULL) {
@@ -83,7 +93,16 @@ problem_t init_lib(void) {
 	um_srandom = (srandom_f )dlsym(libc_handle, "srandom");
 	um_random = (random_f )dlsym(libc_handle, "random");
 	um_ioctl = (ioctl_f )dlsym(libc_handle, "ioctl");
-	um_exit = (exit_f )dlsym(libc_handle, "exit");
+	if (um_printf == NULL
+			|| um_unlink == NULL
+			|| um_time == NULL
+			|| um_localtime == NULL
+			|| um_srandom == NULL
+			|| um_random == NULL
+			|| um_ioctl == NULL
+			|| um_endwin == NULL) {
+		return error(LIBC_DLSYM_PROBLEM);
+	}
 
 	libncurses_handle = dlopen(libncurses_path, mode);
 	if (libncurses_handle == NULL) {
@@ -92,6 +111,12 @@ problem_t init_lib(void) {
 	um_init_pair = (init_pair_f )dlsym(libncurses_handle, "init_pair");
 	um_wrefresh = (wrefresh_f )dlsym(libncurses_handle, "wrefresh");
 	um_wgetch = (wgetch_f )dlsym(libncurses_handle, "wgetch");
+	um_endwin = (endwin_f )dlsym(libncurses_handle, "endwin");
+	if (um_init_pair == NULL
+			|| um_wrefresh == NULL
+			|| um_wgetch == NULL) {
+		return error(LIBNCURSES_DLSYM_PROBLEM);
+	}
 
 	/*
 	Prevents reloading libraries for child processes.
@@ -129,7 +154,7 @@ void save_quit_load(void) {
 /**
 Prints a formatted string.
 
-Intercepts printing anything.
+Intercepts printing anything and initializes this process instead.
 
 @param format The string format.
 @return The amount of characters printed.
@@ -143,7 +168,7 @@ int printf(const char * format, ...) {
 		}
 	}
 
-	call("printf(\"%s\", ...).", format);
+	call("printf(...).");
 	return (int )strlen(format);//approximate
 }
 
@@ -168,7 +193,7 @@ int unlink(const char * path) {
 Controls the terminal.
 
 Intercepts <code>TIOCGWINSZ</code> to always report a fixed size.
-Intercepting <code>SIGWINCH</code> elsewhere is also required.
+Resizing the terminal causes spurious calls and prints garbage on the screen.
 
 @param d An open file descriptor.
 @param request A request conforming to <code>ioctl_list</code>.
@@ -406,12 +431,12 @@ int wgetch(WINDOW * win) {//TODO remove bloat
 		return 0;//redundant
 	}
 	else if (key == state_key) {
-		current_state = current_state%(unsigned int )((int )states-1)+1;//++
+		current_state = current_state % (unsigned int )((int )states - 1) + 1;//++
 		wrefresh(win);
 		return 0;
 	}
 	else if (key == unstate_key) {
-		current_state = (unsigned int )(((int )current_state-2)%((int )states-1))+1;//--
+		current_state = (unsigned int )(((int )current_state - 2) % ((int )states - 1)) + 1;//--
 		wrefresh(win);
 		return 0;
 	}
@@ -450,7 +475,7 @@ int wgetch(WINDOW * win) {//TODO remove bloat
 		len = strlen(">");
 		mvwaddnstr(subwin, 1, cols / 2 + cols % 2 + 1 - len, ">", len);
 		wattrset(subwin, A_NORMAL);
-		um_wrefresh(subwin);
+		wrefresh(subwin);
 		delwin(subwin);
 		for (unsigned int row = 0; row < rows; row += 2) {
 			for (unsigned int col = 0; col < cols; col += 2) {
@@ -482,7 +507,7 @@ int wgetch(WINDOW * win) {//TODO remove bloat
 		return 0;
 	}
 	else if (key == quit_key) {//quits everything (stupid implementation)
-		endwin();
+		um_endwin();
 		printf("Ctrl C will get you back to your beloved terminal if nothing else works.\n"); fflush(stdout);
 		for (unsigned int state = 1; state < states; state++) {
 			if (shm.pids[state] != 0) {
@@ -518,20 +543,19 @@ int wgetch(WINDOW * win) {//TODO remove bloat
 }
 
 /**
-Exits immediately.
+Ends drawing to the screen.
 
 Intercepts exiting prematurely.
-Currently keys are lost and the process jams.
-Intercepting endwin with a wgetch loop should fix the problem.
+Currently the process jams.
 
-@param status The return value.
+@return <code>OK</code> if successful and <code>ERR</code> otherwise.
 **/
-void exit(int status) {
-	call("exit(%d).", status);
-	/*while (TRUE) {
-		sleep(1);
-	}*/
-	um_exit(NO_PROBLEM);
+int endwin(void) {
+	call("endwin().");
+	while (TRUE) {
+		wgetch(stdscr);
+	}
+	return um_endwin();
 }
 
 #endif

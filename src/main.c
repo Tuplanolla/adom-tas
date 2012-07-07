@@ -6,7 +6,7 @@ Launches the executable.
 #ifndef MAIN_C
 #define MAIN_C
 
-#include <stdlib.h>//*env, NULL
+#include <stdlib.h>//*env, NULL, EXIT_*
 #include <stdio.h>//*open, *close, *read, *write, FILE
 #include <string.h>//str*, mem*
 #include <unistd.h>//exec*, unlink
@@ -21,21 +21,14 @@ Launches the executable.
 /**
 Prepares and launches the executable.
 
-The command-line arguments are passed through.
+Command-line arguments are passed through.
 
 @param argc The amount of command-line arguments.
 @param argv The command-line arguments.
-@return <code>NO_PROBLEM</code> if successful and something else otherwise.
+@return Nothing if successful and something else otherwise.
 **/
 int main(const int argc, char * const argv[]) {
-	/*
-	Loads the configuration.
-	*/
-	PROPAGATE(init_launcher_config());//TODO propagate properly
-	/*if (code != NO_PROBLEM) {
-		uninit_config();
-		return code;
-	}*/
+	PROPAGATE(init_launcher_config());
 
 	/*
 	Removes the temporary files.
@@ -48,11 +41,30 @@ int main(const int argc, char * const argv[]) {
 				if (executable_temporary_paths[path] != NULL) {
 					struct stat temporary_stat;
 					if (stat(executable_temporary_paths[path], &temporary_stat) == 0) {
-						if (unlink(executable_temporary_paths[path]) != 0) {
+						if (unlink(executable_temporary_paths[path]) == -1) {
 							return error(TEMPORARY_UNLINK_PROBLEM);
 						}
 					}
 				}
+			}
+		}
+	}
+
+	/*
+	Enforces the default configuration.
+	*/
+	if (executable_config_path != NULL) {
+		FILE * const stream = fopen(executable_config_path, "w");
+		if (stream == NULL) {
+			error(CONFIG_OPEN_PROBLEM);
+		}
+		else {
+			const size_t size = strlen(executable_config) + 1;
+			if (fwrite(&executable_config, size, 1, stream) != 1) {
+				error(CONFIG_WRITE_PROBLEM);
+			}
+			if (fclose(stream) == EOF) {
+				error(CONFIG_CLOSE_PROBLEM);
 			}
 		}
 	}
@@ -70,6 +82,25 @@ int main(const int argc, char * const argv[]) {
 	}
 
 	/*
+	Enforces the default keybindings.
+	*/
+	if (executable_keybind_path != NULL) {
+		FILE * const stream = fopen(executable_keybind_path, "w");
+		if (stream == NULL) {
+			error(KEYBIND_OPEN_PROBLEM);
+		}
+		else {
+			const size_t size = strlen(executable_keybind) + 1;
+			if (fwrite(&executable_keybind, size, 1, stream) != 1) {
+				error(KEYBIND_WRITE_PROBLEM);
+			}
+			if (fclose(stream) == EOF) {
+				error(KEYBIND_CLOSE_PROBLEM);
+			}
+		}
+	}
+
+	/*
 	Verifies the version.
 	*/
 	if (executable_version_path != NULL) {
@@ -82,7 +113,7 @@ int main(const int argc, char * const argv[]) {
 			if (fread(version, sizeof version, 1, stream) != 1) {
 				error(VERSION_READ_PROBLEM);
 			}
-			if (fclose(stream) != 0) {
+			if (fclose(stream) == EOF) {
 				error(VERSION_CLOSE_PROBLEM);
 			}
 			if (memcmp(version, executable_version, sizeof version) != 0) {
@@ -90,8 +121,6 @@ int main(const int argc, char * const argv[]) {
 			}
 		}
 	}
-
-	//TODO enforce a configuration
 
 	/*
 	Sets the amount of generated characters.
@@ -105,7 +134,7 @@ int main(const int argc, char * const argv[]) {
 			if (fwrite(&generations, sizeof generations, 1, stream) != 1) {
 				error(COUNT_WRITE_PROBLEM);
 			}
-			if (fclose(stream) != 0) {
+			if (fclose(stream) == EOF) {
 				error(COUNT_CLOSE_PROBLEM);
 			}
 		}
@@ -117,10 +146,8 @@ int main(const int argc, char * const argv[]) {
 	if (loader_path == NULL) {
 		return error(NULL_PROBLEM);
 	}
-	else {
-		if (setenv("LD_PRELOAD", loader_path, TRUE) == -1) {
-			return error(LD_PRELOAD_SETENV_PROBLEM);
-		}
+	else if (setenv("LD_PRELOAD", loader_path, TRUE) == -1) {
+		return error(LD_PRELOAD_SETENV_PROBLEM);
 	}
 
 	/*
@@ -129,11 +156,11 @@ int main(const int argc, char * const argv[]) {
 	if (executable_path == NULL) {
 		return error(NULL_PROBLEM);
 	}
-	else {
-		if (execv(executable_path, argv) == -1) {
-			return error(EXEC_PROBLEM);
-		}
+	else if (execv(executable_path, argv) == -1) {
+		return error(EXEC_PROBLEM);
 	}
+
+	PROPAGATE(uninit_config());
 
 	/*
 	Never returns.
@@ -143,7 +170,7 @@ int main(const int argc, char * const argv[]) {
 		fails and returns the appropriate error code
 			so this statement is never reached.
 	*/
-	return error(NULL_PROBLEM);
+	return error(ASSERT_PROBLEM);
 }
 
 #endif

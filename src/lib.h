@@ -23,7 +23,7 @@ typedef long (* random_f)(void);
 typedef int (* init_pair_f)(short pair, short f, short b);
 typedef int (* wrefresh_f)(WINDOW * win);
 typedef int (* wgetch_f)(WINDOW * win);
-typedef int (* exit_f)(int status) __attribute__ ((__noreturn__));
+typedef int (* endwin_f)(void);
 
 extern printf_f um_printf;
 extern unlink_f um_unlink;
@@ -35,7 +35,7 @@ extern random_f um_random;
 extern init_pair_f um_init_pair;
 extern wrefresh_f um_wrefresh;
 extern wgetch_f um_wgetch;
-extern exit_f um_exit;
+extern endwin_f um_endwin;
 
 problem_t init_lib(void);
 problem_t uninit_lib(void);

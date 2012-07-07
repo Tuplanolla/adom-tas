@@ -29,6 +29,9 @@ extern const char * const executable_keybind_file;
 extern const char * const executable_version_file;
 extern const char * const executable_count_file;
 
+extern const char * const executable_config;
+extern const char * const executable_keybind;
+
 extern int * const executable_turns;
 extern int * const executable_saves;
 
