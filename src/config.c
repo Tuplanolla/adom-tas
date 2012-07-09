@@ -665,7 +665,7 @@ problem_t init_loader_config(void) {
 	Sets the initial system time.
 	**/
 	int new_timestamp;
-	if (config_lookup_bool(&config, "timestamp", &new_timestamp) == CONFIG_FALSE) {
+	if (config_lookup_int(&config, "timestamp", &new_timestamp) == CONFIG_FALSE) {
 		new_timestamp = default_timestamp;
 		//warning(TIMESTAMP_CONFIG_PROBLEM);
 	}

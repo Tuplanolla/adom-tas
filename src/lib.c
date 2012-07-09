@@ -16,6 +16,8 @@ Does something important.
 #include <dlfcn.h>//dl*, RTLD_*
 #include <sys/ioctl.h>//TIOC*
 
+#include <sys/wait.h>
+
 #include <curses.h>//*w*, chtype, WINDOW, COLOR
 
 #include "util.h"
@@ -59,6 +61,7 @@ The most important variables ever defined.
 bool was_meta = FALSE;//not good
 int was_colon = FALSE;//worse
 bool playbacking = FALSE;
+bool rolling = FALSE;
 frame_t * playback_frame;
 bool running = TRUE;
 char name[77];
@@ -279,6 +282,8 @@ int init_pair(short pair, short f, short b) {
 	return um_init_pair(pair, f, b);
 }
 
+bool skipwr = FALSE;
+
 /**
 Redraws the window.
 
@@ -288,6 +293,7 @@ Draws the custom interface.
 @return 0 if no errors occurred and -1 otherwise.
 **/
 int wrefresh(WINDOW * win) {
+	if (skipwr) return 0;
 	call("wrefresh(0x%08x).", (unsigned int )win);
 
 	/*
@@ -315,6 +321,8 @@ int wrefresh(WINDOW * win) {
 
 int previous_key = 0;
 
+int rollstage = 0;
+
 /**
 Reads a key code from a window.
 
@@ -323,6 +331,99 @@ Reads a key code from a window.
 **/
 int wgetch(WINDOW * win) {//TODO remove bloat
 	call("wgetch(0x%08x).", (unsigned int )win);
+
+	#define ROLL_FOR_PLAYING FALSE
+	if (rolling) {
+		rollstage++;
+		char str[22];
+		switch (rollstage) {
+			case -127-ROLL_FOR_PLAYING: {
+				int * birthday = (int * )0x082b61f0;
+				int * attributes = (int * )0x082b1728;
+				int * items = (int * )0x082a5980;
+				int * books = (int * )0x082a7e00;
+				if (books[0x14] == 0
+						|| books[0x1e] == 0
+						|| items[0xa9] == 0
+						|| attributes[0x01] < 20) exit(0);
+				snprintf(str, 22, "chr/%u", (unsigned int )timestamp);
+				FILE * const f = fopen(str, "w");
+				if (f != NULL) {
+					//fwrite(birthday, sizeof (int), 0x01, f);
+					fwrite(attributes, sizeof (int), 0x09, f);
+					fwrite(items, sizeof (int), 0x2b9, f);
+					fwrite(books, sizeof (int), 0x2f, f);
+					fclose(f);
+					exit(0);
+				}
+				exit(1);
+			}
+			case 1: return 'g';
+			case 2: return ' ';
+			case 3: return 's';
+			case 4: return 'm';
+			case 5: return 'g';
+			case 6: return 'f';
+			case 7: return ' ';
+			case 8: return 'q';
+			//case 8: {rollstage = -128;return 'r';}//return 'q';
+			default:
+				mvinnstr(0, 0, str, 21);
+				if (strncmp(str, "Your father wants you", 16) == 0) return 'd';
+				else if (strncmp(str, "In your childhood sla", 16) == 0) return 'c';
+				else if (strncmp(str, "You and your friends ", 16) == 0) return 'b';
+				else if (strncmp(str, "In cold winters lots ", 16) == 0) return 'c';
+				else if (strncmp(str, "Your grandfather alwa", 16) == 0) return 'a';
+				else if (strncmp(str, "When exploring a long", 16) == 0) return 'a';
+				else if (strncmp(str, "You are offered two j", 16) == 0) return 'a';
+				else if (strncmp(str, "Your favorite teacher", 16) == 0) return 'd';
+				else if (strncmp(str, "While crossing a ford", 16) == 0) return 'b';
+				else if (strncmp(str, "You have been trainin", 16) == 0) return 'c';
+				else if (strncmp(str, "At one point you fall", 16) == 0) return 'd';
+				else if (strncmp(str, "While at a market, yo", 16) == 0) return 'c';
+				else if (strncmp(str, "While playing in the ", 16) == 0) return 'b';
+				else if (strncmp(str, "Soon after starting y", 16) == 0) return 'a';
+				else if (strncmp(str, "After serving your ma", 16) == 0) return 'd';
+				else if (strncmp(str, "Having finally master", 16) == 0) return 'a';
+				else if (strncmp(str, "The final day of your", 16) == 0) return 'd';
+				else if (strncmp(str, "After ending your app", 16) == 0) return 'c';
+				else if (strncmp(str, "Evil has started to i", 16) == 0) return 'c';
+				else if (strncmp(str, "Now that you are old ", 16) == 0) return 'b';
+				else if (strncmp(str, "As you make your way ", 16) == 0) return 'd';
+				else if (strncmp(str, "During your apprentic", 16) == 0) return 'b';
+				else if (strncmp(str, "While doing research ", 16) == 0) return 'a';
+				else if (strncmp(str, "During a night out, o", 16) == 0) return 'a';
+				else if (strncmp(str, "While on a journey, y", 16) == 0) return 'a';
+				else if (strncmp(str, "If you came across an", 16) == 0) return 'd';
+				else if (strncmp(str, "Your brother has come", 16) == 0) return 'b';
+				else if (strncmp(str, "You are carrying your", 16) == 0) return 'b';
+				else if (strncmp(str, "You have stolen to fe", 16) == 0) return 'a';
+				else if (strncmp(str, "Your king lies dying,", 16) == 0) return 'a';
+				else if (strncmp(str, "You are called home t", 16) == 0) return 'c';
+				else if (strncmp(str, "You are a witness to ", 16) == 0) return 'a';
+				else if (strncmp(str, "As a child, whenever ", 16) == 0) return 'b';
+				else if (strncmp(str, "While shopping, you s", 16) == 0) return 'a';
+				else if (strncmp(str, "One night you wake up", 16) == 0) return 'b';
+				else if (strncmp(str, "When your father took", 16) == 0) return 'b';
+				else if (strncmp(str, "What would you order ", 16) == 0) return 'b';
+				else if (strncmp(str, "What about you gave y", 16) == 0) return 'b';
+				else if (strncmp(str, "Will you fight evil..", 16) == 0) return 'b';
+				else if (strncmp(str, "You are in a nobleman", 16) == 0) return 'b';
+				else if (strncmp(str, "There have been whisp", 16) == 0) return 'b';
+				else if (strncmp(str, "Your mind made up, yo", 16) == 0) return 'b';
+				else if (strncmp(str, "On your way to the Dr", 16) == 0) return 'c';
+				else if (strncmp(str, "You attempt to make a", 16) == 0) return 'd';
+				else if (strncmp(str, "You are walking on th", 16) == 0) return 'd';
+				else if (strncmp(str, "You are chopping wood", 16) == 0) return 'd';
+				else if (strncmp(str, "You return back from ", 16) == 0) return 'b';
+				else if (strncmp(str, "Your father has appre", 16) == 0) return 'd';
+				else if (strncmp(str, "You find yourself wor", 16) == 0) return 'b';
+				else if (strncmp(str, "While learning tricks", 16) == 0) return 'c';
+				else if (strncmp(str, "After many years of t", 16) == 0) return 'd';
+				else rollstage = -128; break;
+		}
+		return 0;
+	}
 
 	if (playbacking) {
 		if (playback_frame != NULL) {//TODO move this
@@ -350,6 +451,29 @@ int wgetch(WINDOW * win) {//TODO remove bloat
 	previous_turns = *executable_turns;
 	int key = um_wgetch(win);
 	if (key == play_key) {
+		if (record.count == 1) {//move to roll
+			rolling = TRUE;
+			back: timestamp++;
+			struct tm * tm;
+			tm = gmtime(&timestamp);
+			if (!(tm->tm_mon == 11 && tm->tm_mday == 31)) {
+				tm->tm_sec = 0;
+				tm->tm_min = 0;
+				tm->tm_hour = 0;
+				tm->tm_mday = 31;
+				tm->tm_mon = 11;
+				tm->tm_isdst = 0;
+				timestamp = mktime(tm) - timezone;
+			}
+			iarc4((unsigned int )timestamp, executable_arc4_calls_menu);
+			if (fork() > 0) {
+				int s;
+				wait(&s);
+				if (s == 0) goto back;
+			}
+			else skipwr = TRUE;
+			return 0;
+		}
 		if (record.count == 0) {//move to playback
 			freadp(input_path);
 			playbacking = TRUE;
