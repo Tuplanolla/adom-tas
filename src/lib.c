@@ -28,6 +28,7 @@ Does something important.
 #include "fork.h"
 #include "log.h"
 #include "config.h"
+#include "interface.h"
 
 #include "lib.h"
 
@@ -57,11 +58,13 @@ The most important variables ever defined.
 **/
 bool was_meta = FALSE;//not good
 int was_colon = FALSE;//worse
-bool condensed = FALSE;
 bool playbacking = FALSE;
 frame_t * playback_frame;
-char name[7];
-unsigned char dur = 16;
+bool running = TRUE;
+char name[77];
+unsigned char dur = 15;
+int surplus_turns = 0;
+int previous_turns = 0;
 
 /**
 Whether an overloaded function call is the first one.
@@ -154,18 +157,19 @@ void save_quit_load(void) {
 /**
 Prints a formatted string.
 
-Intercepts printing anything and initializes this process instead.
+Intercepts printing anything and initializes this process.
 
 @param format The string format.
 @return The amount of characters printed.
 **/
 int printf(const char * format, ...) {
-	if (first) {
+	if (first) {//TODO simplify
 		first = FALSE;
 		const problem_t problem = init_parent();
 		if (problem != NO_PROBLEM) {
 			uninit_parent(problem);
 		}
+		init_interface();
 	}
 
 	call("printf(...).");
@@ -262,10 +266,8 @@ long random(void) {
 	return um_random();
 }
 
-unsigned int pairs = 0;
-
 /**
-Initializes a new color pair and tracks their amount.
+Initializes a new color pair.
 
 @param pair The index of the pair.
 @param f The foreground color.
@@ -274,11 +276,8 @@ Initializes a new color pair and tracks their amount.
 **/
 int init_pair(short pair, short f, short b) {
 	call("init_pair(%d, %d, %d).", pair, f, b);
-	pairs++;
 	return um_init_pair(pair, f, b);
 }
-
-unsigned int previous_frame_count = 0;//or similar system to push keys into drawing queue
 
 /**
 Redraws the window.
@@ -288,15 +287,13 @@ Draws the custom interface.
 @param win The window to redraw.
 @return 0 if no errors occurred and -1 otherwise.
 **/
-int previous_turns;
 int wrefresh(WINDOW * win) {
 	call("wrefresh(0x%08x).", (unsigned int )win);
 
-	if (*executable_turns < previous_turns) turns++;
-	previous_turns = *executable_turns;
-
 	/*
-	Stores the state of the window.
+	Stores the state of the window,
+	draws the interface
+	and restores the state.
 
 	Pointers are used to suppress a warning about a bug in a library.
 	<pre>
@@ -308,76 +305,15 @@ int wrefresh(WINDOW * win) {
 	short pair; short * _pair = &pair;
 	wattr_get(win, _attrs, _pair, NULL);
 	getyx(win, y, x);
-
 	wattrset(win, A_NORMAL);
-
-	/*
-	Initializes the color pairs used by the interface.
-	*/
-	short ws_pair = (short )pairs;
-	#define wrefresh_INIT_PAIR(b) \
-		um_init_pair(ws_pair, COLOR_BLACK, b);\
-		ws_pair++;
-	wrefresh_INIT_PAIR(COLOR_RED);
-	wrefresh_INIT_PAIR(COLOR_YELLOW);
-	wrefresh_INIT_PAIR(COLOR_GREEN);
-	wrefresh_INIT_PAIR(COLOR_CYAN);
-	wrefresh_INIT_PAIR(COLOR_BLUE);
-	wrefresh_INIT_PAIR(COLOR_MAGENTA);
-	wrefresh_INIT_PAIR(COLOR_RED);//again
-	wrefresh_INIT_PAIR(COLOR_YELLOW);//again
-
-	/*
-	Draws the status bar.
-
-	TODO make non-static with padding
-	*/
-	#define TERM_COL 77
-	#define TERM_ROW 25
-	int ws_x = TERM_COL, ws_y = TERM_ROW - 1;
-	char ws_str[TERM_COL], ws_buf[TERM_COL];
-	#define wrefresh_ADDSTR(format, length, ...) \
-		ws_pair--;\
-		wattrset(win, COLOR_PAIR(ws_pair));\
-		snprintf(ws_str, (size_t )TERM_COL, format, ##__VA_ARGS__);\
-		snprintf(ws_buf, (size_t )((condensed ? 1 : length) + 1), "%-*s", length, ws_str);\
-		ws_x -= length;\
-		/*ws_x--;*/\
-		mvwaddnstr(win, ws_y, ws_x, ws_buf, TERM_COL-ws_x);\
-		ws_x--;
-	wrefresh_ADDSTR("P: #%u", 9, (unsigned int )getpid());
-	wrefresh_ADDSTR("S: %u/%u", 8, current_state, states - 1);
-	wrefresh_ADDSTR("V: +%u", 8, (unsigned int )(timestamp - record.timestamp));
-	wrefresh_ADDSTR("R: 0x%08x", 13, hash(executable_arc4_s, 0x100));
-	wrefresh_ADDSTR("D: %u", 8, dur);
-	wrefresh_ADDSTR("T: 0/%u", 8, *executable_turns + turns);
-	wrefresh_ADDSTR("F: 1/%u", 8, record.count);
-	wrefresh_ADDSTR("I: %s", 8, name);
-
-	/*
-	Draws the debug bar.
-	*/
-	/*char some[TERM_COL];//a hack
-	strcpy(some, "P:");
-	for (unsigned int indecks = 0; indecks < states; indecks++) {
-		char somer[TERM_COL];
-		bool somery = shm.pids[indecks] != 0;
-		sprintf(somer, "%s %c%d%c", some, somery ? '[' : ' ', (unsigned short )shm.pids[indecks], somery ? ']' : ' ');
-		strcpy(some, somer);
-	}
-	mvwaddnstr(win, 21, 10, some, TERM_COL-20);*/
-
-	/*
-	Restores the state of the window.
-	*/
+	draw_interface(win);
 	wmove(win, y, x);
 	wattr_set(win, attrs, pair, NULL);
 
-	/*
-	Redraws the window.
-	*/
 	return um_wrefresh(win);
 }
+
+int previous_key = 0;
 
 /**
 Reads a key code from a window.
@@ -387,6 +323,7 @@ Reads a key code from a window.
 **/
 int wgetch(WINDOW * win) {//TODO remove bloat
 	call("wgetch(0x%08x).", (unsigned int )win);
+
 	if (playbacking) {
 		if (playback_frame != NULL) {//TODO move this
 			if (playback_frame->duration == 0) {
@@ -408,6 +345,9 @@ int wgetch(WINDOW * win) {//TODO remove bloat
 			}
 		}
 	}
+
+	if (*executable_turns < previous_turns) surplus_turns++;
+	previous_turns = *executable_turns;
 	int key = um_wgetch(win);
 	if (key == play_key) {
 		if (record.count == 0) {//move to playback
@@ -431,59 +371,21 @@ int wgetch(WINDOW * win) {//TODO remove bloat
 		return 0;//redundant
 	}
 	else if (key == state_key) {
-		current_state = current_state % (unsigned int )((int )states - 1) + 1;//++
+		MODINC(current_state, states);
 		wrefresh(win);
 		return 0;
 	}
 	else if (key == unstate_key) {
-		current_state = (unsigned int )(((int )current_state - 2) % ((int )states - 1)) + 1;//--
+		MODDEC(current_state, states);
 		wrefresh(win);
 		return 0;
 	}
 	else if (key == menu_key) {
-		int y, x;
-		getyx(win, y, x);
-		WINDOW * subwin = newwin(rows / 2 + rows % 2 + 2, cols / 2 + cols % 2 + 2, rows / 4 - 2, cols / 4 - 1);
-		chtype ch = (chtype )' ' | COLOR_PAIR(37);
-		wborder(subwin, ch, ch, ch, ch, ch, ch, ch, ch);
-		um_wrefresh(subwin);
-		delwin(subwin);
-		subwin = newwin(3, cols / 2 + cols % 2 + 2, rows * 3 / 4 + rows % 2 - 1, cols / 4 - 1);
-		ch = (chtype )' ' | COLOR_PAIR(37);
-		wborder(subwin, ch, ch, ch, ch, ch, ch, ch, ch);
-		mvwhline(subwin, 1, 1, ch, cols / 2 + cols % 2);
-		wattrset(subwin, COLOR_PAIR(37));
-		unsigned int ws_x = 1;
-		size_t len = strlen("<");
-		mvwaddnstr(subwin, 1, ws_x, "<", len);
-		ws_x += len + 1;
-		unsigned int state = 1;
-		while (ws_x < cols / 2 + cols % 2 - 2 && state < states) {
-			len = uintlen(state) + 2;
-			char * buf = malloc(len + 1);
-			const bool occupied = shm.pids[state] != 0;
-			snprintf(buf, len + 1, "%c%u%c", occupied ? '[' : ' ', state, occupied ? ']' : ' ');
-			mvwaddnstr(subwin, 1, ws_x, buf, len);
-			free(buf);
-			const char * indicator = "^";
-			if (state == current_state) {//TODO intlen / 2 as well
-				mvwaddnstr(subwin, 2, ws_x + 1 - strlen(indicator) / 2, indicator, strlen(indicator));
-			}
-			state++;
-			ws_x += len + 1;
-		}
-		len = strlen(">");
-		mvwaddnstr(subwin, 1, cols / 2 + cols % 2 + 1 - len, ">", len);
-		wattrset(subwin, A_NORMAL);
-		wrefresh(subwin);
-		delwin(subwin);
-		for (unsigned int row = 0; row < rows; row += 2) {
-			for (unsigned int col = 0; col < cols; col += 2) {
-				mvwaddch(win, row / 2 + rows / 4 - 1, col / 2 + cols / 4, shm.chs[current_state][row][col]);
-			}
-		}
-		wmove(win, y, x);
-		wrefresh(win);
+		/*if (inactive) {
+			redrawwin(win);
+			um_wrefresh(win);
+		}*/
+		inactive = !inactive;
 		return 0;
 	}
 	else if (key == time_key) {
@@ -497,16 +399,17 @@ int wgetch(WINDOW * win) {//TODO remove bloat
 		return 0;
 	}
 	else if (key == duration_key) {
-		if (dur < 128) dur = (unsigned char )dur * 2;
+		if (dur < 255) dur = (unsigned char )((dur + 1) * 2 - 1);
 		wrefresh(win);
 		return 0;
 	}
 	else if (key == unduration_key) {
-		if (dur > 1) dur = (unsigned char )dur / 2;
+		if (dur > 0) dur = (unsigned char )((dur + 1) / 2 - 1);
 		wrefresh(win);
 		return 0;
 	}
 	else if (key == quit_key) {//quits everything (stupid implementation)
+		running = FALSE;
 		um_endwin();
 		printf("Ctrl C will get you back to your beloved terminal if nothing else works.\n"); fflush(stdout);
 		for (unsigned int state = 1; state < states; state++) {
@@ -519,26 +422,12 @@ int wgetch(WINDOW * win) {//TODO remove bloat
 		kill(shm.pids[0], SIGKILL);
 		return 0;//nice and elegant
 	}
-	if (!was_meta && !was_colon && (key == 0x3a || key == 'w')) was_colon = key == 0x3a ? 1 : 2;//booleans are fun like that
-	else if (!was_meta && key == 0x1b) was_meta = TRUE;
-	else {
-		const char * code;
-		strcpy(name, "");
-		if (was_colon) {
-			code = key_code(was_colon == 1 ? 0x3a : 'w');
-			strcat(name, code);
-		}
-		if (was_meta) {
-			code = key_code(0x1b);
-			strcat(name, code);
-		}
-		was_colon = FALSE;
-		was_meta = FALSE;
-		code = key_code(key);
-		strcat(name, code);//TODO turn this into a macro
-	}
-	add_key_frame(dur, key);//meta, colon and w are undisplayed but still recorded (for now)
-	//wrefresh(win);
+	const char * code = key_code(key);
+	strcpy(name, "");
+	strcat(name, code);
+	add_key_frame(dur, key);
+	wrefresh(win);
+	previous_key = key;
 	return key;
 }
 
@@ -550,11 +439,12 @@ Currently the process jams.
 
 @return <code>OK</code> if successful and <code>ERR</code> otherwise.
 **/
-int endwin(void) {
+int _endwin(void) {
 	call("endwin().");
-	while (TRUE) {
+	while (running) {
 		wgetch(stdscr);
 	}
+	curs_set(1);
 	return um_endwin();
 }
 

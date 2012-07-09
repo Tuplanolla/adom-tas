@@ -37,8 +37,8 @@ meta:
 $(OBJ)/%.o: $(SRC)/%.c
 	$(GCC) -fpic -c -o $@ $<
 
-$(BIN)/$(NAME).so: prepare meta $(OBJ)/loader.o $(OBJ)/problem.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
-	$(GCC) -fpic -shared -o $(BIN)/$(NAME).so $(OBJ)/loader.o $(OBJ)/problem.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
+$(BIN)/$(NAME).so: prepare meta $(OBJ)/loader.o $(OBJ)/interface.o $(OBJ)/problem.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
+	$(GCC) -fpic -shared -o $(BIN)/$(NAME).so $(OBJ)/loader.o $(OBJ)/interface.o $(OBJ)/problem.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/lib.o $(OBJ)/put.o
 
 $(BIN)/$(NAME): prepare meta $(OBJ)/main.o $(OBJ)/problem.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/put.o
 	$(GCC) -o $(BIN)/$(NAME) $(OBJ)/main.o $(OBJ)/problem.o $(OBJ)/exec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/record.o $(OBJ)/util.o $(OBJ)/asm.o $(OBJ)/log.o $(OBJ)/shm.o $(OBJ)/config.o $(OBJ)/put.o

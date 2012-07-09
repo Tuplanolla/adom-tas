@@ -218,7 +218,7 @@ The user interface deserves a mention since it's so intuitive.
 
 The status bar looks like
 
-	Drunk Coward  I: \M\Cf  F: 2/21  T: 0/7  D: 15  R: 0xe87de001  S: 2/9
+	Drunk Coward  I: \M\Cf  F: 2/21  T: 0/7  D: 1/2  E: 15  R: 0xe87de001  S: 2/9  P: 16384
 
 and contains
  the last recorded inputs (Alt Ctrl F),
@@ -226,24 +226,29 @@ and contains
   the amount of all frames (21),
  the amount of actual turns elapsed since the last input (0) and
   the amount of all actual turns (7),
+ the duration of the next frame (half a second),
  the time elapsed since the last emulated save-quit-load process (15 seconds),
  the current hash of the random number generator's state and
  the currently selected save state (#2) and
-  the amount of all save states (9).
+  the amount of all save states (9) and
+ the current process identifier.
 
 By default
 
-* `F8` shifts time forwards,
-* `Shift F8` shifts it backwards,
-* `F9` saves the current save state,
-* `F10` loads it,
-* `F11` selects the next save state,
-* `Shift F11` the previous save state,
-* `F12` opens the save state menu,
-* `Shift F12` closes it,
-* `Ctrl F12` plays back a recording (only on the first frame),
-* `Ctrl F13` plays a recording (if the key exists),
-* `Ctrl Shift F13` quits and
+* `F5` saves the current save state,
+* `F8` loads it,
+* `F6` selects the next save state,
+* `Shift F6` the previous one,
+* `F2` increases (doubles) the duration of the next frame,
+* `Shift F2` decreases (halves) it,
+* `F3` shifts time forwards (by one second),
+* `Shift F3` shifts it backwards (but not to a negative value),
+* `F9` opens or closes the save state menu,
+* `F10` condenses or expands the user interface,
+* `Shift F10` hides and shows it,
+* `F11` plays or pauses a recording (but only starting on the first frame),
+* `Shift F11` stops a recording (and enables appending to it),
+* `Shift F12` quits and
 * the save key (typically `S`) emulates the save-quit-load process.
 
 ## Troubleshooting
@@ -275,8 +280,14 @@ Something else happened? Consider
 
 ## Notes
 
+The attributes of a character are set when
+ the text "You are born to be a male gnome." appears and
+ varied until the text "You are now a fully learned wizard." appears.
+The items of a character are generated when
+ the talent menu opens.
 A character is considered generated when
  the text "You are now a fully learned wizard." appears.
+
 Putting the resource file `ADOM.DBG` in the current working directory will
  enable ADoM's debug mode.
 I have no idea what it does,
@@ -344,7 +355,8 @@ and the chunks consist of
 ### Making of ...
 
 This section is supposed to be about insightful revelations about
- how things are done,
+ how things are done and
+ some backstory of why this was made,
  but currently it's just a mess.
 
 When writing a recorder the most important thing is entropy.

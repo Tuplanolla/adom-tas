@@ -8,6 +8,9 @@
 #include <stddef.h>//size_t
 
 extern const char * const project_name;
+extern const char * const project_version;
+
+extern const int colors[7];
 
 extern const char * const log_separator;
 extern const char * const log_error;

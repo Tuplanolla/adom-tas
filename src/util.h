@@ -100,6 +100,24 @@ Returns the bigger of two numbers.
 #define MAX(x, y) (x > y ? x : y)
 
 /**
+Increments a number modularly.
+
+@param x The number.
+@param m The modulo.
+@return The incremented integer.
+**/
+#define MODINC(x, m) x = x % ((m) - 1) + 1;
+
+/**
+Decrements a number modularly.
+
+@param x The number.
+@param m The modulo.
+@return The decremented integer.
+**/
+#define MODDEC(x, m) x = ((x - 2) % ((m) - 1)) + 1;
+
+/**
 Returns the page boundary of a pointer.
 
 @param pointer The pointer.
@@ -138,5 +156,10 @@ The Shift modifier for the New Cursor Optimization library.
 The Ctrl modifier for the New Cursor Optimization library.
 **/
 #define MOD_CTRL 24
+
+/**
+The Meta modifier for the New Cursor Optimization library.
+**/
+#define MOD_META 27
 
 #endif

@@ -50,15 +50,16 @@ typedef struct frame_s frame_t;
 </pre>
 Thus only five bytes are needed.
 
+The order is reversed to improve access times.
+
+@var next The next frame.
 @var duration The type of the input or the duration of the frame.
 @var value The key or the time difference of the frame.
-@var next The next frame.
 **/
 struct frame_s {
-	unsigned char duration;
-	unsigned char _[3];
-	int value;
 	struct frame_s * next;
+	int value;
+	unsigned char duration;
 };
 typedef struct frame_s frame_t;
 

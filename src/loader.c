@@ -17,6 +17,7 @@ Does something unnecessary.
 #include "put.h"
 #include "config.h"
 #include "asm.h"
+#include "interface.h"
 #include "shm.h"
 #include "exec.h"
 #include "record.h"
@@ -76,6 +77,8 @@ problem_t init_parent(void) {
 	PROPAGATE(init_loader_config());
 
 	PROPAGATE(init_lib());
+
+	PROPAGATE(init_interface());
 
 	/*
 	Enables save-quit-load emulation.

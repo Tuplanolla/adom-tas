@@ -37,6 +37,12 @@ extern wrefresh_f um_wrefresh;
 extern wgetch_f um_wgetch;
 extern endwin_f um_endwin;
 
+extern unsigned int current_state;
+extern unsigned char dur;
+extern char name[77];
+extern int surplus_turns;
+extern int previous_turns;
+
 problem_t init_lib(void);
 problem_t uninit_lib(void);
 void save_quit_load(void);

@@ -25,9 +25,16 @@ emulates
 #include "exec.h"
 
 /**
-The actual turn count.
+The amount of color pairs initialized.
 
-Ignores negative turns.
+The value is set by <code>init_pair</code>.
+**/
+intern short pairs = 32;
+
+/**
+The actual turn count without negative turns.
+
+The value is set by <code>wgetch</code>.
 **/
 intern int turns = 0;
 
