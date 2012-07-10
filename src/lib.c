@@ -279,6 +279,7 @@ Initializes a new color pair.
 **/
 int init_pair(short pair, short f, short b) {
 	call("init_pair(%d, %d, %d).", pair, f, b);
+	//if (pair >= pairs) exit(error(ASSERT_PROBLEM));
 	return um_init_pair(pair, f, b);
 }
 

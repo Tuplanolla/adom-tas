@@ -55,8 +55,8 @@ extern int play_key;
 extern int stop_key;
 extern int quit_key;
 
-problem_t init_launcher_config(void);
-problem_t init_loader_config(void);
+problem_t init_external_config(void);
+problem_t init_internal_config(void);
 problem_t uninit_config(void);
 
 #endif

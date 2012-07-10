@@ -16,9 +16,9 @@ Generates code automatically.
 Prints the <code>key_code</code> function to <code>stdout</code>.
 **/
 void meta_key_code(void) {
-	printf("/*"
-			"Automatically generated; do not modify."
-			"*/"
+	printf("/*\n"
+			"Automatically generated; do not modify.\n"
+			"*/\n"
 			"const char * key_code(const int key) {\n"
 			"\tswitch (key) {\n");
 	int key = 0;

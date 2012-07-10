@@ -8,14 +8,21 @@ Sets the default values of various variables.
 
 #include <stddef.h>//size_t
 
-#include <curses.h>//KEY_*, COLOR_*
+#include <curses.h>//KEY_*
 
 #include "util.h"//intern, bool, FALSE, TRUE
 
 intern const char * const project_name = "adom-tas";
 intern const char * const project_version = "1.0.0";
 
-intern const int colors[7] = {
+intern const char * const interface_left_more = "<-";
+intern const char * const interface_right_more = "------>";
+intern const char * const interface_left_used = "[";
+intern const char * const interface_right_used = "]";
+intern const char * const interface_left_unused = "";
+intern const char * const interface_right_unused = "";
+intern const int interface_colors[8] = {
+	COLOR_BLACK,
 	COLOR_WHITE,
 	COLOR_RED,
 	COLOR_YELLOW,

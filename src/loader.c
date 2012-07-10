@@ -74,7 +74,7 @@ problem_t uninit_parent(const problem_t problem) {
 Initializes this process.
 **/
 problem_t init_parent(void) {
-	PROPAGATE(init_loader_config());
+	PROPAGATE(init_internal_config());
 
 	PROPAGATE(init_lib());
 

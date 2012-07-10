@@ -355,7 +355,7 @@ problem_t end_init_config(void) {
 	return NO_PROBLEM;
 }
 
-problem_t init_launcher_config(void) {
+problem_t init_external_config(void) {
 	PROPAGATE(init_config());
 
 	/*
@@ -552,7 +552,7 @@ problem_t init_launcher_config(void) {
 	return NO_PROBLEM;
 }
 
-problem_t init_loader_config(void) {
+problem_t init_internal_config(void) {
 	PROPAGATE(init_config());
 
 	/*
@@ -675,7 +675,7 @@ problem_t init_loader_config(void) {
 	Sets the amount of generated characters.
 	**/
 	int new_generations;
-	if (config_lookup_bool(&config, "generations", &new_generations) == CONFIG_FALSE) {
+	if (config_lookup_int(&config, "generations", &new_generations) == CONFIG_FALSE) {
 		new_generations = default_generations;
 		//warning(GENERATIONS_CONFIG_PROBLEM);
 	}

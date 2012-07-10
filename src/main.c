@@ -28,27 +28,7 @@ Command-line arguments are passed through.
 @return Nothing if successful and something else otherwise.
 **/
 int main(const int argc, char * const argv[]) {
-	PROPAGATE(init_launcher_config());
-
-	/*
-	Removes the temporary files.
-	*/
-	if (executable_temporary_paths != NULL) {
-		for (unsigned int level = 0; level < executable_temporary_levels; level++) {
-			const unsigned int offset = level * executable_temporary_parts;
-			for (unsigned int part = 0; part < executable_temporary_parts; part++) {
-				const unsigned int path = offset + part;
-				if (executable_temporary_paths[path] != NULL) {
-					struct stat temporary_stat;
-					if (stat(executable_temporary_paths[path], &temporary_stat) == 0) {
-						if (unlink(executable_temporary_paths[path]) == -1) {
-							return error(TEMPORARY_UNLINK_PROBLEM);
-						}
-					}
-				}
-			}
-		}
-	}
+	PROPAGATE(init_external_config());
 
 	/*
 	Enforces the default configuration.

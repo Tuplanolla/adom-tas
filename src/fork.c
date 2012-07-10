@@ -31,21 +31,27 @@ Manages processes.
 Saves the game to memory.
 **/
 problem_t save(const unsigned int state) {
-	beginning: signal(SIGCHLD, SIG_IGN);//just in case
-	fprintfl(error_stream, "[fork]");
-	pid_t pid = fork();//returns 0 in child, process id of child in parent, -1 on error
+	pid_t pid;
+	beginning: pid = fork();//returns 0 in child, process id of child in parent, -1 on error
 	if (pid == -1) {
 		return error(FORK_PROBLEM);
 	}
 	else if (pid == 0) {//child
 		attach_shm();
-		fprintfl(error_stream, "[inherit <- %d]", (unsigned short )getppid());
+
+		return NO_PROBLEM;
 	}
 	else {//parent
-		attach_shm();
+		signal(SIGCHLD, SIG_IGN);//prevents defunct processes from appearing
 
-		int y, x;
+		attach_shm();//TODO why?
+
+		/*
+		Stores the position of the cursor.
+		*/
+		short y, x;
 		getyx(stdscr, y, x);
+
 		for (unsigned int row = 0; row < rows; row++) {
 			for (unsigned int col = 0; col < cols; col++) {
 				shm.chs[state][row][col] = mvwinch(stdscr, (int )row, (int )col);
@@ -53,7 +59,6 @@ problem_t save(const unsigned int state) {
 		}
 
 		if (shm.pids[state] != 0) {
-			fprintfl(error_stream, "[displace -> %d]", (unsigned short )shm.pids[state]);
 			kill(shm.pids[state], SIGKILL);
 		}
 		shm.pids[state] = getpid();
@@ -89,15 +94,16 @@ problem_t save(const unsigned int state) {
 
 		fprintfl(error_stream, "[continue]");
 
-		wclear(stdscr);
-		for (unsigned int row = 0; row < rows; row++) {
-			for (unsigned int col = 0; col < cols; col++) {
-				mvwaddch(stdscr, (int )row, (int )col, shm.chs[state][row][col]);
-			}
-		}
+		/*
+		Restores the position of the cursor.
+		*/
 		wmove(stdscr, y, x);
-		wrefresh(stdscr);//TODO fix attribute corruption
-		goto beginning;//TODO proper recursion
+
+		/*
+		Redraws the window.
+		*/
+		redrawwin(stdscr);
+		wrefresh(stdscr);
 	}
 	return NO_PROBLEM;
 }

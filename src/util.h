@@ -88,7 +88,7 @@ Returns the smaller of two numbers.
 @param y The second number.
 @return The smaller number.
 **/
-#define MIN(x, y) (x < y ? x : y)
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
 
 /**
 Returns the bigger of two numbers.
@@ -97,7 +97,15 @@ Returns the bigger of two numbers.
 @param y The second number.
 @return The bigger number.
 **/
-#define MAX(x, y) (x > y ? x : y)
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+
+/**
+Returns the sign of a number.
+
+@param x The number.
+@return The sign.
+**/
+#define SGN(x) ((x) > 0 ? 1 : (x) < 0 ? -1 : 0)
 
 /**
 Increments a number modularly.

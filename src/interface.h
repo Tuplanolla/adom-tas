@@ -1,5 +1,5 @@
 /**
-@see gui.c
+@see interface.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef INTERFACE_H
@@ -7,8 +7,8 @@
 
 #include <curses.h>
 
-#include "util.h"
-#include "problem.h"
+#include "util.h"//bool
+#include "problem.h"//problem_t
 
 extern bool quitting;
 extern bool inactive;
@@ -18,6 +18,6 @@ extern bool playing;
 extern bool paused;
 
 problem_t init_interface(void);
-void draw_interface(WINDOW * win);
+problem_t draw_interface(WINDOW * win);
 
 #endif

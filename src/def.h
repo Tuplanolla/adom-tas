@@ -10,7 +10,13 @@
 extern const char * const project_name;
 extern const char * const project_version;
 
-extern const int colors[7];
+extern const char * const interface_left_more;
+extern const char * const interface_right_more;
+extern const char * const interface_left_used;
+extern const char * const interface_right_used;
+extern const char * const interface_left_unused;
+extern const char * const interface_right_unused;
+extern const int interface_colors[8];
 
 extern const char * const log_separator;
 extern const char * const log_error;
