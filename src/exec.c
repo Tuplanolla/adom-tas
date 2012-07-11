@@ -390,9 +390,128 @@ intern const char * const executable_keybind =
 	;
 
 /**
+The unique parts of the questions.
+**/
+intern const char * const executable_question_strings[51] = {
+	"Your father w",
+	"In y",
+	"You an",
+	"In c",
+	"Your g",
+	"When e",
+	"You are o",
+	"Your f",
+	"While c",
+	"You have b",
+	"At",
+	"While a",
+	"While p",
+	"S",
+	"After s",
+	"H",
+	"The ",
+	"After e",
+	"E",
+	"N",
+	"As y",
+	"During y",
+	"While d",
+	"During a",
+	"While o",
+	"If",
+	"Your b",
+	"You are car",
+	"You have s",
+	"Your k",
+	"You are cal",
+	"You are a",
+	"As a",
+	"While s",
+	"One",
+	"When y",
+	"What w",
+	"What a",
+	"Wi",
+	"You are i",
+	"Ther",
+	"Your m",
+	"On ",
+	"You a",
+	"You are w",
+	"You are ch",
+	"You r",
+	"Your father h",
+	"You f",
+	"While l",
+	"After m"
+};
+
+/**
+The lengths of the questions.
+**/
+intern const size_t executable_question_lens[51] = {
+	13,
+	4,
+	6,
+	4,
+	6,
+	6,
+	9,
+	6,
+	7,
+	10,
+	2,
+	7,
+	7,
+	1,
+	7,
+	1,
+	4,
+	7,
+	1,
+	1,
+	4,
+	8,
+	7,
+	8,
+	7,
+	2,
+	6,
+	11,
+	10,
+	6,
+	11,
+	9,
+	4,
+	7,
+	3,
+	6,
+	6,
+	6,
+	2,
+	9,
+	4,
+	6,
+	3,
+	5,
+	9,
+	10,
+	5,
+	13,
+	5,
+	7,
+	7
+};
+
+/**
+The length of the longest question.
+**/
+intern const size_t executable_question_max = 13;
+
+/**
 The effects of the questions.
 **/
-intern const int executable_questions[51][4][9] = {
+intern const int executable_question_effects[51][4][9] = {
 	{
 		{+1, -1,  0,  0, +1,  0,  0,  0, -1},
 		{+1,  0, -1,  0,  0, -1,  0,  0, +1},

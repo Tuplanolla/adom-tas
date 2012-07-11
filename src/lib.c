@@ -323,6 +323,57 @@ int wrefresh(WINDOW * win) {
 int previous_key = 0;
 
 int rollstage = 0;
+bool rollasked[51];
+
+char qathing(char * str, int * attreqs) {//TODO refactor without breaking
+	const size_t questions = sizeof executable_question_strings / sizeof *executable_question_strings;
+	for (size_t question = 0; question < questions; question++) {
+		if (rollasked[question]) continue;
+		if (strncmp(executable_question_strings[question], str, executable_question_lens[question]) == 0) {
+			rollasked[question] = TRUE;
+			bool ignorelist[4] = {FALSE, FALSE, FALSE, FALSE};
+			for (size_t atr = 0; atr < 9; atr++) {
+				bool new_ignorelist[4];
+				new_ignorelist[0] = ignorelist[0];
+				new_ignorelist[1] = ignorelist[1];
+				new_ignorelist[2] = ignorelist[2];
+				new_ignorelist[3] = ignorelist[3];
+				int zorg = attreqs[atr];
+				const int max = MAX(executable_question_effects[question][0][zorg],
+						MAX(executable_question_effects[question][1][zorg],
+						MAX(executable_question_effects[question][2][zorg],
+						executable_question_effects[question][3][zorg])));
+				for (size_t ans = 0; ans < 4; ans++) {
+					if (!new_ignorelist[ans] && executable_question_effects[question][ans][zorg] < max) {
+						new_ignorelist[ans] = TRUE;
+					}
+				}
+				int theanswer = -2;
+				for (size_t ans = 0; ans < 4; ans++) {
+					if (!new_ignorelist[ans]) {
+						if (theanswer == -1 || theanswer == -2) {
+							theanswer = ans;
+						}
+						else {
+							theanswer = -1;
+						}
+					}
+				}
+				if (theanswer == -2) {
+					ignorelist[0] = new_ignorelist[0];
+					ignorelist[1] = new_ignorelist[1];
+					ignorelist[2] = new_ignorelist[2];
+					ignorelist[3] = new_ignorelist[3];
+				}
+				else if (theanswer != -1) {
+					const char letters[4] = {'a', 'b', 'c', 'd'};
+					return letters[theanswer];
+				}
+			}
+		}
+	}
+	return 'e';
+}
 
 /**
 Reads a key code from a window.
@@ -330,13 +381,12 @@ Reads a key code from a window.
 @param win The window to read from.
 @return The key code.
 **/
-int wgetch(WINDOW * win) {//TODO remove bloat
+int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 	call("wgetch(0x%08x).", (unsigned int )win);
 
 	#define ROLL_FOR_PLAYING FALSE
 	if (rolling) {
 		rollstage++;
-		char str[22];
 		switch (rollstage) {
 			case -127-ROLL_FOR_PLAYING: {
 				int * birthday = (int * )0x082b61f0;
@@ -346,9 +396,10 @@ int wgetch(WINDOW * win) {//TODO remove bloat
 				if (books[0x14] == 0
 						|| books[0x1e] == 0
 						|| items[0xa9] == 0
-						|| attributes[0x01] < 20) exit(0);
-				snprintf(str, 22, "chr/%u", (unsigned int )timestamp);
-				FILE * const f = fopen(str, "w");
+						|| attributes[0x01] < 24) exit(0);
+				char buf[32];
+				snprintf(buf, sizeof buf, "chr/%u", (unsigned int )timestamp);
+				FILE * const f = fopen(buf, "w");
 				if (f != NULL) {
 					//fwrite(birthday, sizeof (int), 0x01, f);
 					fwrite(attributes, sizeof (int), 0x09, f);
@@ -367,61 +418,17 @@ int wgetch(WINDOW * win) {//TODO remove bloat
 			case 6: return 'f';
 			case 7: return ' ';
 			case 8: return 'q';
-			//case 8: {rollstage = -128;return 'r';}//return 'q';
-			default:
-				mvinnstr(0, 0, str, 21);
-				if (strncmp(str, "Your father wants you", 16) == 0) return 'd';
-				else if (strncmp(str, "In your childhood sla", 16) == 0) return 'c';
-				else if (strncmp(str, "You and your friends ", 16) == 0) return 'b';
-				else if (strncmp(str, "In cold winters lots ", 16) == 0) return 'c';
-				else if (strncmp(str, "Your grandfather alwa", 16) == 0) return 'a';
-				else if (strncmp(str, "When exploring a long", 16) == 0) return 'a';
-				else if (strncmp(str, "You are offered two j", 16) == 0) return 'a';
-				else if (strncmp(str, "Your favorite teacher", 16) == 0) return 'd';
-				else if (strncmp(str, "While crossing a ford", 16) == 0) return 'b';
-				else if (strncmp(str, "You have been trainin", 16) == 0) return 'c';
-				else if (strncmp(str, "At one point you fall", 16) == 0) return 'd';
-				else if (strncmp(str, "While at a market, yo", 16) == 0) return 'c';
-				else if (strncmp(str, "While playing in the ", 16) == 0) return 'b';
-				else if (strncmp(str, "Soon after starting y", 16) == 0) return 'a';
-				else if (strncmp(str, "After serving your ma", 16) == 0) return 'd';
-				else if (strncmp(str, "Having finally master", 16) == 0) return 'a';
-				else if (strncmp(str, "The final day of your", 16) == 0) return 'd';
-				else if (strncmp(str, "After ending your app", 16) == 0) return 'c';
-				else if (strncmp(str, "Evil has started to i", 16) == 0) return 'c';
-				else if (strncmp(str, "Now that you are old ", 16) == 0) return 'b';
-				else if (strncmp(str, "As you make your way ", 16) == 0) return 'd';
-				else if (strncmp(str, "During your apprentic", 16) == 0) return 'b';
-				else if (strncmp(str, "While doing research ", 16) == 0) return 'a';
-				else if (strncmp(str, "During a night out, o", 16) == 0) return 'a';
-				else if (strncmp(str, "While on a journey, y", 16) == 0) return 'a';
-				else if (strncmp(str, "If you came across an", 16) == 0) return 'd';
-				else if (strncmp(str, "Your brother has come", 16) == 0) return 'b';
-				else if (strncmp(str, "You are carrying your", 16) == 0) return 'b';
-				else if (strncmp(str, "You have stolen to fe", 16) == 0) return 'a';
-				else if (strncmp(str, "Your king lies dying,", 16) == 0) return 'a';
-				else if (strncmp(str, "You are called home t", 16) == 0) return 'c';
-				else if (strncmp(str, "You are a witness to ", 16) == 0) return 'a';
-				else if (strncmp(str, "As a child, whenever ", 16) == 0) return 'b';
-				else if (strncmp(str, "While shopping, you s", 16) == 0) return 'a';
-				else if (strncmp(str, "One night you wake up", 16) == 0) return 'b';
-				else if (strncmp(str, "When your father took", 16) == 0) return 'b';
-				else if (strncmp(str, "What would you order ", 16) == 0) return 'b';
-				else if (strncmp(str, "What about you gave y", 16) == 0) return 'b';
-				else if (strncmp(str, "Will you fight evil..", 16) == 0) return 'b';
-				else if (strncmp(str, "You are in a nobleman", 16) == 0) return 'b';
-				else if (strncmp(str, "There have been whisp", 16) == 0) return 'b';
-				else if (strncmp(str, "Your mind made up, yo", 16) == 0) return 'b';
-				else if (strncmp(str, "On your way to the Dr", 16) == 0) return 'c';
-				else if (strncmp(str, "You attempt to make a", 16) == 0) return 'd';
-				else if (strncmp(str, "You are walking on th", 16) == 0) return 'd';
-				else if (strncmp(str, "You are chopping wood", 16) == 0) return 'd';
-				else if (strncmp(str, "You return back from ", 16) == 0) return 'b';
-				else if (strncmp(str, "Your father has appre", 16) == 0) return 'd';
-				else if (strncmp(str, "You find yourself wor", 16) == 0) return 'b';
-				else if (strncmp(str, "While learning tricks", 16) == 0) return 'c';
-				else if (strncmp(str, "After many years of t", 16) == 0) return 'd';
-				else rollstage = -128; break;
+			default: {
+				char * const str = malloc(executable_question_max + 1);
+				mvwinnstr(win, 0, 0, str, executable_question_max);
+				const int attreqs[9] = {1, 7, 2, 4, 3, 0, 8, 5, 6};//Le > Ma > Wi > To > Dx > St > Pe > Ch > Ap
+				char result = qathing(str, attreqs);
+				free(str);
+				if (result == 'e') {
+					rollstage = -128;
+				}
+				return result;
+			}
 		}
 		return 0;
 	}
@@ -467,6 +474,9 @@ int wgetch(WINDOW * win) {//TODO remove bloat
 				timestamp = mktime(tm) - timezone;
 			}
 			iarc4((unsigned int )timestamp, executable_arc4_calls_menu);
+			for (size_t question = 0; question < 51; question++) {
+				rollasked[question] = FALSE;
+			}
 			if (fork() > 0) {
 				int s;
 				wait(&s);

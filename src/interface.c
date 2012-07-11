@@ -160,12 +160,12 @@ problem_t draw_menu(void) {
 	int right_col = x;
 	{
 		const size_t size = strlen(interface_left_more) + 1;
-		mvwaddstr(menu_states_win, row, left_col, interface_left_more);
+		//mvwaddstr(menu_states_win, row, left_col, interface_left_more);
 		left_col += size;
 	}
 	{
 		const size_t size = strlen(interface_right_more) + 1;
-		mvwaddstr(menu_states_win, row, right_col - size, interface_right_more);
+		//mvwaddstr(menu_states_win, row, right_col - size, interface_right_more);
 		right_col -= size;
 	}
 	const int middle_col = (right_col + left_col) / 2;
@@ -176,31 +176,33 @@ problem_t draw_menu(void) {
 	int diff = -1;
 	int state = current_state;
 	while (TRUE) {
-		const char * interface_left;
-		const char * interface_right;
-		if (state > 0 && state < states && shm.pids[state] == 0) {
-			interface_left = interface_left_unused;
-			interface_right = interface_right_unused;
-		}
-		else {
-			interface_left = interface_left_used;
-			interface_right = interface_right_used;
+		const char * interface_left = "";
+		const char * interface_right = "";
+		if (state > 0 && state < states) {
+			if (shm.pids[state] == 0) {
+				interface_left = interface_left_unused;
+				interface_right = interface_right_unused;
+			}
+			else {
+				interface_left = interface_left_used;
+				interface_right = interface_right_used;
+			}
 		}
 		const size_t len = strlen(interface_left)
 				+ uintlen(state)
 				+ strlen(interface_right) + 2;
 		int col;
 		if (inc_col == dec_col) {//TODO use div
-			inc_col += 1 + (len - 1) / 2;
-			dec_col -= len / 2;
+			inc_col += 1 + (len - 1) / 2 - 2;
+			dec_col -= len / 2 + 2;
 			col = dec_col;
 		}
 		else if (diff < 0) {
-			dec_col -= len;
+			inc_col += len;
 			col = inc_col;
 		}
 		else {
-			inc_col += len;
+			dec_col -= len;
 			col = dec_col - len;//heuristic
 		}
 		if (dec_col < left_col) {

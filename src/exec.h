@@ -33,7 +33,10 @@ extern const char * const executable_count_file;
 extern const char * const executable_config;
 extern const char * const executable_keybind;
 
-extern const int executable_questions[51][4][9];
+extern const char * const executable_question_strings[51];
+extern const size_t executable_question_lens[51];
+extern const size_t executable_question_max;
+extern const int executable_question_effects[51][4][9];
 
 extern int * const executable_turns;
 extern int * const executable_saves;

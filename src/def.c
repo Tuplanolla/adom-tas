@@ -16,7 +16,7 @@ intern const char * const project_name = "adom-tas";
 intern const char * const project_version = "1.0.0";
 
 intern const char * const interface_left_more = "<-";
-intern const char * const interface_right_more = "------>";
+intern const char * const interface_right_more = "---->";
 intern const char * const interface_left_used = "[";
 intern const char * const interface_right_used = "]";
 intern const char * const interface_left_unused = "";
