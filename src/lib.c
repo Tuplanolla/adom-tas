@@ -15,6 +15,7 @@ Does something important.
 #include <signal.h>//temporary SIGKILL
 #include <dlfcn.h>//dl*, RTLD_*
 #include <sys/ioctl.h>//TIOC*
+#include <sys/stat.h>//stat
 
 #include <sys/wait.h>
 
@@ -190,8 +191,11 @@ Intercepts removing the debug file if it exists.
 int unlink(const char * path) {
 	call("unlink(\"%s\").", path);
 	if (strcmp(path, "ADOM.DBG") == 0) {
-		sleep(1);
-		return 0;
+		struct stat buf;
+		if (stat(path, &buf) == 0) {
+			sleep(1);
+			return 0;
+		}
 	}
 	return um_unlink(path);
 }
@@ -324,55 +328,39 @@ int previous_key = 0;
 
 int rollstage = 0;
 bool rollasked[51];
+char answers[51];
+char * str;
 
-char qathing(char * str, int * attreqs) {//TODO refactor without breaking
+char qathing(const char * str, const int * attreqs) {//TODO refactor without breaking
 	const size_t questions = sizeof executable_question_strings / sizeof *executable_question_strings;
 	for (size_t question = 0; question < questions; question++) {
 		if (rollasked[question]) continue;
 		if (strncmp(executable_question_strings[question], str, executable_question_lens[question]) == 0) {
+			if (answers[question] != '?') return answers[question];
 			rollasked[question] = TRUE;
-			bool ignorelist[4] = {FALSE, FALSE, FALSE, FALSE};
-			for (size_t atr = 0; atr < 9; atr++) {
-				bool new_ignorelist[4];
-				new_ignorelist[0] = ignorelist[0];
-				new_ignorelist[1] = ignorelist[1];
-				new_ignorelist[2] = ignorelist[2];
-				new_ignorelist[3] = ignorelist[3];
-				int zorg = attreqs[atr];
-				const int max = MAX(executable_question_effects[question][0][zorg],
-						MAX(executable_question_effects[question][1][zorg],
-						MAX(executable_question_effects[question][2][zorg],
-						executable_question_effects[question][3][zorg])));
-				for (size_t ans = 0; ans < 4; ans++) {
-					if (!new_ignorelist[ans] && executable_question_effects[question][ans][zorg] < max) {
-						new_ignorelist[ans] = TRUE;
-					}
-				}
-				int theanswer = -2;
-				for (size_t ans = 0; ans < 4; ans++) {
-					if (!new_ignorelist[ans]) {
-						if (theanswer == -1 || theanswer == -2) {
-							theanswer = ans;
-						}
-						else {
-							theanswer = -1;
-						}
-					}
-				}
-				if (theanswer == -2) {
-					ignorelist[0] = new_ignorelist[0];
-					ignorelist[1] = new_ignorelist[1];
-					ignorelist[2] = new_ignorelist[2];
-					ignorelist[3] = new_ignorelist[3];
-				}
-				else if (theanswer != -1) {
-					const char letters[4] = {'a', 'b', 'c', 'd'};
-					return letters[theanswer];
+			int score[4] = {0, 0, 0, 0};
+			for (size_t opt = 0; opt < 4; opt++) {
+				int weight = 1;
+				for (size_t atr = 0; atr < 9; atr++) {
+					int zorg = attreqs[8 - atr];
+					score[opt] += weight * executable_question_effects[question][opt][zorg];
+					weight *= 2;
 				}
 			}
+			int answer = 4;
+			int max = -1<<31;
+			for (size_t opt = 0; opt < 4; opt++) {
+				if (score[opt] > max) {
+					max = score[opt];
+					answer = opt;
+				}
+			}
+			const char letters[5] = {'a', 'b', 'c', 'd', '?'};
+			answers[question] = letters[answer];
+			return letters[answer];
 		}
 	}
-	return 'e';
+	return '?';
 }
 
 /**
@@ -389,19 +377,29 @@ int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 		rollstage++;
 		switch (rollstage) {
 			case -127-ROLL_FOR_PLAYING: {
+				free(str);
 				int * birthday = (int * )0x082b61f0;
+				int * gender = (int * )0x082add18;
+				int * race = (int * )0x082add10;
+				int * prof = (int * )0x082add14;
+				int * gift = (int * )0x082b6144;
 				int * attributes = (int * )0x082b1728;
 				int * items = (int * )0x082a5980;
 				int * books = (int * )0x082a7e00;
 				if (books[0x14] == 0
 						|| books[0x1e] == 0
 						|| items[0xa9] == 0
-						|| attributes[0x01] < 24) exit(0);
+						|| attributes[0x01] < 20) exit(0);
 				char buf[32];
 				snprintf(buf, sizeof buf, "chr/%u", (unsigned int )timestamp);
 				FILE * const f = fopen(buf, "w");
 				if (f != NULL) {
-					//fwrite(birthday, sizeof (int), 0x01, f);
+					fwrite(birthday, sizeof (int), 0x01, f);
+					fwrite(gender, sizeof (int), 0x01, f);
+					fwrite(race, sizeof (int), 0x01, f);
+					fwrite(prof, sizeof (int), 0x01, f);
+					fwrite(answers, sizeof answers + 1, 0x01, f);
+					fwrite(gift, sizeof (int), 0x01, f);
 					fwrite(attributes, sizeof (int), 0x09, f);
 					fwrite(items, sizeof (int), 0x2b9, f);
 					fwrite(books, sizeof (int), 0x2f, f);
@@ -410,21 +408,27 @@ int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 				}
 				exit(1);
 			}
-			case 1: return 'g';
+			case 1: {
+				str = malloc(executable_question_max + 1);
+				return 'g';
+			}
 			case 2: return ' ';
 			case 3: return 's';
 			case 4: return 'm';
 			case 5: return 'g';
 			case 6: return 'f';
 			case 7: return ' ';
-			case 8: return 'q';
+			case 8: {
+				for (size_t question = 0; question < 51; question++) {
+					answers[question] = '?';
+				}
+				return 'q';
+			}
 			default: {
-				char * const str = malloc(executable_question_max + 1);
 				mvwinnstr(win, 0, 0, str, executable_question_max);
 				const int attreqs[9] = {1, 7, 2, 4, 3, 0, 8, 5, 6};//Le > Ma > Wi > To > Dx > St > Pe > Ch > Ap
 				char result = qathing(str, attreqs);
-				free(str);
-				if (result == 'e') {
+				if (result == '?') {
 					rollstage = -128;
 				}
 				return result;
@@ -506,6 +510,14 @@ int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 		return 0;//redundant
 	}
 	else if (key == state_key) {
+		for (size_t question = 0; question < 51; question++) {
+			answers[question] = 'e';
+		}
+		const int attreqs[9] = {1, 7, 2, 4, 3, 0, 8, 5, 6};//Le > Ma > Wi > To > Dx > St > Pe > Ch > Ap
+		for (size_t q = 0; q < 51; q++) {
+			char result = qathing(executable_question_strings[q], attreqs);
+			fprintfl(error_stream, "%d -> %c", q, result == 0 ? '0' : result);
+		}
 		MODINC(current_state, states);
 		wrefresh(win);
 		return 0;
