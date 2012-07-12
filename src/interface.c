@@ -123,7 +123,7 @@ problem_t draw_status(void) {
 	wrefresh_ADDSTR("T: 0/%u", (unsigned int )(*executable_turns + surplus_turns));
 	wrefresh_ADDSTR("F: %u/%u", record.count - previous_count, record.count);
 	wrefresh_ADDSTR("I: %s", name);
-	//mvaddnstr("DrCo", name);
+	//mvaddnstr("DrCo", name);//pair 7 or A_NORMAL
 	free(str);
 
 	return NO_PROBLEM;
@@ -156,8 +156,8 @@ problem_t draw_menu(void) {
 	getmaxyx(menu_states_win, y, x);
 
 	int row = 1;
-	int left_col = 1;
-	int right_col = x;
+	int left_col = 0;
+	int right_col = x - 1;
 	{
 		const size_t size = strlen(interface_left_more) + 1;
 		//mvwaddstr(menu_states_win, row, left_col, interface_left_more);
@@ -168,14 +168,15 @@ problem_t draw_menu(void) {
 		//mvwaddstr(menu_states_win, row, right_col - size, interface_right_more);
 		right_col -= size;
 	}
-	const int middle_col = (right_col + left_col) / 2;
-	int dec_col = middle_col;
-	int inc_col = middle_col;
+	int dec_col;
+	int inc_col;
+	bool left_end = FALSE;
+	bool right_end = FALSE;
 	bool left_more = FALSE;
 	bool right_more = FALSE;
-	int diff = -1;
+	int diff = 0;
 	int state = current_state;
-	while (TRUE) {
+	do {
 		const char * interface_left = "";
 		const char * interface_right = "";
 		if (state > 0 && state < states) {
@@ -189,29 +190,52 @@ problem_t draw_menu(void) {
 			}
 		}
 		const size_t len = strlen(interface_left)
-				+ uintlen(state)
-				+ strlen(interface_right) + 2;
-		int col;
-		if (inc_col == dec_col) {//TODO use div
-			inc_col += 1 + (len - 1) / 2 - 2;
-			dec_col -= len / 2 + 2;
+				+ intlen(state)
+				+ strlen(interface_right);
+		int col = -1;
+		if (diff == 0) {
+			diff = 1;
+			dec_col = left_col + (right_col - left_col + len - 1) / 2 + 1;
 			col = dec_col;
+			inc_col = dec_col + len - 1;
 		}
-		else if (diff < 0) {
-			inc_col += len;
-			col = inc_col;
+		else if (diff > 0) {//move left
+			if (!left_more) {
+				dec_col -= len;
+				dec_col--;//spacing
+				col = dec_col;
+				if (dec_col <= left_col) {
+					if (state > 0) {
+						left_more = TRUE;
+					}
+					left_end = TRUE;
+					col = -1;
+				}
+			}
+			if (state <= 0) {
+				left_end = TRUE;
+				col = -1;
+			}
 		}
-		else {
-			dec_col -= len;
-			col = dec_col - len;//heuristic
+		else {//move right
+			if (!right_more) {
+				inc_col++;//spacing
+				col = inc_col + 1;
+				inc_col += len;
+				if (inc_col >= right_col) {
+					if (state < (int )states) {//TODO make states an int
+						right_more = TRUE;
+					}
+					right_end = TRUE;
+					col = -1;
+				}
+			}
+			if (state >= (int )states) {
+				right_end = TRUE;
+				col = -1;
+			}
 		}
-		if (dec_col < left_col) {
-			left_more = TRUE;
-		}
-		if (inc_col > right_col) {
-			right_more = TRUE;
-		}
-		if ((diff < 0 && !left_more) || (diff > 0 && !right_more)) {
+		if (col != -1) {
 			const size_t size = len + 1;
 			char * const buf = malloc(size);
 			if (buf == NULL) {
@@ -228,15 +252,7 @@ problem_t draw_menu(void) {
 		}
 		state += diff;
 		diff = - (diff + SGN(diff));
-		if (state < 0) {
-			left_more = TRUE;
-		}
-		if (state > states) {
-			right_more = TRUE;
-		}
-		//fprintf(stderr, "(%d)", diff);
-		if (left_more && right_more) break;
-	}
+	} while (!(left_end && right_end));
 	if (left_more) {
 		mvwaddstr(menu_states_win, row, 1, interface_left_more);
 	}

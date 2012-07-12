@@ -139,7 +139,7 @@ Returns the page size of an object.
 @param object The object.
 @return The page size of the object.
 **/
-#define PAGE_SIZE(object) ((size_t )((1 + ((int )sizeof (object) - 1) / getpagesize()) * getpagesize()))
+#define PAGE_SIZE(object) ((size_t )((((int )sizeof (object) - 1) / getpagesize() + 1) * getpagesize()))
 
 /**
 Swaps two variables.

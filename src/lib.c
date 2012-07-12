@@ -348,7 +348,7 @@ char qathing(const char * str, const int * attreqs) {//TODO refactor without bre
 				}
 			}
 			int answer = 4;
-			int max = -1<<31;
+			int max = -1 << 31;
 			for (size_t opt = 0; opt < 4; opt++) {
 				if (score[opt] > max) {
 					max = score[opt];
