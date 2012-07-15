@@ -39,17 +39,17 @@ void dlnull(void) {
 	exit(error(ASSERT_PROBLEM));//TODO fix exit
 }
 
-intern printf_f um_printf = (printf_f )dlnull;
-intern unlink_f um_unlink = (unlink_f )dlnull;
-intern ioctl_f um_ioctl = (ioctl_f )dlnull;
-intern time_f um_time = (time_f )dlnull;
-intern localtime_f um_localtime = (localtime_f )dlnull;
-intern srandom_f um_srandom = (srandom_f )dlnull;
-intern random_f um_random = (random_f )dlnull;
-intern init_pair_f um_init_pair = (init_pair_f )dlnull;
-intern wrefresh_f um_wrefresh = (wrefresh_f )dlnull;
-intern wgetch_f um_wgetch = (wgetch_f )dlnull;
-intern endwin_f um_endwin = (endwin_f )dlnull;
+intern printf_f um_printf = (void * )dlnull;
+intern unlink_f um_unlink = (void * )dlnull;
+intern ioctl_f um_ioctl = (void * )dlnull;
+intern time_f um_time = (void * )dlnull;
+intern localtime_f um_localtime = (void * )dlnull;
+intern srandom_f um_srandom = (void * )dlnull;
+intern random_f um_random = (void * )dlnull;
+intern init_pair_f um_init_pair = (void * )dlnull;
+intern wrefresh_f um_wrefresh = (void * )dlnull;
+intern wgetch_f um_wgetch = (void * )dlnull;
+intern endwin_f um_endwin = (void * )dlnull;
 
 /**
 The active save state.
@@ -372,7 +372,7 @@ Reads a key code from a window.
 int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 	call("wgetch(0x%08x).", (unsigned int )win);
 
-	#define ROLL_FOR_PLAYING FALSE
+	#define ROLL_FOR_PLAYING 0//852044892
 	if (rolling) {
 		rollstage++;
 		switch (rollstage) {
@@ -465,6 +465,7 @@ int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 	if (key == play_key) {
 		if (record.count == 1) {//move to roll
 			rolling = TRUE;
+			goto front;
 			back: timestamp++;
 			struct tm * tm;
 			tm = gmtime(&timestamp);
@@ -477,7 +478,7 @@ int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 				tm->tm_isdst = 0;
 				timestamp = mktime(tm) - timezone;
 			}
-			iarc4((unsigned int )timestamp, executable_arc4_calls_menu);
+			front: iarc4((unsigned int )timestamp, executable_arc4_calls_menu);
 			for (size_t question = 0; question < 51; question++) {
 				rollasked[question] = FALSE;
 			}
@@ -522,22 +523,68 @@ int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 		wrefresh(win);
 		return 0;
 	}
-	else if (key == unstate_key) {
-		//mapped_something = int magic_map(int mode);//2 for all
-		typedef int (* magic_map_f)(int);
-		//found_something = int monster_detect(int x, int y);
-		typedef int (* monster_detect_f)(int, int);
-		magic_map_f executable_magic_map = (magic_map_f )0x08058cf0;
-		monster_detect_f executable_monster_detect = (monster_detect_f )0x080aa850;
-		executable_magic_map(2);
-		for (unsigned int row = 0; row < rows - 7; row++) {
+	else if (key == unstate_key) {//TODO move
+		WINDOW * cheat_win = newwin(rows - 5, cols, 2, 0);
+		for (unsigned int row = 0; row < rows - 5; row++) {
 			for (unsigned int col = 0; col < cols; col++) {
-				if (executable_monster_detect(col, row) == 1) {
-					mvwaddch(win, row + 2, col, COLOR_PAIR(4) | '?');
+				const chtype ch = mvwinch(win, row + 2, col);
+				const chtype sch = A_CHARTEXT & ch;
+				if (sch == '\0' || sch == ' ') {
+					const int attr = COLOR_PAIR(8) | A_BOLD;
+					wattron(cheat_win, attr);
+					const unsigned char terrain = (*executable_terrain)[row * cols + col];
+					mvwaddch(cheat_win, row, col, executable_terrain_chars[terrain]);
+					const unsigned char object = (*executable_objects)[row * cols + col];
+					if (object != '\0') {
+						mvwaddch(cheat_win, row, col, executable_object_chars[object]);
+					}
+					wattroff(cheat_win, attr);
+				}
+				else {
+					mvwaddch(cheat_win, row, col, ch);
 				}
 			}
 		}
-		wrefresh(win);
+		for (unsigned int row = 0; row < rows - 5; row++) {
+			for (unsigned int col = 0; col < cols; col++) {
+				const executable_map_item_t * item = (*executable_items)[row * cols + col];
+				if (item != NULL) {
+					while (item->next != NULL) {
+						item = item->next;
+						if (item->item != NULL) {
+							const executable_item_data_t i = executable_item_data[item->item->type];
+							int color = i.color;
+							if (color == -1) {
+								color = executable_material_colors[i.material];
+							}
+							int attr = COLOR_PAIR(color);
+							if (color > 8) {
+								attr = A_BOLD | COLOR_PAIR(color - 8);
+							}
+							wattron(cheat_win, attr);
+							mvwaddch(cheat_win, row, col, executable_item_chars[i.category]);//TODO make rocks special
+							wattroff(cheat_win, attr);
+						}
+					}
+				}
+			}
+		}
+		const executable_map_monster_t * monster = *executable_monsters;
+		while (monster->next != NULL) {
+			monster = monster->next;
+			if (monster->monster != NULL) {
+				const executable_monster_data_t m = executable_monster_data[monster->monster->type];
+				int attr = COLOR_PAIR(m.color);
+				if (m.color > 8) {
+					attr = A_BOLD | COLOR_PAIR(m.color - 8);
+				}
+				wattron(cheat_win, attr);
+				mvwaddch(cheat_win, monster->monster->y, monster->monster->x, m.character);
+				wattroff(cheat_win, attr);
+			}
+		}
+		wrefresh(cheat_win);
+		delwin(cheat_win);
 		MODDEC(current_state, states);
 		wrefresh(win);
 		return 0;

@@ -821,6 +821,135 @@ intern const int executable_question_effects[51][4][9] = {
 };
 
 /**
+A pointer to the item characters.
+**/
+intern const char const executable_terrain_chars[62] = {
+	'?',
+	'#',
+	'#',
+	'.',
+	'+',
+	'#',
+	'#',
+	'/',
+	'#',
+	'+',
+	'.',
+	'+',
+	'.',
+	'/',
+	'=',
+	'"',
+	'~',
+	'^',
+	'&',
+	'"',
+	'.',
+	'^',
+	'^',
+	'!',
+	'~',
+	'"',
+	'.',
+	'o',
+	'*',
+	'.',
+	'=',
+	'+',
+	'*',
+	'=',
+	'*',
+	'*',
+	'*',
+	'*',
+	'*',
+	'o',
+	'o',
+	'o',
+	'*',
+	'=',
+	'*',
+	'*',
+	'o',
+	'*',
+	'*',
+	'*',
+	'o',
+	'&',
+	'*',
+	'*',
+	'*',
+	'o',
+	'*',
+	'*',
+	'*',
+	'*',
+	'#',
+	'*'
+};
+
+intern const char const executable_object_chars[38] = {
+	' ',
+	'>',
+	'<',
+	'>',
+	'<',
+	'_',
+	'*',
+	'*',
+	'^',
+	'0',
+	'^',
+	'^',
+	'|',
+	'0',
+	'&',
+	'+',
+	'8',
+	'"',
+	'"',
+	'"',
+	'"',
+	'"',
+	'"',
+	'$',
+	'$',
+	'_',
+	'_',
+	'_',
+	'_',
+	'.',
+	'.',
+	'.',
+	'.',
+	'_',
+	'.',
+	'&',
+	'!',
+	'T'
+};
+
+/**
+A pointer to the item characters.
+**/
+intern const char * const executable_item_chars = (void * )0x8286c0c;
+
+/**
+A pointer to the material colors.
+**/
+intern const char const executable_material_colors[14] = {7, 7, 6, 6, 10, 15, 15, 6, 6, 14, 8, 7, 7, 8};
+
+/**
+A pointer to the item data.
+**/
+intern const executable_item_data_t * const executable_item_data = (void * )0x08273b00;
+
+/**
+A pointer to the monster data.
+**/
+intern const executable_monster_data_t * const executable_monster_data = (void * )0x08264fc0;
+
+/**
 A pointer to the turn count.
 **/
 intern int * const executable_turns = (void * )0x082b16e0;
@@ -829,6 +958,26 @@ intern int * const executable_turns = (void * )0x082b16e0;
 A pointer to the save count.
 **/
 intern int * const executable_saves = (void * )0x082b6140;
+
+/**
+A pointer to the terrain map.
+**/
+intern unsigned char ** const executable_terrain = (void * )0x0829ea60;
+
+/**
+A pointer to the object map.
+**/
+intern unsigned char ** const executable_objects = (void * )0x0829ea78;
+
+/**
+A pointer to the item map.
+**/
+intern executable_map_item_t *** const executable_items = (void * )0x082a4e7c;
+
+/**
+A pointer to the monster map.
+**/
+intern executable_map_monster_t ** const executable_monsters = (void * )0x082b6a08;
 
 /**
 The random number generator's state S.
