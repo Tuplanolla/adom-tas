@@ -327,6 +327,22 @@ continued lines are always indented twice to
  separate them from scopes they may start
 to name a few.
 
+### Directory Structure
+
+Files are named and organized in a typical manner. The directories are
+
+* `/` for configurations,
+* `/src` for sources,
+* `/obj` for temporary build files,
+* `/lib` for libraries,
+* `/bin` for binaries,
+* `/res` for resources,
+* `/doc` for documentation,
+* `/doxygen` for automated documentation,
+* `/cat` for catalogs,
+* `/rec` for records and
+* `/adom` for ADoM.
+
 ### File Format
 
 Recordings are saved to `*.tas` files in a custom format. The files contain
@@ -352,6 +368,25 @@ and the chunks consist of
 * a 1-byte `unsigned char` duration and
 * a 4-byte `time_t` excerpt.
 
+Additionally characters are catalogued to `*.tac` files. The files contain
+
+* a 4-byte `char *` header (always `54 41 67 00` for "TAC"),
+* a 256-byte `char *` executable name (for example `61 64 6f 6d 00 ...` for ADoM),
+* padding to 1024-byte alignment and
+* an executable-specific `catalog_t` chunk.
+
+For ADoM the chunk consists of
+
+* a 4-byte `unsigned int` birthday (day of the year minus one),
+* a 4-byte `unsigned int` sex,
+* a 4-byte `unsigned int` race,
+* a 4-byte `unsigned int` profession,
+* a 52-byte `unsigned char *` list of answers,
+* a 4-byte `unsigned int` potential crowning gift,
+* a 36-byte `unsigned int` list of initial attributes,
+* a 2788-byte `unsigned int` list of identified items and
+* a 188-byte `unsigned int` list of identified books.
+
 ### Making of ...
 
 This section is supposed to be about insightful revelations about
@@ -365,6 +400,7 @@ even the slightest difference can cause desynchronization.
 It's not desirable, so all sources of entropy need to be understood and controlled (since they're external it's not cheating).
 
 Let's decipher the random number generator with GDB.
+The command names are no abbreviated for clarity.
 
 	[user@arch ~]$ rm -f .adom.data/.adom.prc
 	[user@arch ~]$ cd adom
@@ -441,9 +477,9 @@ However the two last bytes only change after the rest.
 It is therefore likely an ARC4 stream cipher.
 Assuming `i` comes before `j` the variables it uses can be mapped.
 
-	(gdb) set $s = (unsigned char *)0x082ada40
-	(gdb) set $i = (unsigned char *)0x082adb40
-	(gdb) set $j = (unsigned char *)0x082adb41
+	(gdb) set $s = (unsigned char * )0x082ada40
+	(gdb) set $i = (unsigned char * )0x082adb40
+	(gdb) set $j = (unsigned char * )0x082adb41
 	(gdb) set $l = (unsigned int )0x100
 
 Entropy is a problem when trying to get reliable results, so let's get rid of it.
@@ -528,7 +564,7 @@ It appears 0x81504e7 calls 0x80d15f0,
 0x8125b9d calls 0x8126130 which causes all this to happen.
 A breakpoint is set accordingly.
 
-	(gdb) set $f = (void (*)())0x081504e7
+	(gdb) set $f = (void (*)() )0x081504e7
 	(gdb) break *$f
 
 Let's go.
@@ -623,8 +659,8 @@ Why isn't real life this easy?
 			[X] Save state
 			[X] Time manipulation
 			[X] Random number generator state
-		[ ] Implement a journaled character roller
-		[ ] Roll 4294967295 characters (closer to 65535 in reality)
+		[X] Implement a journaled character roller
+		[ ] Roll 4294967295 characters
 		[ ] Implement cheats that disable the recording
 		[X] Refine sloppy implementations
 	[X] Refactor everything

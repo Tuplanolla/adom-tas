@@ -391,9 +391,11 @@ int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 						|| items[0xa9] == 0
 						|| attributes[0x01] < 20) exit(0);
 				char buf[32];
-				snprintf(buf, sizeof buf, "chr/%u", (unsigned int )timestamp);
-				FILE * const f = fopen(buf, "w");
+				snprintf(buf, sizeof buf, "cat/%u.tac", (unsigned int )timestamp);
+				FILE * const f = fopen(buf, "wb");
 				if (f != NULL) {
+					const unsigned char header[4] = {'T', 'A', 'C', '\0'};
+					fwrite(header, sizeof header, 0x01, f);
 					fwrite(birthday, sizeof (int), 0x01, f);
 					fwrite(gender, sizeof (int), 0x01, f);
 					fwrite(race, sizeof (int), 0x01, f);
@@ -478,7 +480,7 @@ int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 				tm->tm_isdst = 0;
 				timestamp = mktime(tm) - timezone;
 			}
-			front: iarc4((unsigned int )timestamp, executable_arc4_calls_menu);
+			front: iiarc4((unsigned int )timestamp);
 			for (size_t question = 0; question < 51; question++) {
 				rollasked[question] = FALSE;
 			}
@@ -523,7 +525,7 @@ int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 		wrefresh(win);
 		return 0;
 	}
-	else if (key == unstate_key) {//TODO move
+	else if (key == unstate_key) {//TODO move and refactor
 		WINDOW * cheat_win = newwin(rows - 5, cols, 2, 0);
 		for (unsigned int row = 0; row < rows - 5; row++) {
 			for (unsigned int col = 0; col < cols; col++) {
@@ -608,6 +610,7 @@ int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 		return 0;
 	}
 	else if (key == duration_key) {
+		iiarc4((unsigned int )timestamp);//TODO remove
 		if (dur < 255) dur = (unsigned char )((dur + 1) * 2 - 1);
 		wrefresh(win);
 		return 0;

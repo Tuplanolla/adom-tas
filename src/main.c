@@ -32,6 +32,8 @@ int main(const int argc, char * const argv[]) {
 
 	/*
 	Enforces the default configuration.
+
+	Similar to the command-line option -n.
 	*/
 	if (executable_config_path != NULL) {
 		FILE * const stream = fopen(executable_config_path, "w");
@@ -63,6 +65,8 @@ int main(const int argc, char * const argv[]) {
 
 	/*
 	Enforces the default keybindings.
+
+	Similar to the command-line option -k.
 	*/
 	if (executable_keybind_path != NULL) {
 		FILE * const stream = fopen(executable_keybind_path, "w");

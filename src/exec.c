@@ -118,6 +118,11 @@ The name of the version file.
 intern const char * const executable_version_file = ".adom.ver";
 
 /**
+The name of the error file.
+**/
+intern const char * const executable_error_file = ".adom.err";
+
+/**
 The name of the count file.
 **/
 intern const char * const executable_count_file = ".adom.cnt";
@@ -1082,6 +1087,111 @@ void iarc4(const unsigned int seed, const unsigned int bytes) {
 	memcpy(executable_arc4_i, &arc4_i, sizeof arc4_i);
 	memcpy(executable_arc4_j, &arc4_j, sizeof arc4_j);
 	(*executable_saves)++;
+}
+
+/**
+Generates and injects
+	the initial state S and
+	the iterators i and j.
+
+The function needs to be disassembled:
+<pre>
+	0x0815055c:  e8 3f f3 fc ff        call  0x0811f8a0
+layer3:
+	0x0811f8a0:  55                    push  %ebp
+	0x0811f8a1:  89 e5                 mov   %esp,%ebp
+	0x0811f8a3:  83 ec 0c              sub   $0xc,%esp
+	0x0811f8a6:  b8 4c eb 2b 08        mov   $0x082beb4c,%eax
+	0x0811f8ab:  57                    push  %edi
+	0x0811f8ac:  56                    push  %esi
+	0x0811f8ad:  53                    push  %ebx
+	0x0811f8ae:  bb 13 00 00 00        mov   $0x13,%ebx
+	0x0811f8b3:  89 18                 mov   %ebx,(%eax)
+	0x0811f8b5:  83 c0 fc              add   $0xfffffffc,%eax
+	0x0811f8b8:  4b                    dec   %ebx
+	0x0811f8b9:  79 f8                 jns   0x0811f8b3 <layer3@got+0x13>
+	0x0811f8bb:  83 c4 f4              add   $0xfffffff4,%esp
+	0x0811f8be:  6a 14                 push  $0x14
+	0x0811f8c0:  e8 2b d9 fb ff        call  0x080dd1f0 <layer2@got>
+	0x0811f8c5:  83 c4 10              add   $0x10,%esp
+	0x0811f8c8:  8d 58 09              lea   0x9(%eax),%ebx
+	0x0811f8cb:  83 fb ff              cmp   $0xffffffff,%ebx
+	0x0811f8ce:  74 56                 je    0x0811f926 <layer3@got+0x86>
+	0x0811f8d0:  83 c4 f4              add   $0xfffffff4,%esp
+	0x0811f8d3:  6a 12                 push  $0x12
+	0x0811f8d5:  e8 16 d9 fb ff        call  0x080dd1f0 <layer2@got>
+	0x0811f8da:  89 c6                 mov   %eax,%esi
+	0x0811f8dc:  83 c4 10              add   $0x10,%esp
+	0x0811f8df:  8d 7b ff              lea   -0x1(%ebx),%edi
+	0x0811f8e2:  83 c4 f4              add   $0xfffffff4,%esp
+	0x0811f8e5:  6a 12                 push  $0x12
+	0x0811f8e7:  e8 04 d9 fb ff        call  0x080dd1f0 <layer2@got>
+	0x0811f8ec:  83 c4 10              add   $0x10,%esp
+	0x0811f8ef:  39 c6                 cmp   %eax,%esi
+	0x0811f8f1:  74 ef                 je    0x0811f8e2 <layer3@got+0x42>
+	0x0811f8f3:  8d 0c b5 00 00 00 00  lea   0x0(,%esi,4),%ecx
+	0x0811f8fa:  8b 99 00 eb 2b 08     mov   0x082beb00(%ecx),%ebx
+	0x0811f900:  83 fb 11              cmp   $0x11,%ebx
+	0x0811f903:  74 1a                 je    0x0811f91f <layer3@got+0x7f>
+	0x0811f905:  c1 e0 02              shl   $0x2,%eax
+	0x0811f908:  8b 90 00 eb 2b 08     mov   0x082beb00(%eax),%edx
+	0x0811f90e:  83 fa 11              cmp   $0x11,%edx
+	0x0811f911:  74 0c                 je    0x0811f91f <layer3@got+0x7f>
+	0x0811f913:  89 91 00 eb 2b 08     mov   %edx,0x082beb00(%ecx)
+	0x0811f919:  89 98 00 eb 2b 08     mov   %ebx,0x082beb00(%eax)
+	0x0811f91f:  89 fb                 mov   %edi,%ebx
+	0x0811f921:  83 fb ff              cmp   $0xffffffff,%ebx
+	0x0811f924:  75 aa                 jne   0x0811f8d0 <layer3@got+0x30>
+	0x0811f926:  8d 65 e8              lea   -0x18(%ebp),%esp
+	0x0811f929:  5b                    pop   %ebx
+	0x0811f92a:  5e                    pop   %esi
+	0x0811f92b:  5f                    pop   %edi
+	0x0811f92c:  89 ec                 mov   %ebp,%esp
+	0x0811f92e:  5d                    pop   %ebp
+	0x0811f92f:  c3                    ret
+layer2: no_j
+	0x080dd1f0:  55                    push  %ebp
+	0x080dd1f1:  89 e5                 mov   %esp,%ebp
+	0x080dd1f3:  83 ec 08              sub   $0x08,%esp
+	0x080dd1f6:  8b 45 08              mov   0x08(%ebp),%eax
+	0x080dd1f9:  ff 05 60 4a 26 08     incl  0x08264a60
+	0x080dd1ff:  83 c4 f4              add   $0xfffffff4,%esp
+	0x080dd202:  50                    push  %eax
+	0x080dd203:  e8 88 89 04 00        call  0x08125b90 <layer1@got>
+	0x080dd208:  89 ec                 mov   %ebp,%esp
+	0x080dd20a:  5d                    pop   %ebp
+	0x080dd20b:  c3                    ret
+layer1: no_j
+	0x08125b90:  55                    push  %ebp
+	0x08125b91:  89 e5                 mov   %esp,%ebp
+	0x08125b93:  83 ec 08              sub   $0x08,%esp
+	0x08125b96:  8b 45 08              mov   0x08(%ebp),%eax
+	0x08125b99:  83 c4 f4              add   $0xfffffff4,%esp
+	0x08125b9c:  50                    push  %eax
+	0x08125b9d:  e8 8e 05 00 00        call  0x08126130 <rng@got> %eax = (int )rng((int )%eax);
+	0x08125ba2:  89 ec                 mov   %ebp,%esp
+	0x08125ba4:  5d                    pop   %ebp
+	0x08125ba5:  c3                    ret
+rng: no_j no_call
+	0x08126130:  ... for (unsigned i = 0; i < 4; i++) arc4();
+</pre>
+
+@param seed The seed k to use.
+**/
+void iiarc4(const unsigned int seed) {//inelegant, but works
+	void (* mangle)(void) = (void * )0x0811f8a0;
+	arc4_i = 0;
+	arc4_j = 0;
+	srandom(seed);
+	sarc4(random());
+	const unsigned int bytes = 4 * 1165;
+	for (unsigned int byte = 0; byte < bytes; byte++) {
+		arc4();
+	}
+	memcpy(executable_arc4_s, arc4_s, sizeof arc4_s);
+	memcpy(executable_arc4_i, &arc4_i, sizeof arc4_i);
+	memcpy(executable_arc4_j, &arc4_j, sizeof arc4_j);
+	mangle();
 }
 
 /*

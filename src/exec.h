@@ -29,6 +29,7 @@ extern const char * const executable_process_file;
 extern const char * const executable_keybind_file;
 extern const char * const executable_version_file;
 extern const char * const executable_count_file;
+extern const char * const executable_error_file;
 
 extern const char * const executable_config;
 extern const char * const executable_keybind;
@@ -119,6 +120,7 @@ extern const unsigned int executable_arc4_calls_manual_load;
 void sarc4(int seed);
 unsigned char arc4(void);
 void iarc4(unsigned int seed, unsigned int bytes);
+void iiarc4(unsigned int seed);
 const char * key_code(int key);
 
 #endif
