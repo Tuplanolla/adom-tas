@@ -347,10 +347,10 @@ Files are named and organized in a typical manner. The directories are
 
 Recordings are saved to `*.tas` files in a custom format. The files contain
 
-* a 4-byte `char *` header (always `54 41 53 00` for "TAS"),
-* a 256-byte `char *` executable name (for example `61 64 6f 6d 00 ...` for ADoM),
+* a 4-byte `char [4]` header (always `54 41 53 00` for "TAS"),
+* a 256-byte `char [256]` executable name (for example `61 64 6f 6d 00 ...` for ADoM),
 * a 4-byte `unsigned int` category (where `00 00 00 00` is uncategorized),
-* a 256-byte `char *` author (for example `54 75 70 6c 61 6e 6f 6c 6c 61 00 ...` for "Tuplanolla"),
+* a 256-byte `char [256]` author (for example `54 75 70 6c 61 6e 6f 6c 6c 61 00 ...` for "Tuplanolla"),
 * a 4-byte `unsigned int` frames,
 * a 4-byte `unsigned int` time,
 * a 4-byte `unsigned int` turns,
@@ -370,8 +370,8 @@ and the chunks consist of
 
 Additionally characters are catalogued to `*.tac` files. The files contain
 
-* a 4-byte `char *` header (always `54 41 67 00` for "TAC"),
-* a 256-byte `char *` executable name (for example `61 64 6f 6d 00 ...` for ADoM),
+* a 4-byte `char [4]` header (always `54 41 67 00` for "TAC"),
+* a 256-byte `char [256]` executable name (for example `61 64 6f 6d 00 ...` for ADoM),
 * padding to 1024-byte alignment and
 * an executable-specific `catalog_t` chunk.
 
@@ -381,11 +381,11 @@ For ADoM the chunk consists of
 * a 4-byte `unsigned int` sex,
 * a 4-byte `unsigned int` race,
 * a 4-byte `unsigned int` profession,
-* a 52-byte `unsigned char *` list of answers,
+* a 52-byte `char [51]` list of answers,
 * a 4-byte `unsigned int` potential crowning gift,
-* a 36-byte `unsigned int` list of initial attributes,
-* a 2788-byte `unsigned int` list of identified items and
-* a 188-byte `unsigned int` list of identified books.
+* a 36-byte `unsigned int [9]` list of initial attributes,
+* a 2788-byte `unsigned int [697]` list of identified items and
+* a 188-byte `unsigned int [47]` list of identified books.
 
 ### Making of ...
 

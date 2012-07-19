@@ -119,7 +119,7 @@ extern const unsigned int executable_arc4_calls_manual_load;
 
 void sarc4(int seed);
 unsigned char arc4(void);
-void iarc4(unsigned int seed, unsigned int bytes);
+void iarc4(unsigned int seed, unsigned int bytes);//TODO replace bytes with location_t
 void iiarc4(unsigned int seed);
 const char * key_code(int key);
 

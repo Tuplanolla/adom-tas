@@ -61,8 +61,13 @@ problem_t init_interface(void) {
 	Initializes the custom color pairs.
 	*/
 	const size_t colors = sizeof interface_colors / sizeof *interface_colors;
-	for (size_t color = 1; color < colors; color++) {
-		init_pair(pairs + color, COLOR_BLACK, interface_colors[color]);
+	for (size_t color_ = 1; color_ < colors; color_++) {
+		if (color) {
+			init_pair(pairs + color_, COLOR_BLACK, interface_colors[color_]);
+		}
+		else {
+			init_pair(pairs + color_, COLOR_WHITE, COLOR_BLACK);
+		}
 	}
 
 	/*
@@ -135,11 +140,12 @@ Draws the save state menu in the middle of a window.
 @param win The window.
 **/
 problem_t draw_menu(void) {
-	const chtype attr = COLOR_PAIR(pairs + 2);
+	const chtype attr = COLOR_PAIR(pairs + 1);
+	const chtype eattr = COLOR_PAIR(pairs);//TODO improve
 	const chtype ch = attr | ' ';
-	const chtype lrs = attr | '|';
-	const chtype tbs = attr | '-';
-	const chtype tblr = attr | '+';
+	const chtype lrs = eattr | '|';
+	const chtype tbs = eattr | '-';
+	const chtype tblr = eattr | '+';
 
 	/*
 	Draws the menu window.
@@ -274,7 +280,7 @@ problem_t draw_menu(void) {
 }
 
 problem_t draw_interface(WINDOW * const win) {
-	init_interface();
+	init_interface();//TODO optimize
 	draw_status();
 	um_wrefresh(status_win);
 	if (inactive) {
