@@ -1099,11 +1099,8 @@ Generates and injects
 
 @param seed The seed k to use.
 **/
-#include "log.h"
-#include "config.h"
 unsigned int arc4s(const unsigned int sup) {
 	const int x = arc4l();//((int (*)(int) )0x08126130)(sup);
-	fprintfl(error_stream, "arc4(%u) = %u -> %u", sup, x, x % sup);
 	return x % sup;
 }
 void iiarc4(const unsigned int seed) {//inelegant, but works
@@ -1123,10 +1120,6 @@ void iiarc4(const unsigned int seed) {//inelegant, but works
 		const unsigned int second = arc4s(sup);
 		while (arc4s(sup) == second);
 	}
-	fprintfl(error_stream, "c: %u", arc4_c);
-	fprintfl(error_stream, "i: %u", (unsigned int )arc4_i);
-	fprintfl(error_stream, "i: %u", (unsigned int )arc4_j);
-	fprintfl(error_stream, "h: 0x%08x", hash(arc4_s, 0x100));
 	memcpy(executable_arc4_c, &arc4_c, sizeof arc4_c);
 	memcpy(executable_arc4_s, arc4_s, sizeof arc4_s);
 	memcpy(executable_arc4_i, &arc4_i, sizeof arc4_i);
