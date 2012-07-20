@@ -634,7 +634,7 @@ Why isn't real life this easy?
 		[X] Make processes actually work
 		[X] Save temporary files
 		[X] Refine sloppy implementations
-	[ ] Implement recording tools
+	[X] Implement recording tools
 		[X] Find the input handler
 		[X] Redirect the input handler to the recorder and back again
 		[X] Implement saving to a file each frame
@@ -645,9 +645,8 @@ Why isn't real life this easy?
 		[X] Implement playing back a recording
 		[X] Implement dumping a ttyrec
 		[X] Implement dumping an avi
-		[ ] Synchronize timing with the processor
 		[X] Refine sloppy implementations
-	[ ] Implement analysis tools
+	[X] Implement analysis tools
 		[X] Find the turn count variable
 		[X] Find a way to get around overloading macros
 		[X] Create an overlay bigger than 80x25
@@ -660,8 +659,8 @@ Why isn't real life this easy?
 			[X] Time manipulation
 			[X] Random number generator state
 		[X] Implement a journaled character roller
-		[ ] Roll 4294967295 characters
-		[ ] Implement cheats that disable the recording
+		[X] Roll 4294967295 characters
+		[X] Implement cheats that disable the recording
 		[X] Refine sloppy implementations
 	[X] Refactor everything
 	[ ] Refactor everything harder

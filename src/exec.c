@@ -17,6 +17,7 @@ emulates
 #include <stdlib.h>//*random, size_t
 #include <stdio.h>//*print*
 #include <string.h>//str*, mem*
+#include <limits.h>//CHAR_BIT
 
 #include <curses.h>//KEY_*
 
@@ -985,6 +986,11 @@ A pointer to the monster map.
 intern executable_map_monster_t ** const executable_monsters = (void * )0x082b6a08;
 
 /**
+The random number generator's counter c.
+**/
+intern unsigned char * const executable_arc4_c = (void * )0x08264a60;
+
+/**
 The random number generator's state S.
 **/
 intern unsigned char * const executable_arc4_s = (void * )0x082ada40;
@@ -1064,12 +1070,12 @@ The order of operations is wrong to replicate the behavior of the executable.
 @return The byte r.
 **/
 unsigned char arc4(void) {
-	arc4_j = (unsigned char )(arc4_j + arc4_s[arc4_i]);//should be at point A
-	SWAP(arc4_s[arc4_i], arc4_s[arc4_j]);//should be at point B
-	arc4_i++;
 	//point A
-	//point B
-	return arc4_s[(unsigned char )(arc4_s[arc4_i] + arc4_s[arc4_j])];
+	arc4_j += arc4_s[arc4_i];
+	SWAP(arc4_s[arc4_i], arc4_s[arc4_j]);
+	const unsigned char r = arc4_s[(unsigned char )(arc4_s[arc4_i] + arc4_s[arc4_j])];
+	arc4_i++;//should be at point A
+	return r;
 }
 
 /**
@@ -1078,19 +1084,12 @@ Generates an integer R (and changes the current state).
 @return The integer R.
 **/
 unsigned int arc4l(void) {
-	arc4_c++;//0x08264a60
-	/*unsigned int result = 0;
-	for (size_t size = 0; size < sizeof result; size++) {
-		result <<= 0x8;//CHAR_BIT
-		result |= arc4();
+	arc4_c++;
+	unsigned int R = 0;
+	for (size_t bit = 0; bit < sizeof R; bit++) {
+		R |= arc4() << bit * CHAR_BIT;
 	}
-	return result;*/
-	unsigned int result = 0x00000000;
-	result |= arc4() << 0;
-	result |= arc4() << 8;
-	result |= arc4() << 16;
-	result |= arc4() << 24;
-	return result;//0x82952351 for 31454436
+	return R;
 }
 
 /**
@@ -1108,7 +1107,6 @@ unsigned int arc4s(const unsigned int sup) {
 	return x % sup;
 }
 void iiarc4(const unsigned int seed) {//inelegant, but works
-	void (* mangle)(void) = (void * )0x0811f8a0;
 	arc4_i = 0;
 	arc4_j = 0;
 	srandom(seed);
@@ -1117,11 +1115,10 @@ void iiarc4(const unsigned int seed) {//inelegant, but works
 	for (unsigned int number = 0; number < numbers; number++) {
 		arc4l();
 	}
-	/*const unsigned int slurp = 20;
+	const unsigned int slurp = 20;
 	const unsigned int add = 10;
 	const unsigned int sup = 18;
 	int first = arc4s(slurp);
-	first = 5;
 	for (unsigned int iterator = 0; iterator < first + add; iterator++) {
 		const unsigned int second = arc4s(sup);
 		while (arc4s(sup) == second);
@@ -1129,11 +1126,11 @@ void iiarc4(const unsigned int seed) {//inelegant, but works
 	fprintfl(error_stream, "c: %u", arc4_c);
 	fprintfl(error_stream, "i: %u", (unsigned int )arc4_i);
 	fprintfl(error_stream, "i: %u", (unsigned int )arc4_j);
-	fprintfl(error_stream, "h: 0x%08x", hash(arc4_s, 0x100));*/
+	fprintfl(error_stream, "h: 0x%08x", hash(arc4_s, 0x100));
+	memcpy(executable_arc4_c, &arc4_c, sizeof arc4_c);
 	memcpy(executable_arc4_s, arc4_s, sizeof arc4_s);
 	memcpy(executable_arc4_i, &arc4_i, sizeof arc4_i);
 	memcpy(executable_arc4_j, &arc4_j, sizeof arc4_j);
-	mangle();//TODO replace with local functions to increase reliability
 }
 
 /**
