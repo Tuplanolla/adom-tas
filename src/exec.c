@@ -1006,22 +1006,25 @@ The random number generator's second iterator j.
 intern unsigned char * const executable_arc4_j = (void * )0x082adb41;
 
 /**
-The amount of random number generator calls measured before
-	reaching the splash screen or the main menu.
+The amount of random number generator calls measured
+	from seeding the random number generator
+	to its first cyclic point.
 **/
-intern const unsigned int executable_arc4_calls_menu = 4 * 1214;
+intern const unsigned int executable_arc4_calls = 1165;
 
 /**
-The amount of random number generator calls measured before
-	loading a game automatically.
+The amount of random number generator calls
+	from the splash screen or the main menu
+	to loading a game automatically.
 **/
-intern const unsigned int executable_arc4_calls_automatic_load = 4 * 1419;
+intern const unsigned int executable_arc4_calls_automatic_load = 205;
 
 /**
-The amount of random number generator calls measured before
-	loading a game manually.
+The amount of random number generator calls measured
+	from the splash screen or the main menu
+	to loading a game manually.
 **/
-intern const unsigned int executable_arc4_calls_manual_load = 4 * 1623;
+intern const unsigned int executable_arc4_calls_manual_load = 409;
 
 /**
 The emulated random number generator's state S.
@@ -1093,23 +1096,26 @@ unsigned int arc4l(void) {
 }
 
 /**
+Counts and stuff.
+**/
+unsigned int arc4s(const unsigned int sup) {
+	const int x = arc4l();//((int (*)(int) )0x08126130)(sup);
+	return x % sup;
+}
+
+/**
 Generates and injects
 	the initial state S and
 	the iterators i and j.
 
 @param seed The seed k to use.
 **/
-unsigned int arc4s(const unsigned int sup) {
-	const int x = arc4l();//((int (*)(int) )0x08126130)(sup);
-	return x % sup;
-}
-void iiarc4(const unsigned int seed) {//inelegant, but works
+void iarc4(const unsigned int seed, const unsigned int calls) {//inelegant, but works
 	arc4_i = 0;
 	arc4_j = 0;
 	srandom(seed);
 	sarc4(random());
-	const unsigned int numbers = 1165;
-	for (unsigned int number = 0; number < numbers; number++) {
+	for (unsigned int call = 0; call < executable_arc4_calls; call++) {
 		arc4l();
 	}
 	const unsigned int slurp = 20;
@@ -1120,32 +1126,13 @@ void iiarc4(const unsigned int seed) {//inelegant, but works
 		const unsigned int second = arc4s(sup);
 		while (arc4s(sup) == second);
 	}
+	for (unsigned int call = 0; call < calls; call++) {
+		arc4l();
+	}
 	memcpy(executable_arc4_c, &arc4_c, sizeof arc4_c);
 	memcpy(executable_arc4_s, arc4_s, sizeof arc4_s);
 	memcpy(executable_arc4_i, &arc4_i, sizeof arc4_i);
 	memcpy(executable_arc4_j, &arc4_j, sizeof arc4_j);
-}
-
-/**
-Generates and injects
-	the state S and
-	the iterators i and j.
-
-@param seed The seed k to use.
-@param bytes The amount of bytes r to generate.
-**/
-void iarc4(const unsigned int seed, const unsigned int bytes) {
-	arc4_i = 0;
-	arc4_j = 0;
-	srandom(seed);
-	sarc4(random());
-	for (unsigned int byte = 0; byte < bytes; byte++) {
-		arc4();
-	}
-	memcpy(executable_arc4_s, arc4_s, sizeof arc4_s);
-	memcpy(executable_arc4_i, &arc4_i, sizeof arc4_i);
-	memcpy(executable_arc4_j, &arc4_j, sizeof arc4_j);
-	(*executable_saves)++;
 }
 
 /*

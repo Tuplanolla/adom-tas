@@ -109,18 +109,18 @@ extern unsigned char ** const executable_objects;
 extern executable_map_item_t *** const executable_items;
 extern executable_map_monster_t ** const executable_monsters;
 
+extern unsigned char * const executable_arc4_c;
 extern unsigned char * const executable_arc4_s;
 extern unsigned char * const executable_arc4_i;
 extern unsigned char * const executable_arc4_j;
 
-extern const unsigned int executable_arc4_calls_menu;
+extern const unsigned int executable_arc4_calls;
 extern const unsigned int executable_arc4_calls_automatic_load;
 extern const unsigned int executable_arc4_calls_manual_load;
 
 void sarc4(int seed);
 unsigned char arc4(void);
-void iarc4(unsigned int seed, unsigned int bytes);//TODO replace bytes with location_t
-void iiarc4(unsigned int seed);
+void iarc4(unsigned int seed, unsigned int calls);
 const char * key_code(int key);
 
 #endif

@@ -153,7 +153,15 @@ problem_t uninit_lib(void) {
 Emulates the process of saving, quitting and loading.
 **/
 void save_quit_load(void) {
+	/*
+	The only reliable case (automatic loading) is assumed.
+
+	Manual loading changes the random number generator's state depending on
+		the available save games and
+		actions in the menu.
+	*/
 	iarc4((unsigned int )timestamp, executable_arc4_calls_automatic_load);
+	(*executable_saves)++;
 	add_seed_frame(timestamp);
 	wrefresh(stdscr);
 }
@@ -480,7 +488,7 @@ int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 				tm->tm_isdst = 0;
 				timestamp = mktime(tm) - timezone;
 			}
-			front: iiarc4((unsigned int )timestamp);
+			front: iarc4((unsigned int )timestamp, 0);
 			for (size_t question = 0; question < 51; question++) {
 				rollasked[question] = FALSE;
 			}
@@ -610,7 +618,7 @@ int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 		return 0;
 	}
 	else if (key == duration_key) {
-		iiarc4((unsigned int )timestamp);//TODO remove
+		//save_quit_load();//TODO remove
 		if (dur < 255) dur = (unsigned char )((dur + 1) * 2 - 1);
 		wrefresh(win);
 		return 0;
