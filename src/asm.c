@@ -6,7 +6,7 @@ Injects assembly instructions.
 #ifndef ASM_C
 #define ASM_C
 
-#include <stddef.h>//ptrdiff_t
+#include <stddef.h>//size_t, ptrdiff_t
 #include <string.h>//mem*
 #include <sys/mman.h>//mprotect, PROT_*
 #include <limits.h>//CHAR_BIT
@@ -39,7 +39,7 @@ The injected instructions:
 @return The error code.
 **/
 problem_t inject_save(void (* const function)(void)) {
-	unsigned char original[10] = {
+	const unsigned char original[10] = {
 		0x83, 0xc4, 0xf8,
 		0x6a, 0x00,
 		0x68, 0xc4, 0xe4, 0x15, 0x08
@@ -51,10 +51,9 @@ problem_t inject_save(void (* const function)(void)) {
 	void * const location = (void * )0x0809072a;
 	const ptrdiff_t offset = 0x5;
 	const ptrdiff_t pointer = (ptrdiff_t )function - ((ptrdiff_t )location + offset);
-	injected[1] = (unsigned char )(pointer >> (0 * CHAR_BIT) & 0xff);
-	injected[2] = (unsigned char )(pointer >> (1 * CHAR_BIT) & 0xff);
-	injected[3] = (unsigned char )(pointer >> (2 * CHAR_BIT) & 0xff);
-	injected[4] = (unsigned char )(pointer >> (3 * CHAR_BIT) & 0xff);
+	for (size_t bit = 0; bit < sizeof bit; bit++) {
+		injected[bit + 1] = (unsigned char )(pointer >> (bit * CHAR_BIT) & 0xff);
+	}
 	const int prot = PROT_READ | PROT_WRITE | PROT_EXEC;
 	if (mprotect(PAGE(location), PAGE_SIZE(original), prot) == -1) {
 		return error(ASM_MPROTECT_PROBLEM);

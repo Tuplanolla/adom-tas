@@ -162,18 +162,10 @@ problem_t draw_menu(void) {
 	getmaxyx(menu_states_win, y, x);
 
 	int row = 1;
-	int left_col = 0;
-	int right_col = x - 1;
-	{
-		const size_t size = strlen(interface_left_more) + 1;
-		//mvwaddstr(menu_states_win, row, left_col, interface_left_more);
-		left_col += size;
-	}
-	{
-		const size_t size = strlen(interface_right_more) + 1;
-		//mvwaddstr(menu_states_win, row, right_col - size, interface_right_more);
-		right_col -= size;
-	}
+	int left_edge = 0;
+	int right_edge = x - 1;
+	left_edge += strlen(interface_left_more) + 1;
+	right_edge -= strlen(interface_right_more) + 1;
 	int dec_col;
 	int inc_col;
 	bool left_end = FALSE;
@@ -201,7 +193,7 @@ problem_t draw_menu(void) {
 		int col = -1;
 		if (diff == 0) {
 			diff = 1;
-			dec_col = left_col + (right_col - left_col + len - 1) / 2 + 1;
+			dec_col = left_edge + (right_edge - left_edge + len - 1) / 2 + 1;
 			col = dec_col;
 			inc_col = dec_col + len - 1;
 		}
@@ -210,7 +202,7 @@ problem_t draw_menu(void) {
 				dec_col -= len;
 				dec_col--;//spacing
 				col = dec_col;
-				if (dec_col <= left_col) {
+				if (dec_col <= left_edge) {
 					if (state > 0) {
 						left_more = TRUE;
 					}
@@ -228,7 +220,7 @@ problem_t draw_menu(void) {
 				inc_col++;//spacing
 				col = inc_col + 1;
 				inc_col += len;
-				if (inc_col >= right_col) {
+				if (inc_col >= right_edge) {
 					if (state < (int )states) {//TODO make states an int
 						right_more = TRUE;
 					}

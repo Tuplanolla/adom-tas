@@ -986,6 +986,114 @@ A pointer to the monster map.
 intern executable_map_monster_t ** const executable_monsters = (void * )0x082b6a08;
 
 /**
+Untested variables.
+**/
+intern unsigned int * const executable_blindness = (void * )0x082b17dc;
+intern unsigned int * const executable_stunnedness = (void * )0x082b17e0;
+intern unsigned int * const executable_confusion = (void * )0x082b17e4;
+intern unsigned int * const executable_slowness = (void * )0x082b17e8;
+intern unsigned int * const executable_paralyzation = (void * )0x082b17ec;
+intern unsigned int * const executable_sickness = (void * )0x082b17f0;
+intern unsigned int * const executable_deafness = (void * )0x082b17f4;
+intern unsigned int * const executable_muteness = (void * )0x082b17f8;
+intern unsigned int * const executable_sleepiness = (void * )0x082b17fc;
+intern unsigned int * const executable_blessedness = (void * )0x082b1800;
+intern unsigned int * const executable_invisibility = (void * )0x082b1804;
+intern unsigned int * const executable_drunkenness = (void * )0x082b5f50;
+intern unsigned int * const executable_tactics = (void * )0x082b5f54;
+intern unsigned int * const executable_satiety = (void * )0x082b5f60;
+intern unsigned int * const executable_intrinsics = (void * )0x082b5f64;
+intern int * const executable_alignment = (void * )0x082b5fac;
+intern int * const executable_chaotic_piety = (void * )0x082b5fb0;
+intern int * const executable_neutral_piety = (void * )0x082b5fb4;
+intern int * const executable_lawful_piety = (void * )0x082b5fb8;
+intern unsigned int * const executable_corruption = (void * )0x082b615c;
+intern unsigned int * const executable_corruptions = (void * )0x082b6160;
+intern unsigned int * const executable_strength_of_atlas = (void * )0x082b61e8;
+intern unsigned int * const executable_farsight = (void * )0x082b61ec;
+intern unsigned int * const executable_time = (void * )0x082b61f4;//?
+intern unsigned int * const executable_speed = (void * )0x082b6230;
+intern int * const executable_speed_modifier = (void * )0x082b6238;
+
+intern const char * const executable_blindness_string = "Blind";
+intern const char * const executable_stunnedness_string = "Stunned";
+intern const char * const executable_confusion_string = "Confused";
+intern const char * const executable_slowness_string = "Slowed";
+intern const char * const executable_paralyzation_string = "Paralyzed";
+intern const char * const executable_sickness_string = "Sick";
+intern const char * const executable_deafness_string = "Deaf";
+intern const char * const executable_muteness_string = "Mute";
+intern const char * const executable_sleepiness_string = "Sleeping";
+intern const char * const executable_blessedness_string = "Blessed";
+intern const char * const executable_invisibility_string = "Invisible";
+intern const char * const executable_drunkenness_string = "Drunk";
+intern const char * const executable_severe_berserking_string = "Extremely Berserk";//naked
+intern const char * const executable_berserking_string = "Berserk";//= 0
+intern const char * const executable_severe_aggressiveness_string = "Very Aggressive";
+intern const char * const executable_aggressiveness_string = "Aggressive";
+intern const char * const executable_densiveness_string = "Defensive";
+intern const char * const executable_severe_densiveness_string = "Very Defensive";
+intern const char * const executable_cowardice_string = "Cowardly";//= 6
+intern const char * const executable_severe_cowardice_string = "Extremely Cowardly";//low hp
+intern const char * const executable_fatal_starvation_string = "Starved";//< 0
+intern const char * const executable_starvation_string = "Starving";//< 50
+intern const char * const executable_severe_hunger_string = "Very Hungry";//< 100
+intern const char * const executable_hunger_string = "Hungry";//< 200
+intern const char * const executable_satiety_string = "Satiated";//> 1500 && <= 2500
+intern const char * const executable_bloatedness_string = "Bloated";//> 2500
+intern const char * const executable_fatal_bloatedness_string = "Overfed";
+intern const char * const executable_intrinsic_fire_resistance_string = "Fire Resistant";
+intern const char * const executable_intrinsic_poison_resistance_string = "Poison Resistant";
+intern const char * const executable_intrinsic_cold_resistance_string = "Cold Resistant";
+intern const char * const executable_intrinsic_acid_resistance_string = "Acid Resistant";
+intern const char * const executable_intrinsic_luck_string = "Lucky";
+intern const char * const executable_intrinsic_fate_smile_string = "Fate Smilant";
+intern const char * const executable_intrinsic_curse_string = "Cursed";
+intern const char * const executable_intrinsic_sleep_resistance_string = "Sleep Resistant";
+intern const char * const executable_intrinsic_petrification_resistance_string = "Petrification Resistant";
+intern const char * const executable_intrinsic_doom_string = "Doomed";
+intern const char * const executable_intrinsic_teleportitis_string = "Teleporting";
+intern const char * const executable_intrinsic_invisibility_string = "Invisible";
+intern const char * const executable_intrinsic_teleport_control_string = "Teleport Controlling";
+intern const char * const executable_intrinsic_stun_resistance_string = "Stun Resistant";
+intern const char * const executable_intrinsic_death_ray_resistance_string = "Death Ray Resistant";
+intern const char * const executable_intrinsic_paralyzation_resistance_string = "Paralyzation Resistant";
+intern const char * const executable_intrinsic_shock_resistance_string = "Shock Resistant";
+intern const char * const executable_intrinsic_invisible_sight_string = "Invisible Seeing";
+intern const char * const executable_intrinsic_fire_immunity_string = "Fire Immune";
+intern const char * const executable_intrinsic_acid_immunity_string = "Acid Immune";
+intern const char * const executable_intrinsic_cold_immunity_string = "Cold Immune";
+intern const char * const executable_intrinsic_shock_immunity_string = "Shock Immune";
+intern const char * const executable_intrinsic_water_breathing_string = "Water Breathing";
+intern const char * const executable_intrinsic_holiness_string = "Holy";
+intern const char * const executable_intrinsic_confusion_resistance_string = "Confusion Resistant";
+intern const char * const executable_severe_chaoticness_string = "Very Chaotic";//<= -5000
+intern const char * const executable_chaoticness_string = "Chaotic";//< -1250
+intern const char * const executable_lawfulness_neutral_string = "Chaotic Neutral";//< -125
+intern const char * const executable_neutrality_string = "Neutral";//>= 125 && <= -125
+intern const char * const executable_lawfulness_neutral_string = "Lawful Neutral";//> 125
+intern const char * const executable_lawfulness_string = "Lawful";//> 1250
+intern const char * const executable_severe_lawfulness_string = "Very Lawful";//>= 5000
+intern const char * const executable_not_corrupted_string = "Uncorrupted";//< 1000
+intern const char * const executable_corrupted_string = "Corrupted";//< 17000
+intern const char * const executable_corrupted_string = "Very Corrupted";//>= 17000
+intern const char * const executable_strength_of_atlas_string = "Strong as Atlas";
+intern const char * const executable_farsight_string = "Farsighty";
+intern const char * const executable_severe_fastness_string = "Very Fast";//>= 150 plus starsign
+intern const char * const executable_fastness_string = "Fast";//>= 105
+intern const char * const executable_slowness_string = "Slow";//<= 95
+intern const char * const executable_severe_slowness_string = "Very Slow";//>= 65
+
+intern const char * const executable_poisonedness_string = "Poisoned";//?
+intern const char * const executable_severe_bleeding_string = "Severely Bleeding";
+intern const char * const executable_bleeding_string = "Bleeding";//?
+intern const char * const executable_fatal_overburdenedness_string = "Crushed";
+intern const char * const executable_overburdenedness_string = "Overburdened";
+intern const char * const executable_severe_strainedness_string = "Very Strained";
+intern const char * const executable_strainedness_string = "Strained";
+intern const char * const executable_burdenedness_string = "Burdened";//?
+
+/**
 The random number generator's counter c.
 **/
 intern unsigned char * const executable_arc4_c = (void * )0x08264a60;

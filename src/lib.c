@@ -380,7 +380,7 @@ Reads a key code from a window.
 int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 	call("wgetch(0x%08x).", (unsigned int )win);
 
-	#define ROLL_FOR_PLAYING 0//852044892
+	#define ROLL_FOR_PLAYING 0
 	if (rolling) {
 		rollstage++;
 		switch (rollstage) {
@@ -403,6 +403,7 @@ int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 				FILE * const f = fopen(buf, "wb");
 				if (f != NULL) {
 					const unsigned char header[4] = {'T', 'A', 'C', '\0'};
+					//fwrite("adom", 4, 0x01, f);
 					fwrite(header, sizeof header, 0x01, f);
 					fwrite(birthday, sizeof (int), 0x01, f);
 					fwrite(gender, sizeof (int), 0x01, f);
@@ -539,7 +540,7 @@ int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 			for (unsigned int col = 0; col < cols; col++) {
 				const chtype ch = mvwinch(win, row + 2, col);
 				const chtype sch = A_CHARTEXT & ch;
-				if (sch == '\0' || sch == ' ') {
+				if (sch == '\0') {
 					const int attr = COLOR_PAIR(8) | A_BOLD;
 					wattron(cheat_win, attr);
 					const unsigned char terrain = (*executable_terrain)[row * cols + col];
