@@ -1018,7 +1018,7 @@ intern int * const executable_speed_modifier = (void * )0x082b6238;
 intern const char * const executable_blindness_string = "Blind";
 intern const char * const executable_stunnedness_string = "Stunned";
 intern const char * const executable_confusion_string = "Confused";
-intern const char * const executable_slowness_string = "Slowed";
+intern const char * const executable_slowedness_string = "Slowed";
 intern const char * const executable_paralyzation_string = "Paralyzed";
 intern const char * const executable_sickness_string = "Sick";
 intern const char * const executable_deafness_string = "Deaf";
@@ -1031,8 +1031,8 @@ intern const char * const executable_severe_berserking_string = "Extremely Berse
 intern const char * const executable_berserking_string = "Berserk";//= 0
 intern const char * const executable_severe_aggressiveness_string = "Very Aggressive";
 intern const char * const executable_aggressiveness_string = "Aggressive";
-intern const char * const executable_densiveness_string = "Defensive";
-intern const char * const executable_severe_densiveness_string = "Very Defensive";
+intern const char * const executable_defensiveness_string = "Defensive";
+intern const char * const executable_severe_defensiveness_string = "Very Defensive";
 intern const char * const executable_cowardice_string = "Cowardly";//= 6
 intern const char * const executable_severe_cowardice_string = "Extremely Cowardly";//low hp
 intern const char * const executable_fatal_starvation_string = "Starved";//< 0
@@ -1053,7 +1053,7 @@ intern const char * const executable_intrinsic_sleep_resistance_string = "Sleep 
 intern const char * const executable_intrinsic_petrification_resistance_string = "Petrification Resistant";
 intern const char * const executable_intrinsic_doom_string = "Doomed";
 intern const char * const executable_intrinsic_teleportitis_string = "Teleporting";
-intern const char * const executable_intrinsic_invisibility_string = "Invisible";
+intern const char * const executable_intrinsic_invisibility_string = "Permanently Invisible";
 intern const char * const executable_intrinsic_teleport_control_string = "Teleport Controlling";
 intern const char * const executable_intrinsic_stun_resistance_string = "Stun Resistant";
 intern const char * const executable_intrinsic_death_ray_resistance_string = "Death Ray Resistant";
@@ -1067,18 +1067,18 @@ intern const char * const executable_intrinsic_shock_immunity_string = "Shock Im
 intern const char * const executable_intrinsic_water_breathing_string = "Water Breathing";
 intern const char * const executable_intrinsic_holiness_string = "Holy";
 intern const char * const executable_intrinsic_confusion_resistance_string = "Confusion Resistant";
-intern const char * const executable_severe_chaoticness_string = "Very Chaotic";//<= -5000
+intern const char * const executable_severe_chaoticness_string = "Extremely Chaotic";//<= -5000
 intern const char * const executable_chaoticness_string = "Chaotic";//< -1250
-intern const char * const executable_lawfulness_neutral_string = "Chaotic Neutral";//< -125
+intern const char * const executable_chaotic_neutrality_string = "Chaotic Neutral";//< -125
 intern const char * const executable_neutrality_string = "Neutral";//>= 125 && <= -125
-intern const char * const executable_lawfulness_neutral_string = "Lawful Neutral";//> 125
+intern const char * const executable_lawful_neutrality_string = "Lawful Neutral";//> 125
 intern const char * const executable_lawfulness_string = "Lawful";//> 1250
-intern const char * const executable_severe_lawfulness_string = "Very Lawful";//>= 5000
-intern const char * const executable_not_corrupted_string = "Uncorrupted";//< 1000
-intern const char * const executable_corrupted_string = "Corrupted";//< 17000
-intern const char * const executable_corrupted_string = "Very Corrupted";//>= 17000
-intern const char * const executable_strength_of_atlas_string = "Strong as Atlas";
-intern const char * const executable_farsight_string = "Farsighty";
+intern const char * const executable_severe_lawfulness_string = "Extremely Lawful";//>= 5000
+intern const char * const executable_no_corruption_string = "Uncorrupted";//< 1000
+intern const char * const executable_corruption_string = "Corrupted";//< 17000
+intern const char * const executable_severe_corruption_string = "Very Corrupted";//>= 17000
+intern const char * const executable_strength_of_atlas_string = "With Strength of Atlas";
+intern const char * const executable_farsight_string = "With Farsight";
 intern const char * const executable_severe_fastness_string = "Very Fast";//>= 150 plus starsign
 intern const char * const executable_fastness_string = "Fast";//>= 105
 intern const char * const executable_slowness_string = "Slow";//<= 95
@@ -1092,6 +1092,84 @@ intern const char * const executable_overburdenedness_string = "Overburdened";
 intern const char * const executable_severe_strainedness_string = "Very Strained";
 intern const char * const executable_strainedness_string = "Strained";
 intern const char * const executable_burdenedness_string = "Burdened";//?
+
+intern const char * const executable_blindness_abbreviation = "Bi";
+intern const char * const executable_stunnedness_abbreviation = "Su";
+intern const char * const executable_confusion_abbreviation = "Cn";
+intern const char * const executable_slowedness_abbreviation = "Sw";
+intern const char * const executable_paralyzation_abbreviation = "Pa";
+intern const char * const executable_sickness_abbreviation = "Si";
+intern const char * const executable_deafness_abbreviation = "Da";
+intern const char * const executable_muteness_abbreviation = "Mu";
+intern const char * const executable_sleepiness_abbreviation = "Se";
+intern const char * const executable_blessedness_abbreviation = "Bs";
+intern const char * const executable_invisibility_abbreviation = "In";
+intern const char * const executable_drunkenness_abbreviation = "Dr";
+intern const char * const executable_severe_berserking_abbreviation = "EB";//naked
+intern const char * const executable_berserking_abbreviation = "Be";//= 0
+intern const char * const executable_severe_aggressiveness_abbreviation = "VA";
+intern const char * const executable_aggressiveness_abbreviation = "Ag";
+intern const char * const executable_defensiveness_abbreviation = "Df";
+intern const char * const executable_severe_defensiveness_abbreviation = "VD";
+intern const char * const executable_cowardice_abbreviation = "Cw";//= 6
+intern const char * const executable_severe_cowardice_abbreviation = "EC";//low hp
+intern const char * const executable_fatal_starvation_abbreviation = "Sd";//< 0
+intern const char * const executable_starvation_abbreviation = "Sn";//< 50
+intern const char * const executable_severe_hunger_abbreviation = "VH";//< 100
+intern const char * const executable_hunger_abbreviation = "Hu";//< 200
+intern const char * const executable_satiety_abbreviation = "Sa";//> 1500 && <= 2500
+intern const char * const executable_bloatedness_abbreviation = "Bo";//> 2500
+intern const char * const executable_fatal_bloatedness_abbreviation = "Of";
+intern const char * const executable_intrinsic_fire_resistance_abbreviation = "FR";
+intern const char * const executable_intrinsic_poison_resistance_abbreviation = "PR";
+intern const char * const executable_intrinsic_cold_resistance_abbreviation = "CR";
+intern const char * const executable_intrinsic_acid_resistance_abbreviation = "AR";
+intern const char * const executable_intrinsic_luck_abbreviation = "Lu";
+intern const char * const executable_intrinsic_fate_smile_abbreviation = "FS";
+intern const char * const executable_intrinsic_curse_abbreviation = "Cu";
+intern const char * const executable_intrinsic_sleep_resistance_abbreviation = "lR";
+intern const char * const executable_intrinsic_petrification_resistance_abbreviation = "eR";
+intern const char * const executable_intrinsic_doom_abbreviation = "Do";
+intern const char * const executable_intrinsic_teleportitis_abbreviation = "Te";
+intern const char * const executable_intrinsic_invisibility_abbreviation = "PE";
+intern const char * const executable_intrinsic_teleport_control_abbreviation = "TC";
+intern const char * const executable_intrinsic_stun_resistance_abbreviation = "tR";
+intern const char * const executable_intrinsic_death_ray_resistance_abbreviation = "DR";
+intern const char * const executable_intrinsic_paralyzation_resistance_abbreviation = "aR";
+intern const char * const executable_intrinsic_shock_resistance_abbreviation = "SR";
+intern const char * const executable_intrinsic_invisible_sight_abbreviation = "IS";
+intern const char * const executable_intrinsic_fire_immunity_abbreviation = "FI";
+intern const char * const executable_intrinsic_acid_immunity_abbreviation = "AI";
+intern const char * const executable_intrinsic_cold_immunity_abbreviation = "CI";
+intern const char * const executable_intrinsic_shock_immunity_abbreviation = "SI";
+intern const char * const executable_intrinsic_water_breathing_abbreviation = "WB";
+intern const char * const executable_intrinsic_holiness_abbreviation = "Ho";
+intern const char * const executable_intrinsic_confusion_resistance_abbreviation = "oR";
+intern const char * const executable_severe_chaoticness_abbreviation = "EC";//<= -5000
+intern const char * const executable_chaoticness_abbreviation = "Ch";//< -1250
+intern const char * const executable_chaotic_neutrality_abbreviation = "CN";//< -125
+intern const char * const executable_neutrality_abbreviation = "Ne";//>= 125 && <= -125
+intern const char * const executable_lawful_neutrality_abbreviation = "LN";//> 125
+intern const char * const executable_lawfulness_abbreviation = "La";//> 1250
+intern const char * const executable_severe_lawfulness_abbreviation = "EL";//>= 5000
+intern const char * const executable_no_corruption_abbreviation = "Un";//< 1000
+intern const char * const executable_corruption_abbreviation = "Co";//< 17000
+intern const char * const executable_severe_corruption_abbreviation = "VC";//>= 17000
+intern const char * const executable_strength_of_atlas_abbreviation = "WA";
+intern const char * const executable_farsight_abbreviation = "WF";
+intern const char * const executable_severe_fastness_abbreviation = "VF";//>= 150 plus starsign
+intern const char * const executable_fastness_abbreviation = "Fa";//>= 105
+intern const char * const executable_slowness_abbreviation = "Sl";//<= 95
+intern const char * const executable_severe_slowness_abbreviation = "Vl";//>= 65
+
+intern const char * const executable_poisonedness_abbreviation = "Po";//?
+intern const char * const executable_severe_bleeding_abbreviation = "SB";
+intern const char * const executable_bleeding_abbreviation = "Bl";//?
+intern const char * const executable_fatal_overburdenedness_abbreviation = "Cr";
+intern const char * const executable_overburdenedness_abbreviation = "Ob";
+intern const char * const executable_severe_strainedness_abbreviation = "VS";
+intern const char * const executable_strainedness_abbreviation = "St";
+intern const char * const executable_burdenedness_abbreviation = "Bu";//?
 
 /**
 The random number generator's counter c.
