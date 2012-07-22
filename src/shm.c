@@ -61,8 +61,8 @@ problem_t get_shm(const int shmflg) {
 	Finds the shared memory segment.
 	*/
 	const size_t size = sizeof *shm.ppid
-			+ states * sizeof *shm.pids
-			+ states * rows * cols * sizeof ***shm.chs;
+			+ (size_t )states * sizeof *shm.pids
+			+ (size_t )(states * rows * cols) * sizeof ***shm.chs;
 	shmid = shmget(key, size, shmflg);
 	if (shmid == -1) {
 		return error(SHM_GET_PROBLEM);
@@ -81,19 +81,19 @@ problem_t get_shm(const int shmflg) {
 	shm.ppid = (pid_t * )position;
 	position += (ptrdiff_t )sizeof *shm.ppid;
 	shm.pids = (pid_t * )position;
-	position += (ptrdiff_t )(states * sizeof *shm.pids);
-	shm.chs = malloc(states * sizeof *shm.chs);
+	position += (ptrdiff_t )((size_t )states * sizeof *shm.pids);
+	shm.chs = malloc((size_t )states * sizeof *shm.chs);
 	if (shm.chs == NULL) {
 		return error(SHM_MALLOC_PROBLEM);
 	}
-	for (unsigned int state = 0; state < states; state++) {
-		shm.chs[state] = malloc(rows * sizeof **shm.chs);
+	for (int state = 0; state < states; state++) {
+		shm.chs[state] = malloc((size_t )rows * sizeof **shm.chs);
 		if (shm.chs[state] == NULL) {
 			return error(SHM_MALLOC_PROBLEM);
 		}
-		for (unsigned int row = 0; row < rows; row++) {
+		for (int row = 0; row < rows; row++) {
 			shm.chs[state][row] = (chtype * )position;
-			position += (ptrdiff_t )(cols * sizeof ***shm.chs);
+			position += (ptrdiff_t )((size_t )cols * sizeof ***shm.chs);
 		}
 	}
 
@@ -124,12 +124,12 @@ problem_t init_shm(void) {
 	Sets the default values of the objects in the shared memory segment.
 	*/
 	shm.ppid[0] = (pid_t )0;
-	for (unsigned int state = 0; state < states; state++) {
+	for (int state = 0; state < states; state++) {
 		shm.pids[state] = (pid_t )0;
 	}
-	for (unsigned int state = 0; state < states; state++) {
-		for (unsigned int row = 0; row < rows; row++) {
-			for (unsigned int col = 0; col < cols; col++) {
+	for (int state = 0; state < states; state++) {
+		for (int row = 0; row < rows; row++) {
+			for (int col = 0; col < cols; col++) {
 				shm.chs[state][row][col] = (chtype )' ';
 			}
 		}
@@ -160,7 +160,7 @@ Detaches the shared memory segment.
 problem_t detach_shm(void) {
 	shm.ppid = NULL;
 	shm.pids = NULL;
-	for (unsigned int state = 0; state < states; state++) {
+	for (int state = 0; state < states; state++) {
 		if (shm.chs[state] != NULL) {
 			free(shm.chs[state]);
 			shm.chs[state] = NULL;

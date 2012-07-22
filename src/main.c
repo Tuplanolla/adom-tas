@@ -42,7 +42,7 @@ int main(const int argc, char * const argv[]) {
 		}
 		else {
 			const size_t size = strlen(executable_config) + 1;
-			if (fwrite(&executable_config, size, 1, stream) != 1) {
+			if (fwrite(executable_config, size, 1, stream) != 1) {
 				error(CONFIG_WRITE_PROBLEM);
 			}
 			if (fclose(stream) == EOF) {
@@ -75,7 +75,7 @@ int main(const int argc, char * const argv[]) {
 		}
 		else {
 			const size_t size = strlen(executable_keybind) + 1;
-			if (fwrite(&executable_keybind, size, 1, stream) != 1) {
+			if (fwrite(executable_keybind, size, 1, stream) != 1) {
 				error(KEYBIND_WRITE_PROBLEM);
 			}
 			if (fclose(stream) == EOF) {
@@ -102,6 +102,18 @@ int main(const int argc, char * const argv[]) {
 			}
 			if (memcmp(version, executable_version, sizeof version) != 0) {
 				error(VERSION_MISMATCH_PROBLEM);
+			}
+		}
+	}
+
+	/*
+	Removes the error log.
+	*/
+	if (executable_error_path != NULL) {
+		struct stat error_stat;
+		if (stat(executable_error_path, &error_stat) == 0) {
+			if (unlink(executable_error_path) != 0) {
+				return error(ERROR_UNLINK_PROBLEM);
 			}
 		}
 	}

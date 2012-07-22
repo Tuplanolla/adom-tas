@@ -38,13 +38,14 @@ intern char * executable_config_path;
 intern char * executable_process_path;
 intern char * executable_keybind_path;
 intern char * executable_version_path;
+intern char * executable_error_path;
 intern char * executable_count_path;
 intern char * loader_path;
 intern char * libc_path;
 intern char * libncurses_path;
-intern unsigned int states;
-intern unsigned int rows;
-intern unsigned int cols;
+intern int states;
+intern int rows;
+intern int cols;
 intern char * shm_path;
 intern time_t timestamp;
 intern unsigned int generations;
@@ -110,7 +111,7 @@ problem_t uninit_config(void) {
 	free(shm_path);
 	free(iterator);
 	free(input_path);
-	for (unsigned int state = 0; state < states; state++) {
+	for (int state = 0; state < states; state++) {
 		free(output_paths[state]);
 	}
 	free(output_paths);
@@ -458,8 +459,30 @@ problem_t init_external_config(void) {
 
 	/*
 	Finds the config file path of the executable.
+
+	The location of the file is first guessed and
+	the existence of the file is then checked.
 	*/
-	executable_config_path = NULL;//not implemented
+	if (executable_data_path == NULL) {
+		executable_config_path = NULL;
+	}
+	else {
+		const size_t size = strlen(executable_data_path) + 1
+				+ strlen(executable_config_file) + 1;
+		executable_config_path = malloc(size);
+		if (executable_config_path == NULL) {
+			error(MALLOC_PROBLEM);
+		}
+		else {
+			snprintf(executable_config_path, size, "%s/%s",
+					executable_data_path,
+					executable_config_file);
+			struct stat executable_config_stat;
+			if (stat(executable_config_path, &executable_config_stat) == -1) {
+				warning(EXECUTABLE_CONFIG_STAT_PROBLEM);
+			}
+		}
+	}
 
 	/*
 	Finds the process lock file path of the executable.
@@ -490,8 +513,30 @@ problem_t init_external_config(void) {
 
 	/*
 	Finds the keybind file path of the executable.
+
+	The location of the file is first guessed and
+	the existence of the file is then checked.
 	*/
-	executable_keybind_path = NULL;//not implemented
+	if (executable_data_path == NULL) {
+		executable_keybind_path = NULL;
+	}
+	else {
+		const size_t size = strlen(executable_data_path) + 1
+				+ strlen(executable_keybind_file) + 1;
+		executable_keybind_path = malloc(size);
+		if (executable_keybind_path == NULL) {
+			error(MALLOC_PROBLEM);
+		}
+		else {
+			snprintf(executable_keybind_path, size, "%s/%s",
+					executable_data_path,
+					executable_keybind_file);
+			struct stat executable_keybind_stat;
+			if (stat(executable_keybind_path, &executable_keybind_stat) == -1) {
+				warning(EXECUTABLE_KEYBIND_STAT_PROBLEM);
+			}
+		}
+	}
 
 	/*
 	Finds the version file path of the executable.
@@ -516,6 +561,33 @@ problem_t init_external_config(void) {
 			struct stat executable_version_stat;
 			if (stat(executable_version_path, &executable_version_stat) == -1) {
 				warning(EXECUTABLE_VERSION_STAT_PROBLEM);
+			}
+		}
+	}
+
+	/*
+	Finds the error log file path of the executable.
+
+	The location of the file is first guessed and
+	the existence of the file is then checked.
+	*/
+	if (executable_data_path == NULL) {
+		executable_error_path = NULL;
+	}
+	else {
+		const size_t size = strlen(executable_data_path) + 1
+				+ strlen(executable_error_file) + 1;
+		executable_error_path = malloc(size);
+		if (executable_error_path == NULL) {
+			error(MALLOC_PROBLEM);
+		}
+		else {
+			snprintf(executable_error_path, size, "%s/%s",
+					executable_data_path,
+					executable_error_file);
+			struct stat executable_error_stat;
+			if (stat(executable_error_path, &executable_error_stat) == -1) {
+				//note(EXECUTABLE_ERROR_STAT_PROBLEM);
 			}
 		}
 	}
@@ -604,7 +676,7 @@ problem_t init_internal_config(void) {
 		new_states = 1;
 		warning(STATE_AMOUNT_PROBLEM);
 	}
-	states = (unsigned int )new_states + 1;//reserves space for the active state
+	states = new_states + 1;//reserves space for the active state
 
 	/*
 	Finds the height of the terminal.
@@ -622,7 +694,7 @@ problem_t init_internal_config(void) {
 		new_rows = MIN(MAX(executable_rows_min, new_rows), executable_rows_max);
 		warning(ROW_AMOUNT_PROBLEM);
 	}
-	rows = (unsigned int )new_rows;
+	rows = new_rows;
 
 	/*
 	Finds the width of the terminal.
@@ -640,7 +712,7 @@ problem_t init_internal_config(void) {
 		new_cols = MIN(MAX(executable_cols_min, new_cols), executable_cols_max);
 		warning(COL_AMOUNT_PROBLEM);
 	}
-	cols = (unsigned int )new_cols;
+	cols = new_cols;
 
 	/*
 	Finds the location of the shared memory segment.
@@ -762,14 +834,14 @@ problem_t init_internal_config(void) {
 		warning(OUTPUT_CONFIG_PROBLEM);
 	}
 	char * const output_path = astrrep(new_output_path, "~", home_path);
-	output_paths = malloc(states * sizeof *output_paths);
+	output_paths = malloc((size_t )states * sizeof *output_paths);
 	if (output_paths == NULL) {
 		error(MALLOC_PROBLEM);
 	}
 	else {
 		bool exists = FALSE;
-		for (unsigned int state = 1; state < states; state++) {
-			const size_t size = uintlen(state) + 1;
+		for (int state = 1; state < states; state++) {
+			const size_t size = intlen(state) + 1;
 			char * const iterand = malloc(size);
 			if (iterand == NULL) {
 				error(MALLOC_PROBLEM);
@@ -917,20 +989,107 @@ problem_t init_internal_config(void) {
 		call_stream = new_call_stream;
 	}
 
-	save_key = default_save_key;//TODO read keys
-	load_key = default_load_key;
-	state_key = default_state_key;
-	unstate_key = default_unstate_key;
-	duration_key = default_duration_key;
-	unduration_key = default_unduration_key;
-	time_key = default_time_key;
-	untime_key = default_untime_key;
-	menu_key = default_menu_key;
-	condense_key = default_condense_key;
-	hide_key = default_hide_key;
-	play_key = default_play_key;
-	stop_key = default_stop_key;
-	quit_key = default_quit_key;
+	/**
+	Sets the keys.
+	**/
+	int new_save_key;
+	if (config_lookup_int(&config, "save_key", &new_save_key) == CONFIG_FALSE) {
+		new_save_key = default_save_key;
+		//warning(KEY_CONFIG_PROBLEM);
+	}
+	save_key = new_save_key;
+
+	int new_load_key;
+	if (config_lookup_int(&config, "load_key", &new_load_key) == CONFIG_FALSE) {
+		new_load_key = default_load_key;
+		//warning(KEY_CONFIG_PROBLEM);
+	}
+	load_key = new_load_key;
+
+	int new_state_key;
+	if (config_lookup_int(&config, "state_key", &new_state_key) == CONFIG_FALSE) {
+		new_state_key = default_state_key;
+		//warning(KEY_CONFIG_PROBLEM);
+	}
+	state_key = new_state_key;
+
+	int new_unstate_key;
+	if (config_lookup_int(&config, "unstate_key", &new_unstate_key) == CONFIG_FALSE) {
+		new_unstate_key = default_unstate_key;
+		//warning(KEY_CONFIG_PROBLEM);
+	}
+	unstate_key = new_unstate_key;
+
+	int new_duration_key;
+	if (config_lookup_int(&config, "duration_key", &new_duration_key) == CONFIG_FALSE) {
+		new_duration_key = default_duration_key;
+		//warning(KEY_CONFIG_PROBLEM);
+	}
+	duration_key = new_duration_key;
+
+	int new_unduration_key;
+	if (config_lookup_int(&config, "unduration_key", &new_unduration_key) == CONFIG_FALSE) {
+		new_unduration_key = default_unduration_key;
+		//warning(KEY_CONFIG_PROBLEM);
+	}
+	unduration_key = new_unduration_key;
+
+	int new_time_key;
+	if (config_lookup_int(&config, "time_key", &new_time_key) == CONFIG_FALSE) {
+		new_time_key = default_time_key;
+		//warning(KEY_CONFIG_PROBLEM);
+	}
+	time_key = new_time_key;
+
+	int new_untime_key;
+	if (config_lookup_int(&config, "untime_key", &new_untime_key) == CONFIG_FALSE) {
+		new_untime_key = default_untime_key;
+		//warning(KEY_CONFIG_PROBLEM);
+	}
+	untime_key = new_untime_key;
+
+	int new_menu_key;
+	if (config_lookup_int(&config, "menu_key", &new_menu_key) == CONFIG_FALSE) {
+		new_menu_key = default_menu_key;
+		//warning(KEY_CONFIG_PROBLEM);
+	}
+	menu_key = new_menu_key;
+
+	int new_condense_key;
+	if (config_lookup_int(&config, "condense_key", &new_condense_key) == CONFIG_FALSE) {
+		new_condense_key = default_condense_key;
+		//warning(KEY_CONFIG_PROBLEM);
+	}
+	condense_key = new_condense_key;
+
+	int new_hide_key;
+	if (config_lookup_int(&config, "hide_key", &new_hide_key) == CONFIG_FALSE) {
+		new_hide_key = default_hide_key;
+		//warning(KEY_CONFIG_PROBLEM);
+	}
+	hide_key = new_hide_key;
+
+	int new_play_key;
+	if (config_lookup_int(&config, "play_key", &new_play_key) == CONFIG_FALSE) {
+		new_play_key = default_play_key;
+		//warning(KEY_CONFIG_PROBLEM);
+	}
+	play_key = new_play_key;
+
+	int new_stop_key;
+	if (config_lookup_int(&config, "stop_key", &new_stop_key) == CONFIG_FALSE) {
+		new_stop_key = default_stop_key;
+		//warning(KEY_CONFIG_PROBLEM);
+	}
+	stop_key = new_stop_key;
+
+	int new_quit_key;
+	if (config_lookup_int(&config, "quit_key", &new_quit_key) == CONFIG_FALSE) {
+		new_quit_key = default_quit_key;
+		//warning(KEY_CONFIG_PROBLEM);
+	}
+	quit_key = new_quit_key;
+	fprintfl(error_stream, "%d\n", quit_key);
 
 	PROPAGATE(end_init_config());
 

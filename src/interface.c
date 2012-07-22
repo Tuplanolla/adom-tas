@@ -221,14 +221,14 @@ problem_t draw_menu(void) {
 				col = inc_col + 1;
 				inc_col += len;
 				if (inc_col >= right_edge) {
-					if (state < (int )states) {//TODO make states an int
+					if (state < states) {
 						right_more = TRUE;
 					}
 					right_end = TRUE;
 					col = -1;
 				}
 			}
-			if (state >= (int )states) {
+			if (state >= states) {
 				right_end = TRUE;
 				col = -1;
 			}

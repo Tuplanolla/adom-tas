@@ -455,14 +455,14 @@ Let's check it out.
 	(gdb) x/12i $pc-13
 
 	    0x8125d1c:  push  $0x0
-	    0x8125d1e:  call  0x8049420 <time@plt>
+	    0x8125d1e:  call  0x08049420 <time@plt>
 	    0x8125d23:  push  %eax
-	    0x8125d24:  call  0x80496d0 <srandom@plt>
+	    0x8125d24:  call  0x080496d0 <srandom@plt>
 	=>  0x8125d29:  add   $0x20,%esp
 	    0x8125d2c:  add   $0xfffffff4,%esp
-	    0x8125d2f:  call  0x8049380 <random@plt>
+	    0x8125d2f:  call  0x08049380 <random@plt>
 	    0x8125d34:  push  %eax
-	    0x8125d35:  call  0x8125ea0
+	    0x8125d35:  call  0x08125ea0
 	    0x8125d3a:  mov   %ebp,%esp
 	    0x8125d3c:  pop   %ebp
 	    0x8125d3d:  ret
@@ -558,10 +558,10 @@ Now we're late, but at least know where to set breakpoints next.
 	    0x8125b9d:  call  0x8126130
 	=>  0x8125ba2:  mov   %ebp,%esp
 
-It appears 0x81504e7 calls 0x80d15f0,
-0x80d1668 calls 0x80dd1f0,
-0x80dd203 calls 0x8125b90 and
-0x8125b9d calls 0x8126130 which causes all this to happen.
+It appears 0x081504e7 calls 0x080d15f0,
+0x080d1668 calls 0x080dd1f0,
+0x080dd203 calls 0x08125b90 and
+0x08125b9d calls 0x08126130 which causes all this to happen.
 A breakpoint is set accordingly.
 
 	(gdb) set $f = (void (*)() )0x081504e7

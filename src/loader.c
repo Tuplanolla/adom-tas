@@ -86,13 +86,16 @@ problem_t init_parent(void) {
 	if (sql) {
 		inject_save(&save_quit_load);
 	}
+	else {
+		//inject_save(&nothing);
+	}
 
 	/*
 	Initializes the shared memory segment.
 	*/
 	PROPAGATE(init_shm());
 
-	const pid_t pid = fork();
+	const pid_t pid = 0;//fork();//disabled to make debugging easier
 	if (pid == -1) {
 		return error(FORK_PROBLEM);
 	}

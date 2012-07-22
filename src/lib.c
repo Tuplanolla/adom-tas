@@ -79,6 +79,20 @@ void * libc_handle;
 void * libncurses_handle;
 
 /*
+Closes the dynamically linked libraries.
+*/
+problem_t uninit_lib(void) {
+	if (dlclose(libc_handle) != 0) {
+		return error(LIBC_DLCLOSE_PROBLEM);
+	}
+	if (dlclose(libncurses_handle) != 0) {
+		return error(LIBNCURSES_DLCLOSE_PROBLEM);
+	}
+
+	return NO_PROBLEM;
+}
+
+/*
 Opens the dynamically linked libraries.
 */
 problem_t init_lib(void) {
@@ -135,20 +149,6 @@ problem_t init_lib(void) {
 	return NO_PROBLEM;
 }
 
-/*
-Closes the dynamically linked libraries.
-*/
-problem_t uninit_lib(void) {
-	if (dlclose(libc_handle) != 0) {
-		return error(LIBC_DLCLOSE_PROBLEM);
-	}
-	if (dlclose(libncurses_handle) != 0) {
-		return error(LIBNCURSES_DLCLOSE_PROBLEM);
-	}
-
-	return NO_PROBLEM;
-}
-
 /**
 Emulates the process of saving, quitting and loading.
 **/
@@ -174,7 +174,7 @@ Intercepts printing anything and initializes this process.
 @param format The string format.
 @return The amount of characters printed.
 **/
-int printf(const char * format, ...) {
+int printf(const char * const format, ...) {
 	if (first) {//TODO simplify
 		first = FALSE;
 		const problem_t problem = init_parent();
@@ -196,7 +196,7 @@ Intercepts removing the debug file if it exists.
 @param path The path of the file to remove.
 @return 0 if no errors occurred and -1 otherwise.
 **/
-int unlink(const char * path) {
+int unlink(const char * const path) {
 	call("unlink(\"%s\").", path);
 	if (strcmp(path, "ADOM.DBG") == 0) {
 		struct stat buf;
@@ -227,8 +227,8 @@ int ioctl(int d, unsigned long request, ...) {
 	const int result = um_ioctl(d, request, arg);
 	if (request == TIOCGWINSZ) {
 		struct winsize * size = (struct winsize * )arg;
-		size->ws_row = (unsigned short )rows;
-		size->ws_col = (unsigned short )cols;
+		size->ws_row = (unsigned short int )rows;
+		size->ws_col = (unsigned short int )cols;
 	}
 	va_end(argp);
 	return result;
@@ -242,7 +242,7 @@ Replaces the system time with a fixed time.
 @param t The fixed time to return.
 @return The fixed time.
 **/
-time_t time(time_t * t) {
+time_t time(time_t * const t) {
 	call("time(0x%08x).", (unsigned int )t);
 	if (t != NULL) *t = timestamp;
 	return timestamp;//reduces entropy
@@ -276,7 +276,7 @@ Generates the next pseudorandom number.
 
 @return The number.
 **/
-long random(void) {
+long int random(void) {
 	call("random().");
 	return um_random();
 }
@@ -305,7 +305,7 @@ Draws the custom interface.
 @param win The window to redraw.
 @return 0 if no errors occurred and -1 otherwise.
 **/
-int wrefresh(WINDOW * win) {
+int wrefresh(WINDOW * const win) {
 	if (skipwr) return 0;
 	call("wrefresh(0x%08x).", (unsigned int )win);
 
@@ -377,7 +377,7 @@ Reads a key code from a window.
 @param win The window to read from.
 @return The key code.
 **/
-int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
+int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme force
 	call("wgetch(0x%08x).", (unsigned int )win);
 
 	#define ROLL_FOR_PLAYING 0
@@ -473,6 +473,7 @@ int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 	if (*executable_turns < previous_turns) surplus_turns++;
 	previous_turns = *executable_turns;
 	int key = um_wgetch(win);
+	char str[64]; snprintf(str, 64, "%u", key); mvwaddstr(win, 1, 1, str);
 	if (key == play_key) {
 		if (record.count == 1) {//move to roll
 			rolling = TRUE;
@@ -536,8 +537,8 @@ int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 	}
 	else if (key == unstate_key) {//TODO move and refactor
 		WINDOW * cheat_win = newwin(rows - 5, cols, 2, 0);
-		for (unsigned int row = 0; row < rows - 5; row++) {
-			for (unsigned int col = 0; col < cols; col++) {
+		for (int row = 0; row < rows - 5; row++) {
+			for (int col = 0; col < cols; col++) {
 				const chtype ch = mvwinch(win, row + 2, col);
 				const chtype sch = A_CHARTEXT & ch;
 				if (sch == '\0') {
@@ -556,8 +557,8 @@ int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 				}
 			}
 		}
-		for (unsigned int row = 0; row < rows - 5; row++) {
-			for (unsigned int col = 0; col < cols; col++) {
+		for (int row = 0; row < rows - 5; row++) {
+			for (int col = 0; col < cols; col++) {
 				const executable_map_item_t * item = (*executable_items)[row * cols + col];
 				if (item != NULL) {
 					while (item->next != NULL) {
@@ -632,8 +633,9 @@ int wgetch(WINDOW * win) {//TODO remove bloat and refactor with extreme force
 	else if (key == quit_key) {//quits everything (stupid implementation)
 		running = FALSE;
 		um_endwin();
-		printf("Ctrl C will get you back to your beloved terminal if nothing else works.\n"); fflush(stdout);
-		for (unsigned int state = 1; state < states; state++) {
+		//uninit_parent(NO_PROBLEM);
+		fprintf(stdout, "Ctrl C will get you back to your beloved terminal if nothing else works.\n"); fflush(stdout);
+		for (int state = 1; state < states; state++) {
 			if (shm.pids[state] != 0) {
 				kill(shm.pids[state], SIGKILL);
 				shm.pids[state] = 0;

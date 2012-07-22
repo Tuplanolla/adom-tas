@@ -118,8 +118,6 @@ extern const unsigned int executable_arc4_calls;
 extern const unsigned int executable_arc4_calls_automatic_load;
 extern const unsigned int executable_arc4_calls_manual_load;
 
-void sarc4(int seed);
-unsigned char arc4(void);
 void iarc4(unsigned int seed, unsigned int calls);
 const char * key_code(int key);
 

@@ -43,6 +43,7 @@ const char * problem_message(const problem_t code) {
 		case VERSION_READ_PROBLEM: return "Reading the version file failed.";
 		case VERSION_CLOSE_PROBLEM: return "Closing the version file failed.";
 		case VERSION_MISMATCH_PROBLEM: return "Verifying the version of the executable failed.";
+		case ERROR_UNLINK_PROBLEM: return "Removing the error log file failed.";
 		case COUNT_OPEN_PROBLEM: return "Opening the count file for writing failed.";
 		case COUNT_WRITE_PROBLEM: return "Writing the count file failed.";
 		case COUNT_CLOSE_PROBLEM: return "Closing the count file failed.";
@@ -82,6 +83,7 @@ const char * problem_message(const problem_t code) {
 		case EXECUTABLE_PROCESS_STAT_PROBLEM: return "Accessing the executable's process lock file failed.";
 		case EXECUTABLE_KEYBIND_STAT_PROBLEM: return "Accessing the executable's keybinding file failed.";
 		case EXECUTABLE_VERSION_STAT_PROBLEM: return "Accessing the executable's version file failed.";
+		case EXECUTABLE_ERROR_STAT_PROBLEM: return "Accessing the executable's error log file failed.";
 		case EXECUTABLE_COUNT_STAT_PROBLEM: return "Accessing the executable's count file failed.";
 
 		case LIBC_CONFIG_PROBLEM: return "Finding the location of the C standard library in the configuration file failed. It will be guessed.";

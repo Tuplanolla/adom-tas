@@ -1074,8 +1074,7 @@ intern const char * const executable_neutrality_string = "Neutral";//>= 125 && <
 intern const char * const executable_lawful_neutrality_string = "Lawful Neutral";//> 125
 intern const char * const executable_lawfulness_string = "Lawful";//> 1250
 intern const char * const executable_severe_lawfulness_string = "Extremely Lawful";//>= 5000
-intern const char * const executable_no_corruption_string = "Uncorrupted";//< 1000
-intern const char * const executable_corruption_string = "Corrupted";//< 17000
+intern const char * const executable_corruption_string = "Corrupted";//>= 1000 && < 17000
 intern const char * const executable_severe_corruption_string = "Very Corrupted";//>= 17000
 intern const char * const executable_strength_of_atlas_string = "With Strength of Atlas";
 intern const char * const executable_farsight_string = "With Farsight";
@@ -1208,47 +1207,72 @@ intern const unsigned int executable_arc4_calls_automatic_load = 205;
 /**
 The amount of random number generator calls measured
 	from the splash screen or the main menu
-	to loading a game manually.
+	to loading a game manually (from a list of one game).
 **/
 intern const unsigned int executable_arc4_calls_manual_load = 409;
 
 /**
 The emulated random number generator's state S.
+
+Emulates an internal variable:
+<pre>
+unsigned char * const arc4_state = (void * )0x082ada40;
+</pre>
 **/
 unsigned char arc4_s[0x100];
 
 /**
 The emulated random number generator's first iterator i.
+
+Emulates an internal variable:
+<pre>
+unsigned char * const first_arc4_iterator = (void * )0x082adb40;
+</pre>
 **/
-unsigned char arc4_i = 0x00;
+unsigned char arc4_i = 0;
 
 /**
 The emulated random number generator's second iterator j.
+
+Emulates an internal variable:
+<pre>
+unsigned char * const second_arc4_iterator = (void * )0x082adb41;
+</pre>
 **/
-unsigned char arc4_j = 0x00;
+unsigned char arc4_j = 0;
 
 /**
 The emulated random number generator's counter c.
+
+Emulates an internal variable:
+<pre>
+unsigned int * const arc4_calls = (void * )0x08264a60;
+</pre>
 **/
 unsigned int arc4_c = 0;
 
 /**
-Seeds the current state S.
+Seeds the current state S with the seed k.
 
-@param seed The seed k.
+Emulates an internal function:
+<pre>
+void (* const seed_arc4)(unsigned int seed) = (void * )0x08125ea0;
+</pre>
+
+@param k The seed k.
 **/
-void sarc4(const int seed) {
-	unsigned char i = 0x00;
-	unsigned char j = 0x00;
+void sarc4(const unsigned int k) {
+	unsigned char i = 0;
+	unsigned char j = 0;
 	do {
 		arc4_s[i] = i;
 		i++;
-	} while(i != 0x00);
+	} while(i != 0);
 	do {
-		j = (unsigned char )(j + (arc4_s[i] + ((const unsigned char * )&seed)[i % sizeof seed]));
+		j = (unsigned char )(j + (arc4_s[i] + ((const unsigned char * )&k)[i % sizeof k]));
 		SWAP(arc4_s[i], arc4_s[j]);
 		i++;
-	} while (i != 0x00);
+	} while (i != 0);
 }
 
 /**
@@ -1260,7 +1284,7 @@ The order of operations is wrong to replicate the behavior of the executable.
 **/
 unsigned char arc4(void) {
 	//point A
-	arc4_j += arc4_s[arc4_i];
+	arc4_j = (unsigned char )(arc4_j + arc4_s[arc4_i]);
 	SWAP(arc4_s[arc4_i], arc4_s[arc4_j]);
 	const unsigned char r = arc4_s[(unsigned char )(arc4_s[arc4_i] + arc4_s[arc4_j])];
 	arc4_i++;//should be at point A
@@ -1268,52 +1292,64 @@ unsigned char arc4(void) {
 }
 
 /**
-Generates an integer R (and changes the current state).
+Generates an integer R and increments the count c.
 
 @return The integer R.
 **/
-unsigned int arc4l(void) {
+unsigned int carc4(void) {
 	arc4_c++;
 	unsigned int R = 0;
 	for (size_t bit = 0; bit < sizeof R; bit++) {
-		R |= arc4() << bit * CHAR_BIT;
+		R |= (size_t )arc4() << bit * CHAR_BIT;
 	}
 	return R;
 }
 
 /**
-Counts and stuff.
+Generates a bound integer B at least 0 and at most s - 1.
+
+Emulates an internal function:
+<pre>
+unsigned int (* const bound_arc4)(unsigned int supremum) = (void * )0x08126130;
+</pre>
+
+@param s The supremum s.
+@return The integer B.
 **/
-unsigned int arc4s(const unsigned int sup) {
-	const int x = arc4l();//((int (*)(int) )0x08126130)(sup);
-	return x % sup;
+unsigned int barc4(const unsigned int s) {
+	const unsigned int B = carc4();
+	if (s == 0) {
+		return B;
+	}
+	return B % s;
 }
 
 /**
 Generates and injects
-	the initial state S and
+	the counter c,
+	the state S and
 	the iterators i and j.
 
-@param seed The seed k to use.
+@param k The seed k to use.
+@param calls The amount of calls to do.
 **/
-void iarc4(const unsigned int seed, const unsigned int calls) {//inelegant, but works
+void iarc4(const unsigned int k, const unsigned int calls) {
 	arc4_i = 0;
 	arc4_j = 0;
-	srandom(seed);
-	sarc4(random());
+	srandom(k);
+	sarc4((unsigned int )random());
 	for (unsigned int call = 0; call < executable_arc4_calls; call++) {
-		arc4l();
+		carc4();
 	}
-	const unsigned int slurp = 20;
-	const unsigned int add = 10;
-	const unsigned int sup = 18;
-	int first = arc4s(slurp);
-	for (unsigned int iterator = 0; iterator < first + add; iterator++) {
-		const unsigned int second = arc4s(sup);
-		while (arc4s(sup) == second);
+	const unsigned int first_sup = 20;
+	const unsigned int second_sup = 18;
+	unsigned int first = barc4(first_sup) + 10;
+	for (unsigned int iterator = 0; iterator < first; iterator++) {
+		const unsigned int second = barc4(second_sup);
+		while (barc4(second_sup) == second);
 	}
 	for (unsigned int call = 0; call < calls; call++) {
-		arc4l();
+		carc4();
 	}
 	memcpy(executable_arc4_c, &arc4_c, sizeof arc4_c);
 	memcpy(executable_arc4_s, arc4_s, sizeof arc4_s);
@@ -1335,7 +1371,6 @@ rm -f obj/meta
 @param code The key number.
 @return The key code.
 */
-const char * key_code(int key);
 #include "meta/key_code.c"
 
 #endif

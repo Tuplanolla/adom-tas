@@ -52,8 +52,8 @@ problem_t save(const unsigned int state) {
 		short y, x;
 		getyx(stdscr, y, x);
 
-		for (unsigned int row = 0; row < rows; row++) {
-			for (unsigned int col = 0; col < cols; col++) {
+		for (int row = 0; row < rows; row++) {
+			for (int col = 0; col < cols; col++) {
 				shm.chs[state][row][col] = mvwinch(stdscr, (int )row, (int )col);
 			}
 		}
