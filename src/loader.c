@@ -83,7 +83,7 @@ problem_t init_parent(void) {
 	/*
 	Enables save-quit-load emulation.
 	*/
-	if (sql) {
+	if (sql_emulation) {
 		inject_save(&save_quit_load);
 	}
 	else {
@@ -94,6 +94,8 @@ problem_t init_parent(void) {
 	Initializes the shared memory segment.
 	*/
 	PROPAGATE(init_shm());
+
+	record.timestamp = timestamp;
 
 	const pid_t pid = 0;//fork();//disabled to make debugging easier
 	if (pid == -1) {

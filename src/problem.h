@@ -9,6 +9,9 @@
 Lists the error codes.
 **/
 enum problem_e {
+	/*
+	*.c
+	*/
 	NO_PROBLEM,
 	ASSERT_PROBLEM,
 	NULL_PROBLEM,
@@ -51,7 +54,7 @@ enum problem_e {
 	EXECUTABLE_DATA_CONFIG_PROBLEM,
 	EXECUTABLE_DATA_HOME_PROBLEM,
 	EXECUTABLE_DATA_STAT_PROBLEM,
-	EXECUTABLE_TEMPORARY_STAT_PROBLEM ,
+	EXECUTABLE_TEMPORARY_STAT_PROBLEM,
 
 	LD_PRELOAD_CONFIG_PROBLEM,
 	LD_PRELOAD_GETENV_PROBLEM,
@@ -155,8 +158,6 @@ enum problem_e {
 };
 typedef enum problem_e problem_t;
 
-const char * problem_message(problem_t code);
-
 /**
 Propagates an error code.
 
@@ -177,5 +178,7 @@ problem_t method {
 			return problem;\
 		}\
 	} while (FALSE)
+
+const char * problem_message(problem_t code);
 
 #endif

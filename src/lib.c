@@ -54,7 +54,7 @@ intern endwin_f um_endwin = (void * )dlnull;
 /**
 The active save state.
 **/
-unsigned int current_state = 1;
+int current_state = 1;
 
 /**
 The most important variables ever defined.
@@ -337,38 +337,32 @@ int previous_key = 0;
 int rollstage = 0;
 bool rollasked[51];
 char answers[51];
-char * str;
+int qnum = 0;
 
-char qathing(const char * str, const int * attreqs) {//TODO refactor without breaking
-	const size_t questions = sizeof executable_question_strings / sizeof *executable_question_strings;
-	for (size_t question = 0; question < questions; question++) {
-		if (rollasked[question]) continue;
-		if (strncmp(executable_question_strings[question], str, executable_question_lens[question]) == 0) {
-			if (answers[question] != '?') return answers[question];
-			rollasked[question] = TRUE;
-			int score[4] = {0, 0, 0, 0};
-			for (size_t opt = 0; opt < 4; opt++) {
-				int weight = 1;
-				for (size_t atr = 0; atr < 9; atr++) {
-					int zorg = attreqs[8 - atr];
-					score[opt] += weight * executable_question_effects[question][opt][zorg];
-					weight *= 2;
-				}
-			}
-			int answer = 4;
-			int max = -1 << 31;
-			for (size_t opt = 0; opt < 4; opt++) {
-				if (score[opt] > max) {
-					max = score[opt];
-					answer = opt;
-				}
-			}
-			const char letters[5] = {'a', 'b', 'c', 'd', '?'};
-			answers[question] = letters[answer];
-			return letters[answer];
+char qathing(const int question, const int * attreqs) {//TODO refactor without breaking
+	if (rollasked[question]) return '?';
+	if (answers[question] != '?') return answers[question];
+	rollasked[question] = TRUE;
+	int score[4] = {0, 0, 0, 0};
+	for (size_t opt = 0; opt < 4; opt++) {
+		int weight = 1;
+		for (size_t atr = 0; atr < 9; atr++) {
+			int zorg = attreqs[8 - atr];
+			score[opt] += weight * executable_question_effects[question][opt][zorg];
+			weight *= 2;
 		}
 	}
-	return '?';
+	int answer = 4;
+	int max = -1 << 31;
+	for (size_t opt = 0; opt < 4; opt++) {
+		if (score[opt] > max) {
+			max = score[opt];
+			answer = (int )opt;
+		}
+	}
+	const char letters[5] = {'a', 'b', 'c', 'd', '?'};
+	answers[question] = letters[answer];
+	return letters[answer];
 }
 
 /**
@@ -385,7 +379,6 @@ int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme fo
 		rollstage++;
 		switch (rollstage) {
 			case -127-ROLL_FOR_PLAYING: {
-				free(str);
 				int * birthday = (int * )0x082b61f0;
 				int * gender = (int * )0x082add18;
 				int * race = (int * )0x082add10;
@@ -397,14 +390,16 @@ int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme fo
 				if (books[0x14] == 0
 						|| books[0x1e] == 0
 						|| items[0xa9] == 0
-						|| attributes[0x01] < 20) exit(0);
+						|| attributes[0x01] < 20
+						|| attributes[0x07] < 20) exit(0);
 				char buf[32];
 				snprintf(buf, sizeof buf, "cat/%u.tac", (unsigned int )timestamp);
 				FILE * const f = fopen(buf, "wb");
 				if (f != NULL) {
 					const unsigned char header[4] = {'T', 'A', 'C', '\0'};
-					//fwrite("adom", 4, 0x01, f);
 					fwrite(header, sizeof header, 0x01, f);
+					fwrite("adom", 4, 0x01, f);
+					fwrite((char [1024] ){[0 ... 1023] = '\0'}, 1, 1016, f);
 					fwrite(birthday, sizeof (int), 0x01, f);
 					fwrite(gender, sizeof (int), 0x01, f);
 					fwrite(race, sizeof (int), 0x01, f);
@@ -419,10 +414,7 @@ int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme fo
 				}
 				exit(1);
 			}
-			case 1: {
-				str = malloc(executable_question_max + 1);
-				return 'g';
-			}
+			case 1: return 'g';
 			case 2: return ' ';
 			case 3: return 's';
 			case 4: return 'm';
@@ -436,9 +428,9 @@ int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme fo
 				return 'q';
 			}
 			default: {
-				mvwinnstr(win, 0, 0, str, executable_question_max);
 				const int attreqs[9] = {1, 7, 2, 4, 3, 0, 8, 5, 6};//Le > Ma > Wi > To > Dx > St > Pe > Ch > Ap
-				char result = qathing(str, attreqs);
+				char result = qathing(executable_questions[qnum], attreqs);
+				qnum++;
 				if (result == '?') {
 					rollstage = -128;
 				}
@@ -473,10 +465,10 @@ int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme fo
 	if (*executable_turns < previous_turns) surplus_turns++;
 	previous_turns = *executable_turns;
 	int key = um_wgetch(win);
-	char str[64]; snprintf(str, 64, "%u", key); mvwaddstr(win, 1, 1, str);
 	if (key == play_key) {
 		if (record.count == 1) {//move to roll
 			rolling = TRUE;
+			timestamp--;
 			goto front;
 			back: timestamp++;
 			struct tm * tm;
@@ -523,13 +515,14 @@ int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme fo
 		return 0;//redundant
 	}
 	else if (key == state_key) {
+		iarc4((unsigned int )timestamp, 0);
 		for (size_t question = 0; question < 51; question++) {
-			answers[question] = 'e';
+			answers[question] = '?';
 		}
 		const int attreqs[9] = {1, 7, 2, 4, 3, 0, 8, 5, 6};//Le > Ma > Wi > To > Dx > St > Pe > Ch > Ap
-		for (size_t q = 0; q < 51; q++) {
-			char result = qathing(executable_question_strings[q], attreqs);
-			fprintfl(error_stream, "%d -> %c", q, result == 0 ? '0' : result);
+		for (int q = 0; q < 51; q++) {
+			char result = qathing(q, attreqs);
+			fprintfl(error_stream, "%d -> %c", q, result == 0 ? '!' : result);
 		}
 		MODINC(current_state, states);
 		wrefresh(win);
@@ -541,8 +534,8 @@ int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme fo
 			for (int col = 0; col < cols; col++) {
 				const chtype ch = mvwinch(win, row + 2, col);
 				const chtype sch = A_CHARTEXT & ch;
-				if (sch == '\0') {
-					const int attr = COLOR_PAIR(8) | A_BOLD;
+				if (sch == '\0' || sch == ' ') {
+					const attr_t attr = COLOR_PAIR(8) | A_BOLD;
 					wattron(cheat_win, attr);
 					const unsigned char terrain = (*executable_terrain)[row * cols + col];
 					mvwaddch(cheat_win, row, col, executable_terrain_chars[terrain]);
@@ -569,12 +562,12 @@ int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme fo
 							if (color == -1) {
 								color = executable_material_colors[i.material];
 							}
-							int attr = COLOR_PAIR(color);
-							if (color > 8) {
-								attr = A_BOLD | COLOR_PAIR(color - 8);
+							attr_t attr = COLOR_PAIR(color);
+							if (color >= 8) {
+								attr |= A_BOLD;
 							}
 							wattron(cheat_win, attr);
-							mvwaddch(cheat_win, row, col, executable_item_chars[i.category]);//TODO make rocks special
+							mvwaddch(cheat_win, row, col, (chtype )executable_item_chars[i.category]);//TODO make rocks special
 							wattroff(cheat_win, attr);
 						}
 					}
@@ -586,19 +579,19 @@ int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme fo
 			monster = monster->next;
 			if (monster->monster != NULL) {
 				const executable_monster_data_t m = executable_monster_data[monster->monster->type];
-				int attr = COLOR_PAIR(m.color);
-				if (m.color > 8) {
-					attr = A_BOLD | COLOR_PAIR(m.color - 8);
+				attr_t attr = COLOR_PAIR(m.color);
+				if (m.color >= 8) {
+					attr |= A_BOLD;
 				}
 				wattron(cheat_win, attr);
-				mvwaddch(cheat_win, monster->monster->y, monster->monster->x, m.character);
+				mvwaddch(cheat_win, monster->monster->y, monster->monster->x, (chtype )m.character);
 				wattroff(cheat_win, attr);
 			}
 		}
+		wrefresh(win);
 		wrefresh(cheat_win);
 		delwin(cheat_win);
 		MODDEC(current_state, states);
-		wrefresh(win);
 		return 0;
 	}
 	else if (key == menu_key) {

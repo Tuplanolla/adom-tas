@@ -43,12 +43,10 @@ intern int turns = 0;
 The size of the executable.
 **/
 intern const size_t executable_size = 2452608;
-
 /**
 The hash code of the executable.
 **/
 intern const int executable_hash = 893530599;
-
 /**
 The version of the executable.
 **/
@@ -58,12 +56,10 @@ intern const unsigned char executable_version[4] = {1, 1, 1, 0};
 The minimum height of the terminal.
 **/
 intern const int executable_rows_min = 25;
-
 /**
 The maximum height of the terminal.
 **/
 intern const int executable_cols_min = 77;
-
 /**
 The minimum width of the terminal.
 **/
@@ -77,52 +73,42 @@ intern const int executable_cols_max = 127;
 The name of the data directory.
 **/
 intern const char * const executable_data_directory = ".adom.data";
-
 /**
 The name of the temporary file directory.
 **/
 intern const char * const executable_temporary_directory = "tmpdat";
-
 /**
 The name prefix of temporary files.
 **/
 intern const char * const executable_temporary_file = "adom_tdl";
-
 /**
 The amount of temporary file groups.
 **/
 intern const unsigned int executable_temporary_levels = 51;
-
 /**
 The amount of temporary files in groups.
 **/
 intern const unsigned int executable_temporary_parts = 4;
-
 /**
 The name of the configuration file.
 **/
 intern const char * const executable_config_file = ".adom.cfg";
-
 /**
 The name of the process lock file.
 **/
 intern const char * const executable_process_file = ".adom.prc";
-
 /**
 The name of the keybinding file.
 **/
 intern const char * const executable_keybind_file = ".adom.kbd";
-
 /**
 The name of the version file.
 **/
 intern const char * const executable_version_file = ".adom.ver";
-
 /**
 The name of the error file.
 **/
 intern const char * const executable_error_file = ".adom.err";
-
 /**
 The name of the count file.
 **/
@@ -394,125 +380,6 @@ intern const char * const executable_keybind =
 		"#Zap wand\n"
 		"ZAP:z\n"
 	;
-
-/**
-The unique parts of the questions.
-**/
-intern const char * const executable_question_strings[51] = {
-	"Your father w",
-	"In y",
-	"You an",
-	"In c",
-	"Your g",
-	"When e",
-	"You are o",
-	"Your f",
-	"While c",
-	"You have b",
-	"At",
-	"While a",
-	"While p",
-	"S",
-	"After s",
-	"H",
-	"The ",
-	"After e",
-	"E",
-	"N",
-	"As y",
-	"During y",
-	"While d",
-	"During a",
-	"While o",
-	"If",
-	"Your b",
-	"You are car",
-	"You have s",
-	"Your k",
-	"You are cal",
-	"You are a",
-	"As a",
-	"While s",
-	"One",
-	"When y",
-	"What w",
-	"What a",
-	"Wi",
-	"You are i",
-	"Ther",
-	"Your m",
-	"On ",
-	"You a",
-	"You are w",
-	"You are ch",
-	"You r",
-	"Your father h",
-	"You f",
-	"While l",
-	"After m"
-};
-
-/**
-The lengths of the questions.
-**/
-intern const size_t executable_question_lens[51] = {
-	13,
-	4,
-	6,
-	4,
-	6,
-	6,
-	9,
-	6,
-	7,
-	10,
-	2,
-	7,
-	7,
-	1,
-	7,
-	1,
-	4,
-	7,
-	1,
-	1,
-	4,
-	8,
-	7,
-	8,
-	7,
-	2,
-	6,
-	11,
-	10,
-	6,
-	11,
-	9,
-	4,
-	7,
-	3,
-	6,
-	6,
-	6,
-	2,
-	9,
-	4,
-	6,
-	3,
-	5,
-	9,
-	10,
-	5,
-	13,
-	5,
-	7,
-	7
-};
-
-/**
-The length of the longest question.
-**/
-intern const size_t executable_question_max = 13;
 
 /**
 The effects of the questions.
@@ -827,129 +694,32 @@ intern const int executable_question_effects[51][4][9] = {
 };
 
 /**
-A pointer to the item characters.
+A pointer to the list of the questions.
+
+The list is written as the questions are answered.
 **/
-intern const char const executable_terrain_chars[62] = {
-	'?',
-	'#',
-	'#',
-	'.',
-	'+',
-	'#',
-	'#',
-	'/',
-	'#',
-	'+',
-	'.',
-	'+',
-	'.',
-	'/',
-	'=',
-	'"',
-	'~',
-	'^',
-	'&',
-	'"',
-	'.',
-	'^',
-	'^',
-	'!',
-	'~',
-	'"',
-	'.',
-	'o',
-	'*',
-	'.',
-	'=',
-	'+',
-	'*',
-	'=',
-	'*',
-	'*',
-	'*',
-	'*',
-	'*',
-	'o',
-	'o',
-	'o',
-	'*',
-	'=',
-	'*',
-	'*',
-	'o',
-	'*',
-	'*',
-	'*',
-	'o',
-	'&',
-	'*',
-	'*',
-	'*',
-	'o',
-	'*',
-	'*',
-	'*',
-	'*',
-	'#',
-	'*'
-};
+intern const int * const executable_questions = (void * )0x082b65f4;
 
-intern const char const executable_object_chars[38] = {
-	' ',
-	'>',
-	'<',
-	'>',
-	'<',
-	'_',
-	'*',
-	'*',
-	'^',
-	'0',
-	'^',
-	'^',
-	'|',
-	'0',
-	'&',
-	'+',
-	'8',
-	'"',
-	'"',
-	'"',
-	'"',
-	'"',
-	'"',
-	'$',
-	'$',
-	'_',
-	'_',
-	'_',
-	'_',
-	'.',
-	'.',
-	'.',
-	'.',
-	'_',
-	'.',
-	'&',
-	'!',
-	'T'
-};
-
+/**
+A pointer to the terrain characters.
+**/
+intern const char * const executable_terrain_chars = "?##.+##/#+.+./=\"~^&\".^^!~\".o*.=+*=*****ooo*=**o***o&***o****#*";//TODO find the address
+/**
+A pointer to the object characters.
+**/
+intern const char * const executable_object_chars = " ><><_**^0^^|0&+8\"\"\"\"\"\"$$____...._.&!T";//TODO find the address
 /**
 A pointer to the item characters.
 **/
-intern const char * const executable_item_chars = (void * )0x8286c0c;
-
+intern const char * const executable_item_chars = (void * )0x08286c0c;//"[[[[[[['~((}/]{=\\!?\"%$*"
 /**
 A pointer to the material colors.
 **/
-intern const char const executable_material_colors[14] = {7, 7, 6, 6, 10, 15, 15, 6, 6, 14, 8, 7, 7, 8};
-
+intern const char const executable_material_colors[14] = {7, 7, 6, 6, 10, 15, 15, 6, 6, 14/*8?*/, 8, 7, 7, 8};//TODO find the address
 /**
 A pointer to the item data.
 **/
 intern const executable_item_data_t * const executable_item_data = (void * )0x08273b00;
-
 /**
 A pointer to the monster data.
 **/
@@ -959,7 +729,6 @@ intern const executable_monster_data_t * const executable_monster_data = (void *
 A pointer to the turn count.
 **/
 intern int * const executable_turns = (void * )0x082b16e0;
-
 /**
 A pointer to the save count.
 **/
@@ -969,25 +738,22 @@ intern int * const executable_saves = (void * )0x082b6140;
 A pointer to the terrain map.
 **/
 intern unsigned char ** const executable_terrain = (void * )0x0829ea60;
-
 /**
 A pointer to the object map.
 **/
 intern unsigned char ** const executable_objects = (void * )0x0829ea78;
-
 /**
 A pointer to the item map.
 **/
 intern executable_map_item_t *** const executable_items = (void * )0x082a4e7c;
-
 /**
 A pointer to the monster map.
 **/
 intern executable_map_monster_t ** const executable_monsters = (void * )0x082b6a08;
 
-/**
-Untested variables.
-**/
+/*
+Undocumented.
+*/
 intern unsigned int * const executable_blindness = (void * )0x082b17dc;
 intern unsigned int * const executable_stunnedness = (void * )0x082b17e0;
 intern unsigned int * const executable_confusion = (void * )0x082b17e4;
@@ -1174,17 +940,14 @@ intern const char * const executable_burdenedness_abbreviation = "Bu";//?
 The random number generator's counter c.
 **/
 intern unsigned char * const executable_arc4_c = (void * )0x08264a60;
-
 /**
 The random number generator's state S.
 **/
 intern unsigned char * const executable_arc4_s = (void * )0x082ada40;
-
 /**
 The random number generator's first iterator i.
 **/
 intern unsigned char * const executable_arc4_i = (void * )0x082adb40;
-
 /**
 The random number generator's second iterator j.
 **/
@@ -1196,14 +959,12 @@ The amount of random number generator calls measured
 	to its first cyclic point.
 **/
 intern const unsigned int executable_arc4_calls = 1165;
-
 /**
 The amount of random number generator calls
 	from the splash screen or the main menu
 	to loading a game automatically.
 **/
 intern const unsigned int executable_arc4_calls_automatic_load = 205;
-
 /**
 The amount of random number generator calls measured
 	from the splash screen or the main menu
@@ -1220,7 +981,6 @@ unsigned char * const arc4_state = (void * )0x082ada40;
 </pre>
 **/
 unsigned char arc4_s[0x100];
-
 /**
 The emulated random number generator's first iterator i.
 
@@ -1230,7 +990,6 @@ unsigned char * const first_arc4_iterator = (void * )0x082adb40;
 </pre>
 **/
 unsigned char arc4_i = 0;
-
 /**
 The emulated random number generator's second iterator j.
 
@@ -1240,7 +999,6 @@ unsigned char * const second_arc4_iterator = (void * )0x082adb41;
 </pre>
 **/
 unsigned char arc4_j = 0;
-
 /**
 The emulated random number generator's counter c.
 

@@ -12,16 +12,47 @@ Sets the default values of various variables.
 
 #include "util.h"//intern, bool, FALSE, TRUE
 
+/**
+The name of this project.
+
+Used in unique identifier generation.
+**/
 intern const char * const project_name = "adom-tas";
+/**
+The release version of this project.
+**/
 intern const char * const project_version = "1.0.0";
 
+/**
+The indicator used when a list extends left.
+**/
 intern const char * const interface_left_more = "<-";
+/**
+The indicator used when a list extends right.
+**/
 intern const char * const interface_right_more = "->";
+/**
+The indicator used on the left side of a used field.
+**/
 intern const char * const interface_left_used = "[";
+/**
+The indicator used on the right side of a used field.
+**/
 intern const char * const interface_right_used = "]";
+/**
+The indicator used on the left side of an unused field.
+**/
 intern const char * const interface_left_unused = "";
+/**
+The indicator used on the right side of an unused field.
+**/
 intern const char * const interface_right_unused = "";
-intern const int interface_colors[8] = {
+/**
+The colors.
+
+Ordered by hue (wavelength).
+**/
+intern const int interface_colors[8] = {//TODO [6]
 	COLOR_BLACK,
 	COLOR_WHITE,
 	COLOR_RED,
@@ -32,12 +63,30 @@ intern const int interface_colors[8] = {
 	COLOR_MAGENTA
 };
 
+/**
+The separator between error message fields.
+**/
 intern const char * const log_separator = " - ";
+/**
+The error string.
+**/
 intern const char * const log_error = "Error";
+/**
+The warning string.
+**/
 intern const char * const log_warning = "Warning";
+/**
+The note string.
+**/
 intern const char * const log_note = "Note";
+/**
+The library call string.
+**/
 intern const char * const log_call = "Call";
 
+/*
+Undocumented.
+*/
 intern const char * const default_executable_path = "adom/adom";
 intern const char * const default_loader_path = "bin/adom-tas.so";
 intern const char * const default_libc_path = "/lib/libc.so.6";

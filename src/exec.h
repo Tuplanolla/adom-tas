@@ -34,13 +34,11 @@ extern const char * const executable_error_file;
 extern const char * const executable_config;
 extern const char * const executable_keybind;
 
-extern const char * const executable_question_strings[51];
-extern const size_t executable_question_lens[51];
-extern const size_t executable_question_max;
 extern const int executable_question_effects[51][4][9];
+extern const int * const executable_questions;
 
-extern const char const executable_terrain_chars[62];
-extern const char const executable_object_chars[38];
+extern const char * const executable_terrain_chars;
+extern const char * const executable_object_chars;
 extern const char * const executable_item_chars;
 extern const char const executable_material_colors[14];
 
@@ -48,7 +46,7 @@ struct executable_item_data_s {
 	unsigned int category;
 	unsigned char stuff[4];
 	//...
-	unsigned int color;
+	int color;
 	unsigned char other_stuff[88];
 	//...
 	unsigned int material;

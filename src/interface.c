@@ -62,7 +62,7 @@ problem_t init_interface(void) {
 	*/
 	const size_t colors = sizeof interface_colors / sizeof *interface_colors;
 	for (size_t color_ = 1; color_ < colors; color_++) {
-		if (color) {
+		if (colorful_interface) {
 			init_pair(pairs + color_, COLOR_BLACK, interface_colors[color_]);
 		}
 		else {
@@ -107,13 +107,13 @@ problem_t draw_status(void) {
 		return error(MALLOC_PROBLEM);
 	}
 	#define wrefresh_ADDSTR(format, ...) do {\
-				snprintf(str, cols, format, __VA_ARGS__);\
-				x -= strlen(str);\
-				wattrset(status_win, COLOR_PAIR(pairs + 1 + pair));\
-				pair = (pair + 1) % 7;\
-				mvwaddnstr(status_win, 0, x, str, cols - x);\
-				x -= 2;\
-			} while (FALSE)
+			snprintf(str, cols, format, __VA_ARGS__);\
+			x -= strlen(str);\
+			wattrset(status_win, COLOR_PAIR(pairs + 1 + pair));\
+			pair = (pair + 1) % 7;\
+			mvwaddnstr(status_win, 0, x, str, cols - x);\
+			x -= 2;\
+		} while (FALSE)
 	//wrefresh_ADDSTR("P: %u", (unsigned int )getpid());
 	wrefresh_ADDSTR("S: %u/%u", current_state, states - 1);
 	wrefresh_ADDSTR("R: 0x%08x", (unsigned int )hash(executable_arc4_s, 0x100));
@@ -166,8 +166,8 @@ problem_t draw_menu(void) {
 	int right_edge = x - 1;
 	left_edge += strlen(interface_left_more) + 1;
 	right_edge -= strlen(interface_right_more) + 1;
-	int dec_col;
-	int inc_col;
+	int left_pos;
+	int right_pos;
 	bool left_end = FALSE;
 	bool right_end = FALSE;
 	bool left_more = FALSE;
@@ -191,18 +191,18 @@ problem_t draw_menu(void) {
 				+ intlen(state)
 				+ strlen(interface_right);
 		int col = -1;
-		if (diff == 0) {
-			diff = 1;
-			dec_col = left_edge + (right_edge - left_edge + len - 1) / 2 + 1;
-			col = dec_col;
-			inc_col = dec_col + len - 1;
+		if (diff == 0) {//move to the center
+			diff++;
+			left_pos = left_edge + (right_edge - left_edge + len - 1) / 2 + 1;
+			col = left_pos;
+			right_pos = left_pos + len - 1;
 		}
 		else if (diff > 0) {//move left
 			if (!left_more) {
-				dec_col -= len;
-				dec_col--;//spacing
-				col = dec_col;
-				if (dec_col <= left_edge) {
+				left_pos -= len;
+				left_pos--;//spacing
+				col = left_pos;
+				if (left_pos <= left_edge) {
 					if (state > 0) {
 						left_more = TRUE;
 					}
@@ -217,10 +217,10 @@ problem_t draw_menu(void) {
 		}
 		else {//move right
 			if (!right_more) {
-				inc_col++;//spacing
-				col = inc_col + 1;
-				inc_col += len;
-				if (inc_col >= right_edge) {
+				right_pos++;//spacing
+				col = right_pos + 1;
+				right_pos += len;
+				if (right_pos >= right_edge) {
 					if (state < states) {
 						right_more = TRUE;
 					}

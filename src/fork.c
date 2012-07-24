@@ -30,7 +30,7 @@ Manages processes.
 /**
 Saves the game to memory.
 **/
-problem_t save(const unsigned int state) {
+problem_t save(const int state) {
 	pid_t pid;
 	beginning: pid = fork();//returns 0 in child, process id of child in parent, -1 on error
 	if (pid == -1) {
@@ -111,7 +111,7 @@ problem_t save(const unsigned int state) {
 /**
 Loads the game from memory.
 **/
-problem_t load(const unsigned int state) {
+problem_t load(const int state) {
 	if (shm.pids[state] != 0) {
 		for (unsigned int level = 0; level < executable_temporary_levels; level++) {
 			const unsigned int offset = level * executable_temporary_parts;

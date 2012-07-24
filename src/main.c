@@ -12,6 +12,7 @@ Launches the executable.
 #include <unistd.h>//exec*, unlink
 #include <sys/stat.h>//stat
 
+#include "gnu.h"//__*__
 #include "util.h"//intern
 #include "problem.h"//*_PROBLEM
 #include "log.h"//error, warning, note, PROPAGATE
@@ -27,7 +28,10 @@ Command-line arguments are passed through.
 @param argv The command-line arguments.
 @return Nothing if successful and something else otherwise.
 **/
-int main(const int argc, char * const argv[]) {
+int main(const int argc __attribute__ ((unused)), char * const argv[]) {
+	/*
+	Initializes the configuration variables.
+	*/
 	PROPAGATE(init_external_config());
 
 	/*
@@ -156,6 +160,12 @@ int main(const int argc, char * const argv[]) {
 		return error(EXEC_PROBLEM);
 	}
 
+	/*
+	Suppresses warnings:
+	<pre>
+	'executable_path' is never deallocated [-Wleak]
+	</pre>
+	*/
 	PROPAGATE(uninit_config());
 
 	/*

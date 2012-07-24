@@ -17,7 +17,6 @@ Provides general-purpose macros.
 #undef FALSE
 #undef TRUE
 #undef bool
-
 /**
 Boolean values.
 **/
@@ -28,19 +27,16 @@ enum bool_e {
 typedef enum bool_e bool;
 
 /**
-General-purpose functions.
-**/
-size_t intlen(int x);
-size_t uintlen(unsigned int x);
-int hash(const unsigned char * array, size_t size);
-char * astrrep(const char * haystack, const char * needle, const char * replacement) __attribute__ ((malloc));
-int copy(const char * dest, const char * src);
-FILE * stdstr(const char * str);
-
-/**
 An annotation to use with an <code>extern</code> variable.
 **/
 #define intern
+
+/**
+Touches a variable.
+
+Used to suppress warnings relating to unused parameters.
+**/
+#define UNUSED(x) ((void )(x))
 
 /**
 An alternative <code>NULL</code> for error checking.
@@ -60,26 +56,26 @@ The print format of a byte.
 
 Works in conjuction with the <code>BITS</code> macro:
 <pre>
-printf("0x%x = 0b"BYTE, 42, BITS(42));
+printf("0x%x = 0b"BITSF, 42, BITS(42));
 </pre>
 **/
-#define BYTE "%d%d%d%d%d%d%d%d"
+#define BITSF "%d%d%d%d%d%d%d%d"
 
 /**
-Returns the bits of a byte.
+The print parameters of a byte.
 
 @param byte The byte.
 @return An argument list of the bits.
 **/
 #define BITS(byte) \
-		byte & 0b10000000 ? 1 : 0,\
-		byte & 0b01000000 ? 1 : 0,\
-		byte & 0b00100000 ? 1 : 0,\
-		byte & 0b00010000 ? 1 : 0,\
-		byte & 0b00001000 ? 1 : 0,\
-		byte & 0b00000100 ? 1 : 0,\
-		byte & 0b00000010 ? 1 : 0,\
-		byte & 0b00000001 ? 1 : 0
+	byte & 0b10000000 ? 1 : 0,\
+	byte & 0b01000000 ? 1 : 0,\
+	byte & 0b00100000 ? 1 : 0,\
+	byte & 0b00010000 ? 1 : 0,\
+	byte & 0b00001000 ? 1 : 0,\
+	byte & 0b00000100 ? 1 : 0,\
+	byte & 0b00000010 ? 1 : 0,\
+	byte & 0b00000001 ? 1 : 0
 
 /**
 Returns the smaller of two numbers.
@@ -149,11 +145,11 @@ Swaps two variables.
 @return An argument list of the bits.
 **/
 #define SWAP(x, y) do {\
-			unsigned char z[sizeof (x) == sizeof (y) ? sizeof (x) : 0];\
-			memcpy(z, &y, sizeof (x));\
-			memcpy(&y, &x, sizeof (x));\
-			memcpy(&x, z, sizeof (x));\
-		} while (FALSE)
+		unsigned char z[sizeof (x) == sizeof (y) ? sizeof (x) : 0];\
+		memcpy(z, &y, sizeof (x));\
+		memcpy(&y, &x, sizeof (x));\
+		memcpy(&x, z, sizeof (x));\
+	} while (FALSE)
 
 /**
 The Shift modifier for the New Cursor Optimization library.
@@ -169,5 +165,12 @@ The Ctrl modifier for the New Cursor Optimization library.
 The Meta modifier for the New Cursor Optimization library.
 **/
 #define MOD_META 27
+
+size_t intlen(int x);
+size_t uintlen(unsigned int x);
+int hash(const unsigned char * array, size_t size);
+char * astrrep(const char * haystack, const char * needle, const char * replacement) __attribute__ ((malloc));
+int copy(const char * dest, const char * src);
+FILE * stdstr(const char * str);
 
 #endif

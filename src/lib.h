@@ -37,7 +37,7 @@ extern wrefresh_f um_wrefresh;
 extern wgetch_f um_wgetch;
 extern endwin_f um_endwin;
 
-extern unsigned int current_state;
+extern int current_state;
 extern unsigned char dur;
 extern char name[77];
 extern int surplus_turns;

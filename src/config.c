@@ -26,9 +26,9 @@ Some redundant conditions are used to
 
 #include "config.h"
 
-/**
-The configuration variables.
-**/
+/*
+Undocumented.
+*/
 intern char * home_path;
 intern char * executable_path;
 intern char * executable_data_path;
@@ -49,9 +49,9 @@ intern int cols;
 intern char * shm_path;
 intern time_t timestamp;
 intern unsigned int generations;
-intern bool sql;
-intern bool autoplay;
-intern bool color;
+intern bool sql_emulation;
+intern bool automatic_playback;
+intern bool colorful_interface;
 intern char * iterator;
 intern char * input_path;
 intern char ** output_paths;
@@ -104,6 +104,7 @@ problem_t uninit_config(void) {
 	free(executable_process_path);
 	free(executable_keybind_path);
 	free(executable_version_path);
+	free(executable_error_path);
 	free(executable_count_path);
 	free(loader_path);
 	free(libc_path);
@@ -761,7 +762,7 @@ problem_t init_internal_config(void) {
 		new_sql = default_sql;
 		//warning(SQL_CONFIG_PROBLEM);
 	}
-	sql = new_sql == CONFIG_TRUE;
+	sql_emulation = new_sql == CONFIG_TRUE;
 
 	/**
 	Sets the playback mode.
@@ -771,7 +772,7 @@ problem_t init_internal_config(void) {
 		new_autoplay = default_autoplay;
 		//warning(AUTOPLAY_CONFIG_PROBLEM);
 	}
-	autoplay = new_autoplay == CONFIG_TRUE;
+	automatic_playback = new_autoplay == CONFIG_TRUE;
 
 	/**
 	Sets the color mode.
@@ -781,7 +782,7 @@ problem_t init_internal_config(void) {
 		new_color = default_color;
 		//warning(COLOR_CONFIG_PROBLEM);
 	}
-	color = new_color == CONFIG_TRUE;
+	colorful_interface = new_color == CONFIG_TRUE;
 
 	/*
 	Finds the iterator string.
@@ -1089,7 +1090,6 @@ problem_t init_internal_config(void) {
 		//warning(KEY_CONFIG_PROBLEM);
 	}
 	quit_key = new_quit_key;
-	fprintfl(error_stream, "%d\n", quit_key);
 
 	PROPAGATE(end_init_config());
 
