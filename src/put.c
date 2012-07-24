@@ -8,9 +8,9 @@ Manages inputs and outputs.
 #include <stdio.h>//*open, *close, *read, *write, FILE
 
 #include "util.h"//FALSE, TRUE
-#include "problem.h"//*_PROBLEM
+#include "prob.h"//*_PROBLEM
 #include "log.h"//error, warning, note
-#include "record.h"//record*
+#include "rec.h"//record*
 
 #include "put.h"
 

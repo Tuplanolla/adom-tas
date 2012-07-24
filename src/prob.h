@@ -1,9 +1,9 @@
 /**
-@see problem.c
+@see prob.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef PROBLEM_H
-#define PROBLEM_H
+#ifndef PROB_H
+#define PROB_H
 
 /**
 Lists the error codes.
@@ -40,7 +40,7 @@ enum problem_e {
 	EXEC_PROBLEM,
 
 	/*
-	config.c
+	cfg.c
 	*/
 	CONFIGURATION_OPEN_PROBLEM,
 	CONFIGURATION_WRITE_PROBLEM,
@@ -115,7 +115,7 @@ enum problem_e {
 	LOG_CHANGE_PROBLEM,
 
 	/*
-	lib.c
+	fcn.c
 	*/
 	LIBC_DLOPEN_PROBLEM,
 	LIBC_DLSYM_PROBLEM,

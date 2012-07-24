@@ -12,7 +12,7 @@ Injects assembly instructions.
 #include <limits.h>//CHAR_BIT
 
 #include "util.h"//PAGE*
-#include "problem.h"//problem_t, *_PROBLEM
+#include "prob.h"//problem_t, *_PROBLEM
 #include "log.h"//error, warning, note
 
 /**

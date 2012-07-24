@@ -7,8 +7,8 @@ Some redundant conditions are used to
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef CONFIG_C
-#define CONFIG_C
+#ifndef CFG_C
+#define CFG_C
 
 #include <stdlib.h>//*alloc, free, *env, size_t, NULL
 #include <stdio.h>//*open, *close, *read, *write, *print*, FILE, EOF
@@ -19,12 +19,12 @@ Some redundant conditions are used to
 #include <libconfig.h>//config_*, CONFIG_*
 
 #include "util.h"//intern, hash, stdstr, SUBNULL
-#include "problem.h"//problem_t, *_PROBLEM
+#include "prob.h"//problem_t, *_PROBLEM
 #include "log.h"//error, warning, note
 #include "def.h"//default_*
 #include "exec.h"//executable_*
 
-#include "config.h"
+#include "cfg.h"
 
 /*
 Undocumented.

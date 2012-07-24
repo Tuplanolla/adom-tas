@@ -117,7 +117,7 @@ intern const char * const executable_count_file = ".adom.cnt";
 /**
 The default configuration.
 **/
-intern const char * const executable_config =
+intern const char * const executable_config = \
 		"Allow_Default_Names    = false\n"
 		"Auto_Lock_Doors        = false\n"
 		"Auto_Lock_Nearest      = true\n"
@@ -152,7 +152,7 @@ intern const char * const executable_config =
 /**
 The default keybindings.
 **/
-intern const char * const executable_keybind =
+intern const char * const executable_keybind = \
 		"#Activate trap\n"
 		"ACT:\\Ct\n\n"
 		"#Apply skill\n"

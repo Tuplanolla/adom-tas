@@ -66,7 +66,7 @@ The following examples are from a (freshly installed) Arch Linux.
 Binaries only need to be downloaded and extracted.
 
 	[user@arch ~]$ wget https://github.com/Tuplanolla/adom-tas/blob/master/adom-tas.tar.gz
-	[user@arch ~]$ tar -x -f adom-tas.tar.gz
+	[user@arch ~]$ tar -xf adom-tas.tar.gz
 
 They may be older than the sources.
 

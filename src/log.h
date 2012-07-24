@@ -9,7 +9,7 @@
 #include <stdio.h>//FILE
 
 #include "gnu.h"//__*__
-#include "problem.h"//problem_t
+#include "prob.h"//problem_t
 
 int vfprintfl(FILE * stream, const char * fmt, va_list ap) __attribute__ ((format(printf, 2, 0)));
 int fprintfl(FILE * stream, const char * fmt, ...) __attribute__ ((format(printf, 2, 3)));

@@ -11,12 +11,12 @@ Logs messages.
 #include <stdio.h>//*print*, *flush, FILE
 #include <string.h>//str*
 #include <time.h>//struct tm, localtime_r, time_t
-#include <sys/time.h>//gettimeofday
+#include <sys/time.h>//gettimeofday, struct timeval
 #include <unistd.h>//getpid
 
-#include "problem.h"//problem_message, problem_t, *_PROBLEM
+#include "prob.h"//problem_message, problem_t, *_PROBLEM
 #include "def.h"//log_*
-#include "config.h"//*_stream
+#include "cfg.h"//*_stream
 
 #include "log.h"
 

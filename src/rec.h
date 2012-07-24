@@ -1,9 +1,9 @@
 /**
-@see record.c
+@see rec.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef RECORD_H
-#define RECORD_H
+#ifndef REC_H
+#define REC_H
 
 #include <time.h>//time_t
 

@@ -14,10 +14,10 @@ Launches the executable.
 
 #include "gnu.h"//__*__
 #include "util.h"//intern
-#include "problem.h"//*_PROBLEM
+#include "prob.h"//*_PROBLEM
 #include "log.h"//error, warning, note, PROPAGATE
 #include "exec.h"//executable_*
-#include "config.h"//*
+#include "cfg.h"//*
 
 /**
 Prepares and launches the executable.

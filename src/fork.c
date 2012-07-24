@@ -15,15 +15,14 @@ Manages processes.
 #include <sys/types.h>
 
 #include <curses.h>
-#include <libconfig.h>
 
 #include "util.h"
-#include "problem.h"//problem_t
+#include "prob.h"//problem_t
 #include "log.h"
-#include "config.h"
+#include "cfg.h"
 #include "shm.h"
 #include "exec.h"
-#include "loader.h"
+#include "lib.h"
 
 #include "fork.h"
 

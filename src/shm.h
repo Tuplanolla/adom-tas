@@ -9,7 +9,7 @@
 
 #include <curses.h>//chtype
 
-#include "problem.h"//problem_t
+#include "prob.h"//problem_t
 
 /**
 Contains the objects in the shared memory segment.

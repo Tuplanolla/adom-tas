@@ -1,15 +1,15 @@
 /**
-@see config.c
+@see cfg.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef CONFIG_H
-#define CONFIG_H
+#ifndef CFG_H
+#define CFG_H
 
 #include <stdio.h>//FILE
 #include <time.h>//time_t
 
 #include "util.h"//bool
-#include "problem.h"//problem_t
+#include "prob.h"//problem_t
 
 extern char * home_path;
 extern char * executable_path;

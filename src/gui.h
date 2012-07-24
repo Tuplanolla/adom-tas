@@ -1,14 +1,14 @@
 /**
-@see interface.c
+@see gui.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef INTERFACE_H
-#define INTERFACE_H
+#ifndef GUI_H
+#define GUI_H
 
 #include <curses.h>
 
 #include "util.h"//bool
-#include "problem.h"//problem_t
+#include "prob.h"//problem_t
 
 extern bool quitting;
 extern bool inactive;

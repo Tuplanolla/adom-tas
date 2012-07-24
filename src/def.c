@@ -12,6 +12,8 @@ Sets the default values of various variables.
 
 #include "util.h"//intern, bool, FALSE, TRUE
 
+#include "def.h"
+
 /**
 The name of this project.
 

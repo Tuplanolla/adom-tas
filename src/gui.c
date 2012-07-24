@@ -3,8 +3,8 @@ Serves as a template.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef INTERFACE_C
-#define INTERFACE_C
+#ifndef GUI_C
+#define GUI_C
 
 #include <stdlib.h>
 
@@ -13,15 +13,15 @@ Serves as a template.
 #include "util.h"
 #include "exec.h"
 #include "shm.h"
-#include "problem.h"//problem_t, *_PROBLEM
-#include "record.h"
+#include "prob.h"//problem_t, *_PROBLEM
+#include "rec.h"
 #include "def.h"
-#include "loader.h"
 #include "lib.h"
+#include "fcn.h"
 #include "log.h"
-#include "config.h"
+#include "cfg.h"
 
-#include "interface.h"
+#include "gui.h"
 
 /**
 Modes.

@@ -7,10 +7,10 @@ Notes are not problems.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef PROBLEM_C
-#define PROBLEM_C
+#ifndef PROB_C
+#define PROB_C
 
-#include "problem.h"//problem_t, *_PROBLEM
+#include "prob.h"//problem_t, *_PROBLEM
 
 /**
 Converts an error code to an error message.
@@ -51,7 +51,7 @@ const char * problem_message(const problem_t code) {
 		case EXEC_PROBLEM: return "Launching the executable failed.";
 
 		/*
-		config.c
+		cfg.c
 		*/
 		case CONFIGURATION_OPEN_PROBLEM: return "Opening the configuration file for writing failed.";
 		case CONFIGURATION_WRITE_PROBLEM: return "Writing the configuration file failed.";
@@ -146,7 +146,7 @@ const char * problem_message(const problem_t code) {
 		case OUTPUT_CLOSE_PROBLEM: return "Closing the output file failed.";
 
 		/*
-		lib.c
+		fcn.c
 		*/
 		case LIBC_DLOPEN_PROBLEM: return "Opening the C standard library for linking failed.";
 		case LIBC_DLSYM_PROBLEM: return "Reading at least one of the symbols from the C standard library failed.";

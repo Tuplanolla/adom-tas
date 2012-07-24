@@ -5,15 +5,15 @@ Records are built around linked lists.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef RECORD_C
-#define RECORD_C
+#ifndef REC_C
+#define REC_C
 
 #include <stdlib.h>//*alloc, free, NULL
 #include <time.h>//time_t
 
 #include "util.h"//intern
 
-#include "record.h"
+#include "rec.h"
 
 /**
 The record.

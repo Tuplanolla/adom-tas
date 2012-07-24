@@ -20,10 +20,10 @@ removes
 #include <curses.h>//chtype
 
 #include "util.h"//hash, intern, SUBNULL
-#include "problem.h"//problem_t, PROPAGATE, *_PROBLEM
+#include "prob.h"//problem_t, PROPAGATE, *_PROBLEM
 #include "log.h"//error, warning, note
 #include "def.h"//project_name
-#include "config.h"//*
+#include "cfg.h"//*
 
 #include "shm.h"
 
