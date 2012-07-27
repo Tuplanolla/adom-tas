@@ -60,7 +60,6 @@ printf("0x%x = 0b"BITSF, 42, BITS(42));
 </pre>
 **/
 #define BITSF "%d%d%d%d%d%d%d%d"
-
 /**
 The print parameters of a byte.
 
@@ -111,7 +110,6 @@ Increments a number modularly.
 @return The incremented integer.
 **/
 #define MODINC(x, m) x = x % ((m) - 1) + 1;
-
 /**
 Decrements a number modularly.
 
@@ -128,7 +126,6 @@ Returns the page boundary of a pointer.
 @return A pointer to the page boundary.
 **/
 #define PAGE(pointer) ((void * )(((ptrdiff_t )(pointer)) - ((ptrdiff_t )(pointer)) % getpagesize()))
-
 /**
 Returns the page size of an object.
 
@@ -155,12 +152,10 @@ Swaps two variables.
 The Shift modifier for the New Cursor Optimization library.
 **/
 #define MOD_SHIFT 12
-
 /**
 The Ctrl modifier for the New Cursor Optimization library.
 **/
 #define MOD_CTRL 24
-
 /**
 The Meta modifier for the New Cursor Optimization library.
 **/

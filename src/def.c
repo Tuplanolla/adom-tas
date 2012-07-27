@@ -54,9 +54,7 @@ The colors.
 
 Ordered by hue (wavelength).
 **/
-intern const int interface_colors[8] = {//TODO [6]
-	COLOR_BLACK,
-	COLOR_WHITE,
+intern const int interface_colors[6] = {
 	COLOR_RED,
 	COLOR_YELLOW,
 	COLOR_GREEN,
@@ -113,10 +111,10 @@ intern const int default_save_key = KEY_F(2);
 intern const int default_load_key = KEY_F(3);
 intern const int default_state_key = KEY_F(8);
 intern const int default_unstate_key = MOD_SHIFT + KEY_F(8);
-intern const int default_duration_key = KEY_F(6);
-intern const int default_unduration_key = MOD_SHIFT + KEY_F(6);
-intern const int default_time_key = KEY_F(5);
-intern const int default_untime_key = MOD_SHIFT + KEY_F(5);
+intern const int default_duration_key = KEY_F(5);
+intern const int default_unduration_key = MOD_SHIFT + KEY_F(5);
+intern const int default_time_key = KEY_F(6);
+intern const int default_untime_key = MOD_SHIFT + KEY_F(6);
 intern const int default_menu_key = KEY_F(9);
 intern const int default_condense_key = KEY_F(10);
 intern const int default_hide_key = MOD_SHIFT + KEY_F(10);
@@ -124,7 +122,13 @@ intern const int default_play_key = KEY_F(11);
 intern const int default_stop_key = MOD_SHIFT + KEY_F(11);
 intern const int default_quit_key = MOD_SHIFT + KEY_F(12);
 
+/**
+The location of the configuration file.
+**/
 intern const char * const default_config_path = "adom-tas.cfg";
+/**
+The template configuration.
+**/
 intern const char * const default_config =
 	"#required\n"
 	"executable     = \"adom/adom\"\n"
@@ -134,13 +138,14 @@ intern const char * const default_config =
 	"libncurses     = \"/usr/lib/libncurses.so.5\"\n"
 	"\n"
 	"#optional\n"
+	"#enforce        = false\n"
 	"#home           = \"/home/user\"\n"
 	"#states         = 4\n"
 	"#rows           = 25\n"
 	"#cols           = 77\n"
 	"#shm            = \"adom-tas.shm\"\n"
 	"#generations    = 100\n"
-	"#timestamp      = 0\n"
+	"#timestamp      = 189284349\n"
 	"#sql            = true\n"
 	"#autoplay       = false\n"
 	"#color          = true\n"
@@ -155,10 +160,10 @@ intern const char * const default_config =
 	"#load_key       = 267#F3\n"
 	"#state_key      = 272#F8\n"
 	"#unstate_key    = 284#Shift F8\n"
-	"#duration_key   = 270#F6\n"
-	"#unduration_key = 282#Shift F6\n"
-	"#time_key       = 269#F5\n"
-	"#untime_key     = 281#Shift F5\n"
+	"#duration_key   = 270#F5\n"
+	"#unduration_key = 282#Shift F5\n"
+	"#time_key       = 269#F6\n"
+	"#untime_key     = 281#Shift F6\n"
 	"#menu_key       = 273#F9\n"
 	"#condense_key   = 274#F10\n"
 	"#hide_key       = 286#Shift F10\n"

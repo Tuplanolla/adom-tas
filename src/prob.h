@@ -151,6 +151,12 @@ enum problem_e {
 	FORK_PROBLEM,
 
 	/*
+	gui.c
+	*/
+	INIT_PAIR_PROBLEM,
+	NEWWIN_PROBLEM,
+
+	/*
 	asm.c
 	*/
 	ASM_MPROTECT_PROBLEM,
@@ -177,7 +183,7 @@ problem_t method {
 		if (problem != NO_PROBLEM) {\
 			return problem;\
 		}\
-	} while (FALSE)
+	} while (0)
 
 const char * problem_message(problem_t code);
 

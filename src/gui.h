@@ -18,6 +18,6 @@ extern bool playing;
 extern bool paused;
 
 problem_t init_interface(void);
-problem_t draw_interface(WINDOW * win);
+problem_t draw_interface(void);
 
 #endif

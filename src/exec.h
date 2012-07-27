@@ -7,7 +7,7 @@
 
 #include <stddef.h>//size_t
 
-extern short pairs;
+extern short int pairs;
 extern int turns;
 
 extern const size_t executable_size;

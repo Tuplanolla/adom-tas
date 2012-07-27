@@ -30,7 +30,7 @@ The amount of color pairs initialized (including erroneously initialized pairs).
 
 The value is set by <code>init_pair</code>.
 **/
-intern short pairs = 31;
+intern short int pairs = 0;
 
 /**
 The actual turn count without negative turns.
@@ -973,6 +973,15 @@ The amount of random number generator calls measured
 intern const unsigned int executable_arc4_calls_manual_load = 409;
 
 /**
+The emulated random number generator's counter c.
+
+Emulates an internal variable:
+<pre>
+unsigned int * const arc4_calls = (void * )0x08264a60;
+</pre>
+**/
+unsigned int arc4_c = 0;
+/**
 The emulated random number generator's state S.
 
 Emulates an internal variable:
@@ -980,7 +989,7 @@ Emulates an internal variable:
 unsigned char * const arc4_state = (void * )0x082ada40;
 </pre>
 **/
-unsigned char arc4_s[0x100];
+unsigned char arc4_s[256];
 /**
 The emulated random number generator's first iterator i.
 
@@ -999,15 +1008,6 @@ unsigned char * const second_arc4_iterator = (void * )0x082adb41;
 </pre>
 **/
 unsigned char arc4_j = 0;
-/**
-The emulated random number generator's counter c.
-
-Emulates an internal variable:
-<pre>
-unsigned int * const arc4_calls = (void * )0x08264a60;
-</pre>
-**/
-unsigned int arc4_c = 0;
 
 /**
 Seeds the current state S with the seed k.
@@ -1034,37 +1034,37 @@ void sarc4(const unsigned int k) {
 }
 
 /**
-Generates a byte r (and changes the current state).
+Generates a byte q (and changes the current state).
 
 The order of operations is wrong to replicate the behavior of the executable.
 
-@return The byte r.
+@return The byte q.
 **/
 unsigned char arc4(void) {
 	//point A
 	arc4_j = (unsigned char )(arc4_j + arc4_s[arc4_i]);
 	SWAP(arc4_s[arc4_i], arc4_s[arc4_j]);
-	const unsigned char r = arc4_s[(unsigned char )(arc4_s[arc4_i] + arc4_s[arc4_j])];
+	const unsigned char q = arc4_s[(unsigned char )(arc4_s[arc4_i] + arc4_s[arc4_j])];
 	arc4_i++;//should be at point A
-	return r;
+	return q;
 }
 
 /**
-Generates an integer R and increments the count c.
+Generates an integer w and increments the count c.
 
-@return The integer R.
+@return The integer w.
 **/
 unsigned int carc4(void) {
 	arc4_c++;
-	unsigned int R = 0;
-	for (size_t bit = 0; bit < sizeof R; bit++) {
-		R |= (size_t )arc4() << bit * CHAR_BIT;
+	unsigned int w = 0;
+	for (size_t bit = 0; bit < sizeof w; bit++) {
+		w |= (size_t )arc4() << bit * CHAR_BIT;
 	}
-	return R;
+	return w;
 }
 
 /**
-Generates a bound integer B at least 0 and at most s - 1.
+Generates a bound integer b at least 0 and at most s - 1.
 
 Emulates an internal function:
 <pre>
@@ -1072,14 +1072,14 @@ unsigned int (* const bound_arc4)(unsigned int supremum) = (void * )0x08126130;
 </pre>
 
 @param s The supremum s.
-@return The integer B.
+@return The integer b.
 **/
 unsigned int barc4(const unsigned int s) {
-	const unsigned int B = carc4();
+	const unsigned int b = carc4();
 	if (s == 0) {
-		return B;
+		return b;
 	}
-	return B % s;
+	return b % s;
 }
 
 /**

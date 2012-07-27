@@ -73,7 +73,7 @@ problem_t init_parent(void) {
 
 	PROPAGATE(init_fcn());
 
-	PROPAGATE(init_interface());
+	//PROPAGATE(init_interface());//TODO move
 
 	/*
 	Enables save-quit-load emulation.

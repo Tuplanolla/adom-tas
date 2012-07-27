@@ -16,7 +16,7 @@ extern const char * const interface_left_used;
 extern const char * const interface_right_used;
 extern const char * const interface_left_unused;
 extern const char * const interface_right_unused;
-extern const int interface_colors[8];
+extern const int interface_colors[6];
 
 extern const char * const log_separator;
 extern const char * const log_error;

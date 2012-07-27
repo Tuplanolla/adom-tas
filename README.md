@@ -2,8 +2,9 @@
 
 ADoM TAS stands for Ancient Domains of Mystery Tool-Assisted Speedruns.
 It makes recording deterministic runs as input sequences possible and thus
-allows creating theoretically perfect speedruns and other demonstrations.
-Its possibilities are not restricted to speedruns despite being the main focus.
+ allows creating theoretically perfect speedruns and
+ other demonstrations.
+Its possibilities are not restricted to speedruns although it's the main focus.
 The name is not very descriptive since it's built around an acronym.
 
 ## Meta
@@ -13,9 +14,9 @@ This readme is incomplete.
 ## Schedule
 
 This project is in active development and
-the first version was expected to be finished by 2012-07-01.
-The first working binaries were built 2012-07-02.
-The rest should be done by 2012-08-01.
+ the first version was finished by 2012-07-01,
+ the first working binaries were built 2012-07-02 and
+ the rest should be done by 2012-08-01.
 
 ## Motivation
 
@@ -38,10 +39,10 @@ Altogether it's an excellent game to
 
 Tool-assisted speedruns combine two concepts: tool-assisting and speedrunning.
 Tool-assisting means controlling time and the environment to
-make theoretically flawless execution possible.
+ make theoretically flawless execution possible.
 Speedrunning obviously means playing as fast as possible.
 Typically being fast means minimizing the time spent,
-but for turn-based games the goal may be different.
+ but for turn-based games the goal may be different.
 
 ## Installation
 
@@ -101,9 +102,18 @@ and ADoM TAS can be built.
 	[user@arch adom-tas]$ make
 
 The binaries go in the `bin` directory and
-temporary objects that can be removed after compilation in the `obj` directory.
+ temporary objects in the `obj` directory.
+The object files can be removed after compilation.
+
+	[user@arch adom-tas]$ rm -f obj/*
 
 ## Running
+
+Note that the configuration files used by ADoM are overwritten by default
+ to achieve consistency in recorded input sequences.
+To preserve the configuration files move or copy them elsewhere first.
+
+	[user@arch adom-tas]$ cp -u ~/.adom.data ~/adom.data
 
 Running the launcher for the first time will
  generate a template configuration file in the current working directory and
@@ -129,7 +139,7 @@ Some formats also require
  the Audio/Video Codec library `libavcodec` or
  the Audio/Video Filter library `libavfilter`.
 
-	[user@arch ~]$ pacman -S ttyrec ffmpeg
+	[user@arch adom-tas]$ pacman -S ttyrec ffmpeg
 
 Recording is managed by shell scripts.
 
@@ -174,6 +184,7 @@ The configuration file contains
 * the location of ADoM TAS's `loader`,
 * the location of the C standard library `libc`,
 * the location of the New Cursor Optimization library `libncurses` and
+* whether default configuration files are enforced (`true` by default),
 * the location of the `home` directory,
 * the amount of save `states` excluding the currently active state (at least `1` and `9` by default),
 * the height of the terminal in `rows` (at least `25`, at most `127` and `25` by default),
@@ -190,7 +201,7 @@ The configuration file contains
 * the location of the `error` log (`stderr` by default),
 * the location of the `warning` log (`stderr` by default),
 * the location of the `note` log (`stderr` by default),
-* the location of the `call` log (`/dev/null` by default)
+* the location of the `call` log (`/dev/null` by default) and
 * the `key` numbers of various commands.
 
 The standard streams are `stdin`, `stdout` and `stderr`.
@@ -235,21 +246,23 @@ and contains
 
 By default
 
-* `F5` saves the current save state,
-* `F8` loads it,
-* `F6` selects the next save state,
-* `Shift F6` the previous one,
-* `F2` increases (doubles) the duration of the next frame,
-* `Shift F2` decreases (halves) it,
-* `F3` shifts time forwards (by one second),
-* `Shift F3` shifts it backwards (but not to a negative value),
+* `F2` saves the current save state,
+* `F3` loads it,
+* `F8` selects the next save state,
+* `Shift F8` selects the previous one,
+* `F5` increases (doubles) the duration of the next frame,
+* `Shift F5` decreases (halves) it,
+* `F6` shifts the system time forwards (by one second),
+* `Shift F6` shifts it backwards (but not to a negative value),
 * `F9` opens or closes the save state menu,
 * `F10` condenses or expands the user interface,
 * `Shift F10` hides and shows it,
-* `F11` plays or pauses a recording (but only starting on the first frame),
-* `Shift F11` stops a recording (and enables appending to it),
+* `F11` plays or pauses a record (but only starting on the first frame),
+* `Shift F11` stops a record (and enables appending to it),
 * `Shift F12` quits and
 * the save key (typically `S`) emulates the save-quit-load process.
+
+The keys only used to interact with ADoM TAS are not recorded.
 
 ## Troubleshooting
 
@@ -258,6 +271,7 @@ Compilation failed with `No such file or directory`? Consider
 * ensuring the installed libraries are
 	* `libncurses` instead of `libcurses` and
 	* `libconfig` instead of `libconfig++`,
+* checking that `gcc` and `make` are installed properly and
 * making sure the commands `rm`, `mkdir` and `cp` are unaltered.
 
 Running failed with `Parsing the configuration file failed`? Consider
@@ -275,7 +289,8 @@ Running failed with `Parsing the configuration file failed`? Consider
 Something else happened? Consider
 
 * trying to understand the error message better,
-* looking it up in the well-documented source code or
+* looking it up in the well-documented source code,
+* reinstalling ADoM TAS or
 * asking for help.
 
 ## Notes
@@ -291,7 +306,7 @@ A character is considered generated when
 Putting the resource file `ADOM.DBG` in the current working directory will
  enable ADoM's debug mode.
 I have no idea what it does,
-but hopefully someone can figure it out and tell me.
+ but hopefully someone can figure it out and tell me.
 
 ## Development
 
@@ -299,7 +314,7 @@ but hopefully someone can figure it out and tell me.
 
 It's possible to generate automated documentation for ADoM TAS with Doxygen.
 
-	[user@arch ~]$ pacman -S doxygen
+	[user@arch adom-tas]$ pacman -S doxygen
 
 The process is similar to makeing (sic).
 
@@ -345,7 +360,7 @@ Files are named and organized in a typical manner. The directories are
 
 ### File Format
 
-Recordings are saved to `*.tas` files in a custom format. The files contain
+Records are saved to `*.tas` files in a custom format. The files contain
 
 * a 4-byte `char [4]` header (always `54 41 53 00` for "TAS"),
 * a 256-byte `char [256]` executable name (for example `61 64 6f 6d 00 ...` for ADoM),
@@ -394,128 +409,187 @@ This section is supposed to be about insightful revelations about
  some backstory of why this was made,
  but currently it's just a mess.
 
+June 2012 was when it all begun...
+
+...and that's it.
+
+#### Random Number Generator
+
+Recording what's essentially a nondeterministic finite automaton.
+
 When writing a recorder the most important thing is entropy.
-Since recordings are basically inputs sent to the game the game acts like an automata:
+Since records are basically inputs sent to the game the game acts like an automata:
 even the slightest difference can cause desynchronization.
 It's not desirable, so all sources of entropy need to be understood and controlled (since they're external it's not cheating).
+The most important thing is finding out what kind of a random number generator ADoM uses.
 
-Let's decipher the random number generator with GDB.
-The command names are no abbreviated for clarity.
+(Rewriting is progressing here.)
 
-	[user@arch ~]$ rm -f .adom.data/.adom.prc
+The GNU Debugger is suited for the task.
+
 	[user@arch ~]$ cd adom
 	[user@arch adom]$ gdb adom
 
-Let's check for typical random number generators.
+Typical random number generators are `rand`, `random` and `drand48`.
+The `info functions` command tells which of them may be used.
 
-	(gdb) break rand
-	(gdb) break random
-	(gdb) break drand48
-	(gdb) ignore 1 0xff
-	(gdb) ignore 2 0xff
-	(gdb) ignore 3 0xff
-	(gdb) run
-	(gdb) info break 1
-	(gdb) info break 2
-	(gdb) info break 3
+	(gdb) i fu rand
+	0x08049380  random
+	0x080496d0  srandom
 
-`random` is called once.
-Let's look for its seed.
+The nonlinear additive feedback random number generator function `random` and
+its seed function `srandom` seem to be the only ones available.
+Breakpoints set with the `break` and `ignore` commands and
+can be used to count how many times they're called.
+The `run` command can be used to start the process.
 
-	(gdb) break srandom
-	(gdb) ignore 4 0xff
-	(gdb) run
-	(gdb) info break 4
+	(gdb) b random
+	(gdb) b srandom
+	(gdb) ig 1 0xffff
+	(gdb) ig 2 0xffff
+	(gdb) r
 
-It's called once as well.
-Time is a typical source of entropy.
-Let's check for it.
+Once the process terminates the `info break` command can be used to
+ inspect the breakpoints.
 
-	(gdb) break time
-	(gdb) break gettimeofday
-	(gdb) break clock
-	(gdb) break localtime
-	(gdb) ignore 5 0xff
-	(gdb) ignore 6 0xff
-	(gdb) ignore 7 0xff
-	(gdb) ignore 8 0xff
-	(gdb) run
-	(gdb) info break 5
-	(gdb) info break 6
-	(gdb) info break 7
-	(gdb) info break 8
+	(gdb) i b
 
-`time` is called once too. 
-The sequence is probably the typical `srandom(time(NULL))` and `random()`.
-Let's check it out.
+Both of the functions are only called once at startup.
+It indicates that a custom random number generator is used and
+they're likely used just to initialize it.
+However `random` is only a pseudo-random number generator and
+as such requires a source of entropy.
+Time-related functions are commonly used as such.
 
-	(gdb) ignore 4 0
-	(gdb) run
-	(gdb) finish
-	(gdb) x/12i $pc-13
+	(gdb) i fu time
+	0x080492e0  localtime
+	0x08049420  time
+	0x08049610  notimeout
+	0x08049700  wtimeout
 
-	    0x8125d1c:  push  $0x0
-	    0x8125d1e:  call  0x08049420 <time@plt>
-	    0x8125d23:  push  %eax
-	    0x8125d24:  call  0x080496d0 <srandom@plt>
-	=>  0x8125d29:  add   $0x20,%esp
-	    0x8125d2c:  add   $0xfffffff4,%esp
-	    0x8125d2f:  call  0x08049380 <random@plt>
-	    0x8125d34:  push  %eax
-	    0x8125d35:  call  0x08125ea0
-	    0x8125d3a:  mov   %ebp,%esp
-	    0x8125d3c:  pop   %ebp
-	    0x8125d3d:  ret
+Only `time` and `localtime` are interesting since
+ `notimeout` and
+ `wtimeout`
+  are relative timers.
+Breakpoints can be used to count how many times they're called again.
 
-So it seems.
-The rest is more complicated though.
+	(gdb) b localtime
+	(gdb) b time
+	(gdb) ig 3 0xffff
+	(gdb) ig 4 0xffff
+	(gdb) r
+	(gdb) i b
 
-	(gdb) continue
+Since `time` is called once at startup it's likely that
+ `srandom(time(NULL))` is first called to
+  seed the pseudo-random number generator and
+ `random()` is then called to
+  seed the custom random number generator.
+Using `break` and `finish` to position `$pc` (the program counter) and
+ e`x`amine `i`nstructions to read the disassembly help check the assumption.
 
-Running the executable at different times and comparing the memory reveal a 258 byte state.
-However the two last bytes only change after the rest.
-It is therefore likely an ARC4 stream cipher.
-Assuming `i` comes before `j` the variables it uses can be mapped.
+	(gdb) ig 4 0
+	(gdb) r
+	(gdb) fin
+	(gdb) x /17i $pc - 0x13
+		0x08125d10:  push  %ebp
+		0x08125d11:  mov   %esp, %ebp
+		0x08125d13:  sub   $0x8, %esp
+		0x08125d16:  add   $0xfffffff4, %esp
+		0x08125d19:  add   $0xfffffff4, %esp
+		0x08125d1c:  push  $0x0
+	    0x08125d1c:  push  $0x0
+	    0x08125d1e:  call  0x08049420 <time@plt>
+	=>  0x08125d23:  push  %eax
+	    0x08125d24:  call  0x080496d0 <srandom@plt>
+	    0x08125d29:  add   $0x20,%esp
+	    0x08125d2c:  add   $0xfffffff4,%esp
+	    0x08125d2f:  call  0x08049380 <random@plt>
+	    0x08125d34:  push  %eax
+	    0x08125d35:  call  0x08125ea0
+	    0x08125d3a:  mov   %ebp,%esp
+	    0x08125d3c:  pop   %ebp
+	    0x08125d3d:  ret
+
+Random number generators often store their state statically.
+Therefore the location is most likely fixed and
+ the random number generator can be identified by
+  analyzing the size and contents of its storage.
+The `info proc mappings` command can be used to find the location of the heap.
+
+	(gdb) i proc m
+	0x08048000  0x08262000  0x21a000  0x0       /home/user/adom/adom
+	0x08262000  0x0829f000  0x3d000   0x219000  /home/user/adom/adom
+	0x0829f000  0x082ec000  0x4d000   0x0       heap
+
+The heap is dumped to files `m1` and `m2` at different times with the help of
+ the `define`,
+ the `dump memory`,
+ the `info stack`,
+ the `disable` and
+ the `shell`
+  commands.
+
+	(gdb) def dm
+	du m $arg0 0x0829f000 0x082ec000
+	end
+	(gdb) i s
+	#0  0xb7fda14f in time from /lib/libc.so.6
+	#1  0x08125d23 in ??
+	#2  0x080dd8fb in ??
+	#3  0x081503da in ??
+	#4  0xb7df43d5 in __libc_start_main from /lib/libc.so.6
+	#5  0x08049791 in ??
+	(gdb) disa 1
+	(gdb) b *0x081503da
+	(gdb) c
+	(gdb) dm m1
+	(gdb) c
+	(gdb) r
+	(gdb) dm m2
+	(gdb) c
+	(gdb) she cmp -l m1 m2 | wc -l
+
+The heaps differ by 260 bytes, which indicates
+ a 256-byte state and
+ a 4-byte collection of iterators, counters or such.
+Upon closer inspection one of the bytes stands out as
+ it's only ever incremented by one and
+ another byte next to it is always incremented with it.
+Two of the bytes change haphazardly, so they're probably unrelated.
+The layout of the storage means
+ the random number generator is most likely an ARC4 stream cipher.
+ARC4 uses three variables that can be easily mapped.
 
 	(gdb) set $s = (unsigned char * )0x082ada40
+	(gdb) set $l = (unsigned int )256
 	(gdb) set $i = (unsigned char * )0x082adb40
 	(gdb) set $j = (unsigned char * )0x082adb41
-	(gdb) set $l = (unsigned int )0x100
 
-Entropy is a problem when trying to get reliable results, so let's get rid of it.
+In order to get reliable test results entropy has to be controlled.
+The `enable` command is used to catch `time` again.
 
-	(gdb) ignore 5 0
-	(gdb) run
+	(gdb) ena 1
+	(gdb) r
+	(gdb) fin
 
-`time` is caught.
-Let's look around.
-
-	(gdb) x/6i $pc
-
-	=>  0xb7e7eeb0 <time>:     xor   %eax,%eax
-	    0xb7e7eeb2 <time+2>:   mov   0x4(%esp),%edx
-	    0xb7e7eeb6 <time+6>:   mov   %eax,%ecx
-	    0xb7e7eeb8 <time+8>:   xchg  %ecx,%ebx
-	    0xb7e7eeba <time+10>:  mov   $0xd,%eax
-	    0xb7e7eebf <time+15>:  call  *%gs:0x10
-	    0xb7e7eec6 <time+22>:  xchg  %ecx,%ebx
-	    0xb7e7eec8 <time+24>:  test  %edx,%edx
+The registers can be inspected with the `info registers` command to
+ intercept the call and
+ replace the return value.
 
 That call is the actual system call to get the time so let's step past it and change its return value.
 
-	(gdb) nexti 6
-	(gdb) info registers
-
+	(gdb) i r
 	eax     0x4fc90000  +1338572800
-	ecx     0xbffffa54  -1073743276
-	edx     0x00000000   0
-	ebx     0x00000000   0
-	esp     0xbffff960  0xbffff960
-	ebp     0xbffff988  0xbffff988
+	ecx     0xbffff694  -1073744236
+	edx     0x00000001  +1
+	ebx     0xbffff9a4  -1073743452
+	esp     0xbffff8b4  0xbffff8b4
+	ebp     0xbffff8d8  0xbffff8d8
 	esi     0x00000001  +1
 	edi     0x00000000   0
-	eip     0xb7e7eec6  0xb7e7eec6 <time+22>
-	eflags  0000000246  [ PF ZF IF ]
+	eip     0x08125d23  0x08125d23
+	eflags  0000000296  PF | AF | SF | IF
 	cs      0x00000073  +115
 	ss      0x0000007b  +123
 	ds      0x0000007b  +123
@@ -523,23 +597,26 @@ That call is the actual system call to get the time so let's step past it and ch
 	fs      0x00000000   0
 	gs      0x00000033  +51
 
-`eax` seems to contain an epoch time for 2012-06-01 17:46:40 UTC.
+The `eax` register seems to contain an epoch time for 2012-06-01 17:46:40 UTC.
 
 	(gdb) set $eax = 0
 
 Back to 1970-01-01 00:00:00 UTC.
-It be that time until we're done since it's only called once during the execution.
-Let's add watches.
+No further actions are neede, since `time` is only called once.
 
-	(gdb) watch *$s
-	(gdb) watch *$i
-	(gdb) watch *$j
-	(gdb) continue
+(Rewriting is progressing here.)
+
+Let's add `watch`es.
+
+	(gdb) wa *$s
+	(gdb) wa *$i
+	(gdb) wa *$j
+	(gdb) c
 
 `s` already changed from 0 to 103 in 0x08125f2c so we're late to the party.
 Let's dump `s` to find out how late.
 
-	(gdb) dump binary memory late_s $s $s+$l
+	(gdb) dm sl $s $s+$l
 
 The first byte of `s` is 0x67 and the rest are uninitialized (seemingly to `s[i] = i`) so not too late.
 
@@ -576,16 +653,16 @@ Let's go.
 
 Now we can dump the initial state
 
-	(gdb) dump binary memory first_s $s $s+$l
+	(gdb) dump memory s1 $s $s + $l
 
 and the next two states since the index watches are still active.
 
 	(gdb) continue
 	(gdb) continue
-	(gdb) dump binary memory second_s $s $s+$l
+	(gdb) dump memory s2 $s $s + $l
 	(gdb) continue
 	(gdb) continue
-	(gdb) dump binary memory third_s $s $s+$l
+	(gdb) dump memory s3 $s $s + $l
 
 Let's get out of here.
 
@@ -595,78 +672,236 @@ Let's get out of here.
 	(gdb) continue
 	(gdb) quit
 
-The state files `first_s`, `second_s` and `third_s` can now be analyzed and help write a replica ARC4.
+The state files `s1`, `s2` and `s3` can now be analyzed and help write a replica ARC4.
 They can be found in the project resources for completeness' sake.
 Later states can be calculated with brute force once the first few states can be simulated reliably.
 More about that and more about fixing what was just written later.
 
+It's disassembly time! We'll let `objdump` do the heavy lifting.
+
+	[user@arch adom]$ objdump -d -w adom >adom.s
+
+That's only 333620 lines.
+Here are the relevant parts.
+
+	.data
+	s:
+	0x082ada40:  00 01 02 ... ff       .byte   0, 1, 2, ..., 255
+	i:
+	0x082adb40:  00                    .byte   0
+	j:
+	0x082adb41:  00                    .byte   0
+	n:
+	0x082beb00:  00 00 00 ... 00       .int    0, 1, 2, ..., 19
+	z:
+	0x082beb4c:  00                    .int    0
+	.text
+	init:
+	0x0815055c:  e8 3f f3 fc ff        call    0x0811f8a0 <init_rng>
+	init_rng:
+	0x0811f8a0:  55                    push    %ebp
+	0x0811f8a1:  89 e5                 mov     %esp, %ebp
+	0x0811f8a3:  83 ec 0c              sub     $0xc, %esp
+	0x0811f8a6:  b8 4c eb 2b 08        mov     z, %eax
+	0x0811f8ab:  57                    push    %edi
+	0x0811f8ac:  56                    push    %esi
+	0x0811f8ad:  53                    push    %ebx
+	0x0811f8ae:  bb 13 00 00 00        mov     $0x13, %ebx
+	0x0811f8b3:  89 18                 mov     %ebx, (%eax) <----------------.
+	0x0811f8b5:  83 c0 fc              add     $0xfffffffc, %eax <sub $0x3>  |
+	0x0811f8b8:  4b                    dec     %ebx                          |
+	0x0811f8b9:  79 f8                 jns     0x0811f8b3 <init_rng + 0x13> -´
+	0x0811f8bb:  83 c4 f4              add     $0xfffffff4, %esp <sub $0xb>
+	0x0811f8be:  6a 14                 push    $0x14
+	0x0811f8c0:  e8 2b d9 fb ff        call    0x080dd1f0 <counted_rng>
+	0x0811f8c5:  83 c4 10              add     $0x10, %esp
+	0x0811f8c8:  8d 58 09              lea     0x9(%eax), %ebx
+	0x0811f8cb:  83 fb ff              cmp     $0xffffffff, %ebx
+	0x0811f8ce:  74 56                 je      0x0811f926 <init_rng + 0x86> -------.
+	0x0811f8d0:  83 c4 f4              add     $0xfffffff4, %esp <sub $0xb> <----. |
+	0x0811f8d3:  6a 12                 push    $0x12                             | |
+	0x0811f8d5:  e8 16 d9 fb ff        call    0x080dd1f0 <counted_rng>          | |
+	0x0811f8da:  89 c6                 mov     %eax, %esi                        | |
+	0x0811f8dc:  83 c4 10              add     $0x10, %esp                       | |
+	0x0811f8df:  8d 7b ff              lea     -0x1(%ebx), %edi                  | |
+	0x0811f8e2:  83 c4 f4              add     $0xfffffff4, %esp <sub $0xb> <-.  | |
+	0x0811f8e5:  6a 12                 push    $0x12                          |  | |
+	0x0811f8e7:  e8 04 d9 fb ff        call    0x080dd1f0 <counted_rng>       |  | |
+	0x0811f8ec:  83 c4 10              add     $0x10, %esp                    |  | |
+	0x0811f8ef:  39 c6                 cmp     %eax, %esi                     |  | |
+	0x0811f8f1:  74 ef                 je      0x0811f8e2 <init_rng + 0x42> --´  | |
+	0x0811f8f3:  8d 0c b5 00 00 00 00  lea     0x0(0, %esi, 4), %ecx             | |
+	0x0811f8fa:  8b 99 00 eb 2b 08     mov     n(%ecx), %ebx                     | |
+	0x0811f900:  83 fb 11              cmp     $0x11, %ebx                       | |
+	0x0811f903:  74 1a                 je      0x0811f91f <init_rng + 0x7f> ---. | |
+	0x0811f905:  c1 e0 02              shl     $0x2, %eax                      | | |
+	0x0811f908:  8b 90 00 eb 2b 08     mov     n(%eax), %edx                   | | |
+	0x0811f90e:  83 fa 11              cmp     $0x11, %edx                     | | |
+	0x0811f911:  74 0c                 je      0x0811f91f <init_rng + 0x7f> -. | | |
+	0x0811f913:  89 91 00 eb 2b 08     mov     %edx, n(%ecx)                 | | | |
+	0x0811f919:  89 98 00 eb 2b 08     mov     %ebx, n(%eax)                 , | | |
+	0x0811f91f:  89 fb                 mov     %edi, %ebx <-----------------<  | | |
+	0x0811f921:  83 fb ff              cmp     $0xffffffff, %ebx             `-´ | |
+	0x0811f924:  75 aa                 jne     0x0811f8d0 <init_rng + 0x30> -----´ |
+	0x0811f926:  8d 65 e8              lea     -0x18(%ebp), %esp <-----------------´
+	0x0811f929:  5b                    pop     %ebx
+	0x0811f92a:  5e                    pop     %esi
+	0x0811f92b:  5f                    pop     %edi
+	0x0811f92c:  89 ec                 mov     %ebp, %esp
+	0x0811f92e:  5d                    pop     %ebp
+	0x0811f92f:  c3                    ret
+	counted_rng:
+	0x080dd1f0:  55                    push    %ebp
+	0x080dd1f1:  89 e5                 mov     %esp, %ebp
+	0x080dd1f3:  83 ec 08              sub     $0x8, %esp
+	0x080dd1f6:  8b 45 08              mov     0x8(%ebp), %eax
+	0x080dd1f9:  ff 05 60 4a 26 08     incl    c
+	0x080dd1ff:  83 c4 f4              add     $0xfffffff4, %esp <sub $0xb>
+	0x080dd202:  50                    push    %eax
+	0x080dd203:  e8 88 89 04 00        call    0x08125b90 <uncounted_rng>
+	0x080dd208:  89 ec                 mov     %ebp, %esp
+	0x080dd20a:  5d                    pop     %ebp
+	0x080dd20b:  c3                    ret
+	uncounted_rng:
+	0x08125b90:  55                    push    %ebp
+	0x08125b91:  89 e5                 mov     %esp, %ebp
+	0x08125b93:  83 ec 08              sub     $0x8, %esp
+	0x08125b96:  8b 45 08              mov     0x8(%ebp), %eax
+	0x08125b99:  83 c4 f4              add     $0xfffffff4, %esp <sub $0xb>
+	0x08125b9c:  50                    push    %eax
+	0x08125b9d:  e8 8e 05 00 00        call    0x08126130 <rng>
+	0x08125ba2:  89 ec                 mov     %ebp, %esp
+	0x08125ba4:  5d                    pop     %ebp
+	0x08125ba5:  c3                    ret
+	rng:
+	0x08126130:  55                    push    %ebp
+	0x08126131:  89 e5                 mov     %esp, %ebp
+	0x08126133:  83 ec 1c              sub     $0x1c, %esp
+	0x08126136:  31 c0                 xor     %eax, %eax
+	0x08126138:  57                    push    %edi
+	0x08126139:  56                    push    %esi
+	0x0812613a:  53                    push    %ebx
+	0x0812613b:  8b 7d 08              mov     0x8(%ebp), %edi
+	0x0812613e:  a0 40 db 2a 08        mov     i, %al
+	0x08126143:  8a 90 40 da 2a 08     mov     s(%eax), %dl
+	0x08126149:  88 55 ff              mov     %dl, -0x1(%ebp)
+	0x0812614c:  a0 41 db 2a 08        mov     j, %al
+	0x08126151:  00 45 ff              add     %al, -0x1(%ebp)
+	0x08126154:  8a 4d ff              mov     -0x1(%ebp), %cl
+	0x08126157:  88 0d 41 db 2a 08     mov     %cl, j
+	0x0812615d:  31 c0                 xor     %eax, %eax
+	0x0812615f:  88 c8                 mov     %cl, %al
+	0x08126161:  8a 80 40 da 2a 08     mov     s(%eax), %al
+	0x08126167:  88 45 fe              mov     %al, -0x2(%ebp)
+	0x0812616a:  31 c0                 xor     %eax, %eax
+	0x0812616c:  a0 40 db 2a 08        mov     i, %al
+	0x08126171:  8a 5d fe              mov     -0x2(%ebp), %bl
+	0x08126174:  88 98 40 da 2a 08     mov     %bl, s(%eax)
+	0x0812617a:  31 c0                 xor     %eax, %eax
+	0x0812617c:  a0 41 db 2a 08        mov     j, %al
+	0x08126181:  88 90 40 da 2a 08     mov     %dl, s(%eax)
+	0x08126187:  00 da                 add     %bl, %dl
+	0x08126189:  31 c0                 xor     %eax, %eax
+	0x0812618b:  88 d0                 mov     %dl, %al
+	0x0812618d:  0f b6 b0 40 da 2a 08  movzbl  s(%eax), %esi
+	0x08126194:  a0 40 db 2a 08        mov     i, %al
+	0x08126199:  88 45 fd              mov     %al, -0x3(%ebp)
+	0x0812619c:  fe c0                 inc     %al
+	0x0812619e:  a2 40 db 2a 08        mov     %al, i
+	0x081261a3:  31 c0                 xor     %eax, %eax
+	0x081261a5:  a0 40 db 2a 08        mov     i, %al
+	0x081261aa:  8a 90 40 da 2a 08     mov     s(%eax), %dl
+	0x081261b0:  00 d1                 add     %dl, %cl
+	0x081261b2:  88 4d fc              mov     %cl, -0x4(%ebp)
+	0x081261b5:  88 0d 41 db 2a 08     mov     %cl, j
+	0x081261bb:  31 c0                 xor     %eax, %eax
+	0x081261bd:  88 c8                 mov     %cl, %al
+	0x081261bf:  8a 80 40 da 2a 08     mov     s(%eax), %al
+	0x081261c5:  88 45 fb              mov     %al, -0x5(%ebp)
+	0x081261c8:  31 c0                 xor     %eax, %eax
+	0x081261ca:  a0 40 db 2a 08        mov     i, %al
+	0x081261cf:  8a 4d fb              mov     -0x5(%ebp), %cl
+	0x081261d2:  88 88 40 da 2a 08     mov     %cl, s(%eax)
+	0x081261d8:  31 c0                 xor     %eax, %eax
+	0x081261da:  a0 41 db 2a 08        mov     j, %al
+	0x081261df:  88 90 40 da 2a 08     mov     %dl, s(%eax)
+	0x081261e5:  00 ca                 add     %cl, %dl
+	0x081261e7:  31 c0                 xor     %eax, %eax
+	0x081261e9:  88 d0                 mov     %dl, %al
+	0x081261eb:  31 db                 xor     %ebx, %ebx
+	0x081261ed:  8a 98 40 da 2a 08     mov     s(%eax), %bl
+	0x081261f3:  89 5d f0              mov     %ebx, -0x10(%ebp)
+	0x081261f6:  8a 45 fd              mov     -0x3(%ebp), %al
+	0x081261f9:  04 02                 add     $0x2, %al
+	0x081261fb:  a2 40 db 2a 08        mov     %al, i
+	0x08126200:  31 c0                 xor     %eax, %eax
+	0x08126202:  a0 40 db 2a 08        mov     i, %al
+	0x08126207:  8a 90 40 da 2a 08     mov     s(%eax), %dl
+	0x0812620d:  8a 4d fc              mov     -0x4(%ebp), %cl
+	0x08126210:  00 d1                 add     %dl, %cl
+	0x08126212:  88 4d fa              mov     %cl, -0x6(%ebp)
+	0x08126215:  88 0d 41 db 2a 08     mov     %cl, j
+	0x0812621b:  31 c0                 xor     %eax, %eax
+	0x0812621d:  88 c8                 mov     %cl, %al
+	0x0812621f:  8a 80 40 da 2a 08     mov     s(%eax), %al
+	0x08126225:  88 45 f9              mov     %al, -0x7(%ebp)
+	0x08126228:  31 c0                 xor     %eax, %eax
+	0x0812622a:  a0 40 db 2a 08        mov     i, %al
+	0x0812622f:  8a 5d f9              mov     -0x7(%ebp), %bl
+	0x08126232:  88 98 40 da 2a 08     mov     %bl, s(%eax)
+	0x08126238:  31 c0                 xor     %eax, %eax
+	0x0812623a:  a0 41 db 2a 08        mov     j, %al
+	0x0812623f:  88 90 40 da 2a 08     mov     %dl, s(%eax)
+	0x08126245:  00 da                 add     %bl, %dl
+	0x08126247:  31 c0                 xor     %eax, %eax
+	0x08126249:  88 d0                 mov     %dl, %al
+	0x0812624b:  31 c9                 xor     %ecx, %ecx
+	0x0812624d:  8a 88 40 da 2a 08     mov     s(%eax), %cl
+	0x08126253:  8a 45 fd              mov     -0x3(%ebp), %al
+	0x08126256:  04 03                 add     $0x3, %al
+	0x08126258:  a2 40 db 2a 08        mov     %al, i
+	0x0812625d:  31 c0                 xor     %eax, %eax
+	0x0812625f:  a0 40 db 2a 08        mov     i, %al
+	0x08126264:  8a 90 40 da 2a 08     mov     s(%eax), %dl
+	0x0812626a:  8a 5d fa              mov     -0x6(%ebp), %bl
+	0x0812626d:  00 d3                 add     %dl, %bl
+	0x0812626f:  88 1d 41 db 2a 08     mov     %bl, j
+	0x08126275:  31 c0                 xor     %eax, %eax
+	0x08126277:  88 d8                 mov     %bl, %al
+	0x08126279:  8a 80 40 da 2a 08     mov     s(%eax), %al
+	0x0812627f:  88 45 f8              mov     %al, -0x8(%ebp)
+	0x08126282:  31 c0                 xor     %eax, %eax
+	0x08126284:  a0 40 db 2a 08        mov     i, %al
+	0x08126289:  8a 5d f8              mov     -0x8(%ebp), %bl
+	0x0812628c:  88 98 40 da 2a 08     mov     %bl, s(%eax)
+	0x08126292:  31 c0                 xor     %eax, %eax
+	0x08126294:  a0 41 db 2a 08        mov     j, %al
+	0x08126299:  88 90 40 da 2a 08     mov     %dl, s(%eax)
+	0x0812629f:  00 da                 add     %bl, %dl
+	0x081262a1:  31 c0                 xor     %eax, %eax
+	0x081262a3:  88 d0                 mov     %dl, %al
+	0x081262a5:  8a 80 40 da 2a 08     mov     s(%eax), %al
+	0x081262ab:  8a 55 fd              mov     -0x3(%ebp), %dl
+	0x081262ae:  80 c2 04              add     $0x4, %dl
+	0x081262b1:  88 15 40 db 2a 08     mov     %dl, i
+	0x081262b7:  8b 55 f0              mov     -0x10(%ebp), %edx
+	0x081262ba:  c1 e2 08              shl     $0x8, %edx
+	0x081262bd:  01 f2                 add     %esi, %edx
+	0x081262bf:  89 4d f4              mov     %ecx, -0xc(%ebp)
+	0x081262c2:  c1 65 f4 10           shll    $0x10, -0xc(%ebp)
+	0x081262c6:  03 55 f4              add     -0xc(%ebp), %edx
+	0x081262c9:  c1 e0 18              shl     $0x18, %eax
+	0x081262cc:  01 d0                 add     %edx, %eax
+	0x081262ce:  85 ff                 test    %edi, %edi
+	0x081262d0:  74 06                 je      0x081262d8 <rng + 0x1a8> -.
+	0x081262d2:  31 d2                 xor     %edx, %edx                |
+	0x081262d4:  f7 f7                 div     %edi                      |
+	0x081262d6:  89 d0                 mov     %edx, %eax                |
+	0x081262d8:  5b                    pop     %ebx <--------------------´
+	0x081262d9:  5e                    pop     %esi
+	0x081262da:  5f                    pop     %edi
+	0x081262db:  89 ec                 mov     %ebp, %esp
+	0x081262dd:  5d                    pop     %ebp
+	0x081262de:  c3                    ret
+
 Note that it turned out to not be a proper ARC4; the order of operations was atypical.
-
-Why isn't real life this easy?
-
-## Some Diagrams
-
-### Checklist
-
-	[X] Install
-		[X] Linux
-		[X] Packages
-			[X] gcc
-			[X] libc
-			[X] libncurses
-			[X] libconfig
-			[X] make
-			[X] git
-			[X] ttyrec
-			[X] ffmpeg
-	[X] Implement emulation tools
-		[X] Disable the actual save function
-		[X] Find the random number generator's seed function
-		[X] Redirect the seed function to the recorder and back again
-		[X] Find the random number generator's reseed function
-		[X] Simulate the reseed function
-		[X] Implement save state selector
-		[X] Implement fast save (memory-memory)
-		[X] Implement fast load (memory-memory)
-		[X] Implement slow save (memory-file)
-		[X] Implement slow load (file-memory)
-		[X] Make processes independent
-		[X] Make processes actually work
-		[X] Save temporary files
-		[X] Refine sloppy implementations
-	[X] Implement recording tools
-		[X] Find the input handler
-		[X] Redirect the input handler to the recorder and back again
-		[X] Implement saving to a file each frame
-			[X] Input type (enum type_t)
-			[X] Input code (int32_t key)
-			[X] Time manipulation (uint32_t t)
-			[X] Playback duration (uint8_t sixteenths)
-		[X] Implement playing back a recording
-		[X] Implement dumping a ttyrec
-		[X] Implement dumping an avi
-		[X] Refine sloppy implementations
-	[X] Implement analysis tools
-		[X] Find the turn count variable
-		[X] Find a way to get around overloading macros
-		[X] Create an overlay bigger than 80x25
-		[X] Add a status bar (char * line)
-		[X] Include in the status bar
-			[X] Last input
-			[X] Frame count
-			[X] Turn count
-			[X] Save state
-			[X] Time manipulation
-			[X] Random number generator state
-		[X] Implement a journaled character roller
-		[X] Roll 4294967295 characters
-		[X] Implement cheats that disable the recording
-		[X] Refine sloppy implementations
-	[X] Refactor everything
-	[ ] Refactor everything harder
-	[ ] Document
-		[ ] Code
-		[X] Documentation
-		[X] Project
-		[ ] Executable
-		[ ] Meta

@@ -46,8 +46,9 @@ intern time_f um_time = (void * )dlnull;
 intern localtime_f um_localtime = (void * )dlnull;
 intern srandom_f um_srandom = (void * )dlnull;
 intern random_f um_random = (void * )dlnull;
-intern init_pair_f um_init_pair = (void * )dlnull;
 intern wrefresh_f um_wrefresh = (void * )dlnull;
+intern init_pair_f um_init_pair = (void * )dlnull;
+intern waddnstr_f um_waddnstr = (void * )dlnull;
 intern wgetch_f um_wgetch = (void * )dlnull;
 intern endwin_f um_endwin = (void * )dlnull;
 
@@ -65,7 +66,7 @@ bool playbacking = FALSE;
 bool rolling = FALSE;
 frame_t * playback_frame;
 bool running = TRUE;
-char name[77];
+char previous_inputs[77];
 unsigned char dur = 15;
 int surplus_turns = 0;
 int previous_turns = 0;
@@ -73,7 +74,7 @@ int previous_turns = 0;
 /**
 Whether an overloaded function call is the first one.
 **/
-bool first = TRUE;
+bool first = TRUE, second = FALSE;
 
 void * libc_handle;
 void * libncurses_handle;
@@ -109,19 +110,18 @@ problem_t init_fcn(void) {
 	}
 	um_printf = (printf_f )dlsym(libc_handle, "printf");
 	um_unlink = (unlink_f )dlsym(libc_handle, "unlink");
+	um_ioctl = (ioctl_f )dlsym(libc_handle, "ioctl");
 	um_time = (time_f )dlsym(libc_handle, "time");
 	um_localtime = (localtime_f )dlsym(libc_handle, "localtime");
 	um_srandom = (srandom_f )dlsym(libc_handle, "srandom");
 	um_random = (random_f )dlsym(libc_handle, "random");
-	um_ioctl = (ioctl_f )dlsym(libc_handle, "ioctl");
 	if (um_printf == NULL
 			|| um_unlink == NULL
 			|| um_time == NULL
 			|| um_localtime == NULL
 			|| um_srandom == NULL
 			|| um_random == NULL
-			|| um_ioctl == NULL
-			|| um_endwin == NULL) {
+			|| um_ioctl == NULL) {
 		return error(LIBC_DLSYM_PROBLEM);
 	}
 
@@ -129,13 +129,15 @@ problem_t init_fcn(void) {
 	if (libncurses_handle == NULL) {
 		return error(LIBNCURSES_DLOPEN_PROBLEM);
 	}
-	um_init_pair = (init_pair_f )dlsym(libncurses_handle, "init_pair");
 	um_wrefresh = (wrefresh_f )dlsym(libncurses_handle, "wrefresh");
+	um_init_pair = (init_pair_f )dlsym(libncurses_handle, "init_pair");
+	um_waddnstr = (waddnstr_f )dlsym(libncurses_handle, "waddnstr");
 	um_wgetch = (wgetch_f )dlsym(libncurses_handle, "wgetch");
 	um_endwin = (endwin_f )dlsym(libncurses_handle, "endwin");
 	if (um_init_pair == NULL
 			|| um_wrefresh == NULL
-			|| um_wgetch == NULL) {
+			|| um_wgetch == NULL
+			|| um_endwin == NULL) {
 		return error(LIBNCURSES_DLSYM_PROBLEM);
 	}
 
@@ -177,11 +179,11 @@ Intercepts printing anything and initializes this process.
 int printf(const char * const format, ...) {
 	if (first) {//TODO simplify
 		first = FALSE;
+		second = TRUE;
 		const problem_t problem = init_parent();
 		if (problem != NO_PROBLEM) {
 			uninit_parent(problem);
 		}
-		init_interface();
 	}
 
 	call("printf(...).");
@@ -219,7 +221,7 @@ Resizing the terminal causes spurious calls and prints garbage on the screen.
 @param ... A single pointer.
 @return 0 if no errors occurred and -1 otherwise.
 **/
-int ioctl(int d, unsigned long request, ...) {
+int ioctl(const int d, const unsigned long request, ...) {
 	va_list	argp;
 	va_start(argp, request);
 	void * arg = va_arg(argp, void *);
@@ -256,7 +258,7 @@ Replaces <code>localtime</code> with <code>gmtime</code> to disregard timezones.
 @param timep The <code>time_t</code> to convert.
 @return The <code>struct tm</code>.
 **/
-struct tm * localtime(const time_t * timep) {
+struct tm * localtime(const time_t * const timep) {
 	call("localtime(0x%08x).", (unsigned int )timep);
 	return gmtime(timep);//reduces entropy
 }
@@ -266,7 +268,7 @@ Seeds the pseudorandom number generator.
 
 @param seed The seed.
 **/
-void srandom(unsigned int seed) {
+void srandom(const unsigned int seed) {
 	call("srandom(%u).", seed);
 	um_srandom(seed);
 }
@@ -279,20 +281,6 @@ Generates the next pseudorandom number.
 long int random(void) {
 	call("random().");
 	return um_random();
-}
-
-/**
-Initializes a new color pair.
-
-@param pair The index of the pair.
-@param f The foreground color.
-@param b The background color.
-@return 0 if no errors occurred and -1 otherwise.
-**/
-int init_pair(short pair, short f, short b) {
-	call("init_pair(%d, %d, %d).", pair, f, b);
-	//if (pair >= pairs) exit(error(ASSERT_PROBLEM));
-	return um_init_pair(pair, f, b);
 }
 
 bool skipwr = FALSE;
@@ -321,15 +309,50 @@ int wrefresh(WINDOW * const win) {
 	*/
 	int y, x;
 	attr_t attrs; attr_t * _attrs = &attrs;
-	short pair; short * _pair = &pair;
+	short int pair; short int * _pair = &pair;
 	wattr_get(win, _attrs, _pair, NULL);
 	getyx(win, y, x);
 	wattrset(win, A_NORMAL);
-	draw_interface(win);
+	const int result = um_wrefresh(win);
+	draw_interface();
 	wmove(win, y, x);
 	wattr_set(win, attrs, pair, NULL);
 
-	return um_wrefresh(win);
+	return result;
+}
+
+/**
+Initializes a new color pair.
+
+@param pair The index of the pair.
+@param f The foreground color.
+@param b The background color.
+@return 0 if no errors occurred and -1 otherwise.
+**/
+int init_pair(const short int pair, const short int f, const short int b) {
+	call("init_pair(%d, %d, %d).", pair, f, b);
+	pairs++;
+	return um_init_pair(pair, f, b);
+}
+
+/**
+Redraws the window.
+
+Draws the custom interface.
+
+@param win The window to redraw.
+@return 0 if no errors occurred and -1 otherwise.
+**/
+int waddnstr(WINDOW * const win, const char * const str, const int n) {
+	if (second) {//TODO simplify
+		second = FALSE;
+		const problem_t problem = init_interface();
+		if (problem != NO_PROBLEM) {
+			uninit_parent(problem);
+		}
+	}
+
+	return um_waddnstr(win, str, n);
 }
 
 int previous_key = 0;
@@ -339,7 +362,7 @@ bool rollasked[51];
 char answers[51];
 int qnum = 0;
 
-char qathing(const int question, const int * attreqs) {//TODO refactor without breaking
+char qathing(const int question, const int * const attreqs) {//TODO refactor without breaking
 	if (rollasked[question]) return '?';
 	if (answers[question] != '?') return answers[question];
 	rollasked[question] = TRUE;
@@ -597,7 +620,7 @@ int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme fo
 	else if (key == menu_key) {
 		/*if (inactive) {
 			redrawwin(win);
-			um_wrefresh(win);
+			wrefresh(win);
 		}*/
 		inactive = !inactive;
 		return 0;
@@ -639,8 +662,8 @@ int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme fo
 		return 0;//nice and elegant
 	}
 	const char * code = key_code(key);
-	strcpy(name, "");
-	strcat(name, code);
+	strcpy(previous_inputs, "");
+	strcat(previous_inputs, code);
 	add_key_frame(dur, key);
 	wrefresh(win);
 	previous_key = key;
@@ -660,6 +683,7 @@ int _endwin(void) {
 	while (running) {
 		wgetch(stdscr);
 	}
+	uninit_interface();//TODO exit
 	curs_set(1);
 	return um_endwin();
 }

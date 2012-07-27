@@ -162,6 +162,12 @@ const char * problem_message(const problem_t code) {
 		case FORK_PROBLEM: return "Creating a new process failed.";
 
 		/*
+		gui.c
+		*/
+		case INIT_PAIR_PROBLEM: return "Creating a new color pair failed.";
+		case NEWWIN_PROBLEM: return "Creating a new window failed.";
+
+		/*
 		asm.c
 		*/
 		case ASM_MPROTECT_PROBLEM: return "Unprotecting the instructions to overwrite failed.";
