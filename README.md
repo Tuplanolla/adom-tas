@@ -171,7 +171,7 @@ When ADoM TAS is run it
 By default the configuration file is called `adom-tas.cfg`
  in the current working directory,
 but the default location can be changed by
- modifying the variable `default_config_path` in the file `def*.c` and
+ modifying the variable `default_config_path` in the file `def.c` and
  rebuilding ADoM TAS.
 The default file extension is `*.cfg` since
  the configuration file library uses it by default and
@@ -229,7 +229,7 @@ The user interface deserves a mention since it's so intuitive.
 
 The status bar looks like
 
-	Drunk Coward  I: \M\Cf  F: 2/21  T: 0/7  D: 1/2  E: 15  R: 0xe87de001  S: 2/9  P: 16384
+	I: \M\Cf  F: 2/21  T: 0/7  D: 1/2  E: 15  R: 0xe87de001  S: 2/9  P: 16384
 
 and contains
  the last recorded inputs (Alt Ctrl F),
@@ -309,6 +309,16 @@ I have no idea what it does,
  but hopefully someone can figure it out and tell me.
 
 ## Development
+
+### Tracing
+
+ADoM TAS comes with a wrapper for `ltrace` that logs library calls.
+
+	[user@arch adom-tas]$ pacman -S ltrace
+
+The log files it generates are enormous, so use it with care.
+
+	[user@arch adom-tas]$ bin/ltrace.sh
 
 ### Documentation
 
@@ -402,46 +412,49 @@ For ADoM the chunk consists of
 * a 2788-byte `unsigned int [697]` list of identified items and
 * a 188-byte `unsigned int [47]` list of identified books.
 
-### Making of ...
-
-This section is supposed to be about insightful revelations about
- how things are done and
- some backstory of why this was made,
- but currently it's just a mess.
+### Making of ADoM TAS
 
 June 2012 was when it all begun...
 
-...and that's it.
+...and that's it (more will be written later).
 
 #### Random Number Generator
 
-Recording what's essentially a nondeterministic finite automaton.
+The best way to record what's essentially a nondeterministic finite automaton
+ is finding the sequence of inputs that result in the desired output.
+Eliminating entropy guarantees the same inputs always map to the same output,
+ which is essential to avoid desynchronization.
+Practically it means
+ finding out what kind of a random number generator is used,
+ emulating it to predict how it changes and
+ controlling external factors that affect it.
 
-When writing a recorder the most important thing is entropy.
-Since records are basically inputs sent to the game the game acts like an automata:
-even the slightest difference can cause desynchronization.
-It's not desirable, so all sources of entropy need to be understood and controlled (since they're external it's not cheating).
-The most important thing is finding out what kind of a random number generator ADoM uses.
-
-(Rewriting is progressing here.)
-
-The GNU Debugger is suited for the task.
+The GNU Debugger is used to
+ create a controlled test environment and
+ find out how the random number generator works.
 
 	[user@arch ~]$ cd adom
 	[user@arch adom]$ gdb adom
 
-Typical random number generators are `rand`, `random` and `drand48`.
-The `info functions` command tells which of them may be used.
+Commonly used random number generators are
+ `rand`,
+ `random` and
+ `drand48`.
+To find out which of them are linked with the executable
+ the `info functions` command
+  is used.
 
 	(gdb) i fu rand
 	0x08049380  random
 	0x080496d0  srandom
 
-The nonlinear additive feedback random number generator function `random` and
-its seed function `srandom` seem to be the only ones available.
-Breakpoints set with the `break` and `ignore` commands and
-can be used to count how many times they're called.
-The `run` command can be used to start the process.
+The nonlinear additive feedback random number generator `random` and
+ its seed function `srandom`
+  are found.
+Breakpoints set with the `break` command and
+ `ignore`d to
+  help count how many times they're called.
+The `run` command starts the process.
 
 	(gdb) b random
 	(gdb) b srandom
@@ -449,17 +462,19 @@ The `run` command can be used to start the process.
 	(gdb) ig 2 0xffff
 	(gdb) r
 
-Once the process terminates the `info break` command can be used to
- inspect the breakpoints.
+Once the process terminates
+ `info break` is used to inspect the breakpoints and
+ `delete breakpoints` to clean up afterwards.
 
 	(gdb) i b
+	(gdb) d br
 
-Both of the functions are only called once at startup.
-It indicates that a custom random number generator is used and
-they're likely used just to initialize it.
+Both of the functions are only called once, so
+ a custom random number generator is used and
+ the functions are likely there just to initialize it.
 However `random` is only a pseudo-random number generator and
-as such requires a source of entropy.
-Time-related functions are commonly used as such.
+ as such requires a source of entropy.
+Timers are commonly used as such sources.
 
 	(gdb) i fu time
 	0x080492e0  localtime
@@ -468,10 +483,9 @@ Time-related functions are commonly used as such.
 	0x08049700  wtimeout
 
 Only `time` and `localtime` are interesting since
- `notimeout` and
- `wtimeout`
-  are relative timers.
-Breakpoints can be used to count how many times they're called again.
+ they're absolute timers and
+ reside in the standard library.
+Breakpoints help count how many times they're called again.
 
 	(gdb) b localtime
 	(gdb) b time
@@ -479,14 +493,18 @@ Breakpoints can be used to count how many times they're called again.
 	(gdb) ig 4 0xffff
 	(gdb) r
 	(gdb) i b
+	(gdb) d 3
 
-Since `time` is called once at startup it's likely that
+Since `time` is also called once at startup, it's likely that
  `srandom(time(NULL))` is first called to
   seed the pseudo-random number generator and
  `random()` is then called to
   seed the custom random number generator.
-Using `break` and `finish` to position `$pc` (the program counter) and
- e`x`amine `i`nstructions to read the disassembly help check the assumption.
+The assumption is checked by using
+ `break` and
+ `finish`
+  to position `$pc` (the program counter) and
+  e`x`amine `i`nstructions to read the disassembly.
 
 	(gdb) ig 4 0
 	(gdb) r
@@ -511,24 +529,28 @@ Using `break` and `finish` to position `$pc` (the program counter) and
 	    0x08125d3c:  pop   %ebp
 	    0x08125d3d:  ret
 
-Random number generators often store their state statically.
-Therefore the location is most likely fixed and
- the random number generator can be identified by
-  analyzing the size and contents of its storage.
-The `info proc mappings` command can be used to find the location of the heap.
+Random number generators often store their state statically, so
+ the location is most likely fixed and
+ the random number generator can be identified by analyzing its storage's
+  size and
+  contents.
+To know where to look at
+ `info proc mappings` shows the location of the heap.
 
 	(gdb) i proc m
 	0x08048000  0x08262000  0x21a000  0x0       /home/user/adom/adom
 	0x08262000  0x0829f000  0x3d000   0x219000  /home/user/adom/adom
 	0x0829f000  0x082ec000  0x4d000   0x0       heap
 
-The heap is dumped to files `m1` and `m2` at different times with the help of
- the `define`,
- the `dump memory`,
- the `info stack`,
- the `disable` and
- the `shell`
-  commands.
+The heap is
+ dumped to files `m1` and `m2` at different times with the help of
+  `define`,
+  `dump memory`,
+  `info stack`,
+  `disable` and
+  `continue` and
+ compared with the `shell` command
+  `cmp`.
 
 	(gdb) def dm
 	du m $arg0 0x0829f000 0x082ec000
@@ -539,7 +561,6 @@ The heap is dumped to files `m1` and `m2` at different times with the help of
 	#2  0x080dd8fb in ??
 	#3  0x081503da in ??
 	#4  0xb7df43d5 in __libc_start_main from /lib/libc.so.6
-	#5  0x08049791 in ??
 	(gdb) disa 1
 	(gdb) b *0x081503da
 	(gdb) c
@@ -547,37 +568,38 @@ The heap is dumped to files `m1` and `m2` at different times with the help of
 	(gdb) c
 	(gdb) r
 	(gdb) dm m2
+	(gdb) disa 2
 	(gdb) c
 	(gdb) she cmp -l m1 m2 | wc -l
 
 The heaps differ by 260 bytes, which indicates
  a 256-byte state and
- a 4-byte collection of iterators, counters or such.
+ a 4-byte collection of iterators, counters or unrelated garbage.
 Upon closer inspection one of the bytes stands out as
  it's only ever incremented by one and
- another byte next to it is always incremented with it.
+ another byte next to it is always incremented with it,
+  but by an arbitrary amount.
 Two of the bytes change haphazardly, so they're probably unrelated.
 The layout of the storage means
- the random number generator is most likely an ARC4 stream cipher.
-ARC4 uses three variables that can be easily mapped.
+ the random number generator is most likely
+  a variation of an ARC4 stream cipher.
+ARC4 uses three variables: the state S and the iterators i and j.
 
 	(gdb) set $s = (unsigned char * )0x082ada40
 	(gdb) set $l = (unsigned int )256
 	(gdb) set $i = (unsigned char * )0x082adb40
 	(gdb) set $j = (unsigned char * )0x082adb41
 
-In order to get reliable test results entropy has to be controlled.
-The `enable` command is used to catch `time` again.
+In order to get reliable test results
+ entropy has to be removed.
+The breakpoint is `enable`d to catch `time` again.
 
-	(gdb) ena 1
+	(gdb) ena 4
 	(gdb) r
 	(gdb) fin
 
-The registers can be inspected with the `info registers` command to
- intercept the call and
- replace the return value.
-
-That call is the actual system call to get the time so let's step past it and change its return value.
+Inspecting the registers with `info registers`
+ help find the return value.
 
 	(gdb) i r
 	eax     0x4fc90000  +1338572800
@@ -597,92 +619,95 @@ That call is the actual system call to get the time so let's step past it and ch
 	fs      0x00000000   0
 	gs      0x00000033  +51
 
-The `eax` register seems to contain an epoch time for 2012-06-01 17:46:40 UTC.
+The `eax` register seems to contain an timestamp of 2012-06-01 17:46:40 UTC and
+ needs to be re`set`.
 
 	(gdb) set $eax = 0
 
-Back to 1970-01-01 00:00:00 UTC.
-No further actions are neede, since `time` is only called once.
-
-(Rewriting is progressing here.)
-
-Let's add `watch`es.
+It's 1970-01-01 00:00:00 UTC again and
+ no further actions are needed, since `time` is only called once.
+The variables of the random number generator can now be tracked reliably
+ with the `watch` command.
 
 	(gdb) wa *$s
 	(gdb) wa *$i
 	(gdb) wa *$j
 	(gdb) c
 
-`s` already changed from 0 to 103 in 0x08125f2c so we're late to the party.
-Let's dump `s` to find out how late.
+First `s` changes from 0 to 103 at 0x08125f2c,
+ so the watchpoints are late to the party.
+Analyzing the state should tell how late exactly.
 
-	(gdb) dm sl $s $s+$l
+	(gdb) def ds
+	du m $arg0 $s $s + $l
+	end
+	(gdb) ds su
 
-The first byte of `s` is 0x67 and the rest are uninitialized (seemingly to `s[i] = i`) so not too late.
+The first byte is 0x67 and the rest are uninitialized (so that `s[i] = i`),
+ so not too late.
 
-	(gdb) continue
+	(gdb) c
+	(gdb) c
 
-Turns out `j` changes from 0 to 15 in 0x0812615d and
+Then `j` changes from 0 to 15 at 0x0812615d and
+ `i` from 0 to 1 in 0x081261a3.
+The random number generator is obviously a variant of ARC4.
+The initialization has already started,
+ so the state can't be inspected any further,
+ but the breakpoints for the next run can be set now.
 
-	(gdb) continue
+	(gdb) disa 5
+	(gdb) i s
+	#0  0x081261a3 in ??
+	#1  0x08125ba2 in ??
+	#2  0x080dd208 in ??
+	#3  0x080d166d in ??
+	#4  0x081504ec in ??
+	#5  0xb7df43d5 in __libc_start_main from /lib/libc.so.6
+	(gdb) fin
+	(gdb) fin
+	(gdb) fin
+	(gdb) fin
+	(gdb) x /4i $pc - 0x8
+	   0x81504e4:  add   $0x20,%esp
+	   0x81504e7:  call  0x080d15f0
+	=> 0x81504ec:  add   $0xfffffff4,%esp
+	   0x81504ef:  push  $0x082614eb
+	(gdb) b *0x081504e7
+	(gdb) c
 
-`i` changes from 0 to 1 in 0x081261a3. This confirms `i` was indeed first.
-Now we're late, but at least know where to set breakpoints next.
+The initial state is dumped once the breakpoint is reached.
 
-	(gdb) finish
-	(gdb) x/3i $pc-6
-	    0x8125b9c:  push  %eax
-	    0x8125b9d:  call  0x8126130
-	=>  0x8125ba2:  mov   %ebp,%esp
-
-It appears 0x081504e7 calls 0x080d15f0,
-0x080d1668 calls 0x080dd1f0,
-0x080dd203 calls 0x08125b90 and
-0x08125b9d calls 0x08126130 which causes all this to happen.
-A breakpoint is set accordingly.
-
-	(gdb) set $f = (void (*)() )0x081504e7
-	(gdb) break *$f
-
-Let's go.
-
-	(gdb) run
-	(gdb) nexti 6
+	(gdb) r
+	(gdb) fin
 	(gdb) set $eax = 0
-	(gdb) continue
+	(gdb) c
+	(gdb) ds s1
 
-Now we can dump the initial state
+The next two states are dumped after the iterators have changed.
 
-	(gdb) dump memory s1 $s $s + $l
+	(gdb) c
+	(gdb) c
+	(gdb) ds s2
+	(gdb) c
+	(gdb) c
+	(gdb) ds s3
 
-and the next two states since the index watches are still active.
+The state files `s1`, `s2` and `s3` show how to initialize a replica ARC4.
+The debugger has done its job and may `quit`.
 
-	(gdb) continue
-	(gdb) continue
-	(gdb) dump memory s2 $s $s + $l
-	(gdb) continue
-	(gdb) continue
-	(gdb) dump memory s3 $s $s + $l
+	(gdb) d br
+	(gdb) c
+	(gdb) q
 
-Let's get out of here.
-
-	(gdb) ignore 9 0xffff
-	(gdb) ignore 10 0xffff
-	(gdb) ignore 11 0xffff
-	(gdb) continue
-	(gdb) quit
-
-The state files `s1`, `s2` and `s3` can now be analyzed and help write a replica ARC4.
-They can be found in the project resources for completeness' sake.
-Later states can be calculated with brute force once the first few states can be simulated reliably.
-More about that and more about fixing what was just written later.
-
-It's disassembly time! We'll let `objdump` do the heavy lifting.
+However since the custom random number generator operates cyclically,
+ its output must also to be replicated.
+It's more complicated, so `objdump` does the heavy lifting.
 
 	[user@arch adom]$ objdump -d -w adom >adom.s
 
-That's only 333620 lines.
-Here are the relevant parts.
+The disassembly is 333620 lines long,
+ but searching for the relevant parts (accesses to `s`, `i` and `j`) is easy.
 
 	.data
 	s:
@@ -904,4 +929,13 @@ Here are the relevant parts.
 	0x081262dd:  5d                    pop     %ebp
 	0x081262de:  c3                    ret
 
-Note that it turned out to not be a proper ARC4; the order of operations was atypical.
+The disassembly shows how to operate the replica ARC4.
+It also shows that the order of operations is atypical as
+ `i` is incremented after the rest of the operations,
+ how bytes combined into an integer and
+ how the return value is bound.
+Interestingly
+ the worst-case complexity of the algorithm is O(infinity) and
+ it may return anything if the given upper bound is equal to the lower bound.
+
+Most of the relevant dumps can be found in the project's resources.
