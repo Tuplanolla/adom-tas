@@ -35,8 +35,15 @@ Does something important.
 
 #include "fcn.h"
 
+enum fcn_state_e {
+	NOT_INITIALIZED,
+	SOMEWHAT_INITIALIZED,
+	FULLY_INITIALIZED
+};
+typedef enum fcn_state_e fcn_state_d;
+
 void dlnull(void) {
-	exit(error(ASSERT_PROBLEM));//TODO fix exit
+	uninit_parent(error(ASSERT_PROBLEM));//TODO fix exit
 }
 
 intern printf_f um_printf = (void * )dlnull;
@@ -64,17 +71,17 @@ bool was_meta = FALSE;//not good
 int was_colon = FALSE;//worse
 bool playbacking = FALSE;
 bool rolling = FALSE;
-frame_t * playback_frame;
+frame_d * current_frame;
 bool running = TRUE;
 char previous_inputs[77];
-unsigned char dur = 15;
+unsigned char current_duration = 15;
 int surplus_turns = 0;
 int previous_turns = 0;
 
 /**
-Whether an overloaded function call is the first one.
+The state of this library.
 **/
-bool first = TRUE, second = FALSE;
+fcn_state_d fcn_state = NOT_INITIALIZED;
 
 void * libc_handle;
 void * libncurses_handle;
@@ -82,7 +89,7 @@ void * libncurses_handle;
 /*
 Closes the dynamically linked libraries.
 */
-problem_t uninit_fcn(void) {
+problem_d uninit_fcn(void) {
 	if (dlclose(libc_handle) != 0) {
 		return error(LIBC_DLCLOSE_PROBLEM);
 	}
@@ -96,7 +103,7 @@ problem_t uninit_fcn(void) {
 /*
 Opens the dynamically linked libraries.
 */
-problem_t init_fcn(void) {
+problem_d init_fcn(void) {
 	/*
 	Loads the unmodified functions.
 
@@ -162,8 +169,8 @@ void save_quit_load(void) {
 		the available save games and
 		actions in the menu.
 	*/
-	iarc4((unsigned int )timestamp, executable_arc4_calls_automatic_load);
-	(*executable_saves)++;
+	iarc4((unsigned int )timestamp, exec_arc4_calls_automatic_load);
+	(*exec_saves)++;
 	add_seed_frame(timestamp);
 	wrefresh(stdscr);
 }
@@ -177,13 +184,9 @@ Intercepts printing anything and initializes this process.
 @return The amount of characters printed.
 **/
 int printf(const char * const format, ...) {
-	if (first) {//TODO simplify
-		first = FALSE;
-		second = TRUE;
-		const problem_t problem = init_parent();
-		if (problem != NO_PROBLEM) {
-			uninit_parent(problem);
-		}
+	if (fcn_state == NOT_INITIALIZED) {
+		fcn_state = SOMEWHAT_INITIALIZED;
+		PROPAGATEF(init_parent(), uninit_parent);
 	}
 
 	call("printf(...).");
@@ -344,12 +347,9 @@ Draws the custom interface.
 @return 0 if no errors occurred and -1 otherwise.
 **/
 int waddnstr(WINDOW * const win, const char * const str, const int n) {
-	if (second) {//TODO simplify
-		second = FALSE;
-		const problem_t problem = init_interface();
-		if (problem != NO_PROBLEM) {
-			uninit_parent(problem);
-		}
+	if (fcn_state == SOMEWHAT_INITIALIZED) {
+		fcn_state = FULLY_INITIALIZED;
+		PROPAGATEF(init_interface(), uninit_parent);
 	}
 
 	return um_waddnstr(win, str, n);
@@ -371,7 +371,7 @@ char qathing(const int question, const int * const attreqs) {//TODO refactor wit
 		int weight = 1;
 		for (size_t atr = 0; atr < 9; atr++) {
 			int zorg = attreqs[8 - atr];
-			score[opt] += weight * executable_question_effects[question][opt][zorg];
+			score[opt] += weight * exec_question_effects[question][opt][zorg];
 			weight *= 2;
 		}
 	}
@@ -397,96 +397,14 @@ Reads a key code from a window.
 int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme force
 	call("wgetch(0x%08x).", (unsigned int )win);
 
-	#define ROLL_FOR_PLAYING 0
 	if (rolling) {
-		rollstage++;
-		switch (rollstage) {
-			case -127-ROLL_FOR_PLAYING: {
-				int * birthday = (int * )0x082b61f0;
-				int * gender = (int * )0x082add18;
-				int * race = (int * )0x082add10;
-				int * prof = (int * )0x082add14;
-				int * gift = (int * )0x082b6144;
-				int * attributes = (int * )0x082b1728;
-				int * items = (int * )0x082a5980;
-				int * books = (int * )0x082a7e00;
-				if (books[0x14] == 0
-						|| books[0x1e] == 0
-						|| items[0xa9] == 0
-						|| attributes[0x01] < 20
-						|| attributes[0x07] < 20) exit(0);
-				char buf[32];
-				snprintf(buf, sizeof buf, "cat/%u.tac", (unsigned int )timestamp);
-				FILE * const f = fopen(buf, "wb");
-				if (f != NULL) {
-					const unsigned char header[4] = {'T', 'A', 'C', '\0'};
-					fwrite(header, sizeof header, 0x01, f);
-					fwrite("adom", 4, 0x01, f);
-					fwrite((char [1024] ){[0 ... 1023] = '\0'}, 1, 1016, f);
-					fwrite(birthday, sizeof (int), 0x01, f);
-					fwrite(gender, sizeof (int), 0x01, f);
-					fwrite(race, sizeof (int), 0x01, f);
-					fwrite(prof, sizeof (int), 0x01, f);
-					fwrite(answers, sizeof answers + 1, 0x01, f);
-					fwrite(gift, sizeof (int), 0x01, f);
-					fwrite(attributes, sizeof (int), 0x09, f);
-					fwrite(items, sizeof (int), 0x2b9, f);
-					fwrite(books, sizeof (int), 0x2f, f);
-					fclose(f);
-					exit(0);
-				}
-				exit(1);
-			}
-			case 1: return 'g';
-			case 2: return ' ';
-			case 3: return 's';
-			case 4: return 'm';
-			case 5: return 'g';
-			case 6: return 'f';
-			case 7: return ' ';
-			case 8: {
-				for (size_t question = 0; question < 51; question++) {
-					answers[question] = '?';
-				}
-				return 'q';
-			}
-			default: {
-				const int attreqs[9] = {1, 7, 2, 4, 3, 0, 8, 5, 6};//Le > Ma > Wi > To > Dx > St > Pe > Ch > Ap
-				char result = qathing(executable_questions[qnum], attreqs);
-				qnum++;
-				if (result == '?') {
-					rollstage = -128;
-				}
-				return result;
-			}
-		}
-		return 0;
 	}
 
 	if (playbacking) {
-		if (playback_frame != NULL) {//TODO move this
-			if (playback_frame->duration == 0) {
-				timestamp += playback_frame->value;
-				iarc4((unsigned int )timestamp, executable_arc4_calls_automatic_load);
-				playback_frame = playback_frame->next;
-				return 0;
-			}
-			else {
-				struct timespec req;
-				bool out_of_variable_names = FALSE;
-				if (playback_frame->duration >= frame_rate) out_of_variable_names = TRUE;
-				req.tv_sec = (time_t )(out_of_variable_names ? playback_frame->duration : 0);
-				req.tv_nsec = out_of_variable_names ? 0l : 1000000000l / frame_rate * playback_frame->duration;
-				nanosleep(&req, NULL);//TODO use a better timer
-				const int yield = playback_frame->value;
-				playback_frame = playback_frame->next;
-				return yield;
-			}
-		}
 	}
 
-	if (*executable_turns < previous_turns) surplus_turns++;
-	previous_turns = *executable_turns;
+	if (*exec_turns < previous_turns) surplus_turns++;
+	previous_turns = *exec_turns;
 	int key = um_wgetch(win);
 	if (key == play_key) {
 		if (record.count == 1) {//move to roll
@@ -520,7 +438,7 @@ int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme fo
 		if (record.count == 0) {//move to playback
 			freadp(input_path);
 			playbacking = TRUE;
-			playback_frame = record.first;
+			current_frame = record.first;
 		}
 		else condensed = !condensed;
 		wrefresh(win);
@@ -552,68 +470,6 @@ int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme fo
 		return 0;
 	}
 	else if (key == unstate_key) {//TODO move and refactor
-		WINDOW * cheat_win = newwin(rows - 5, cols, 2, 0);
-		for (int row = 0; row < rows - 5; row++) {
-			for (int col = 0; col < cols; col++) {
-				const chtype ch = mvwinch(win, row + 2, col);
-				const chtype sch = A_CHARTEXT & ch;
-				if (sch == '\0' || sch == ' ') {
-					const attr_t attr = COLOR_PAIR(8) | A_BOLD;
-					wattron(cheat_win, attr);
-					const unsigned char terrain = (*executable_terrain)[row * cols + col];
-					mvwaddch(cheat_win, row, col, executable_terrain_chars[terrain]);
-					const unsigned char object = (*executable_objects)[row * cols + col];
-					if (object != '\0') {
-						mvwaddch(cheat_win, row, col, executable_object_chars[object]);
-					}
-					wattroff(cheat_win, attr);
-				}
-				else {
-					mvwaddch(cheat_win, row, col, ch);
-				}
-			}
-		}
-		for (int row = 0; row < rows - 5; row++) {
-			for (int col = 0; col < cols; col++) {
-				const executable_map_item_t * item = (*executable_items)[row * cols + col];
-				if (item != NULL) {
-					while (item->next != NULL) {
-						item = item->next;
-						if (item->item != NULL) {
-							const executable_item_data_t i = executable_item_data[item->item->type];
-							int color = i.color;
-							if (color == -1) {
-								color = executable_material_colors[i.material];
-							}
-							attr_t attr = COLOR_PAIR(color);
-							if (color >= 8) {
-								attr |= A_BOLD;
-							}
-							wattron(cheat_win, attr);
-							mvwaddch(cheat_win, row, col, (chtype )executable_item_chars[i.category]);//TODO make rocks special
-							wattroff(cheat_win, attr);
-						}
-					}
-				}
-			}
-		}
-		const executable_map_monster_t * monster = *executable_monsters;
-		while (monster->next != NULL) {
-			monster = monster->next;
-			if (monster->monster != NULL) {
-				const executable_monster_data_t m = executable_monster_data[monster->monster->type];
-				attr_t attr = COLOR_PAIR(m.color);
-				if (m.color >= 8) {
-					attr |= A_BOLD;
-				}
-				wattron(cheat_win, attr);
-				mvwaddch(cheat_win, monster->monster->y, monster->monster->x, (chtype )m.character);
-				wattroff(cheat_win, attr);
-			}
-		}
-		wrefresh(win);
-		wrefresh(cheat_win);
-		delwin(cheat_win);
 		MODDEC(current_state, states);
 		return 0;
 	}
@@ -637,12 +493,12 @@ int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme fo
 	}
 	else if (key == duration_key) {
 		//save_quit_load();//TODO remove
-		if (dur < 255) dur = (unsigned char )((dur + 1) * 2 - 1);
+		if (current_duration < 255) current_duration = (unsigned char )((current_duration + 1) * 2 - 1);
 		wrefresh(win);
 		return 0;
 	}
 	else if (key == unduration_key) {
-		if (dur > 0) dur = (unsigned char )((dur + 1) / 2 - 1);
+		if (current_duration > 0) current_duration = (unsigned char )((current_duration + 1) / 2 - 1);
 		wrefresh(win);
 		return 0;
 	}
@@ -664,7 +520,7 @@ int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme fo
 	const char * code = key_code(key);
 	strcpy(previous_inputs, "");
 	strcat(previous_inputs, code);
-	add_key_frame(dur, key);
+	add_key_frame(current_duration, key);
 	wrefresh(win);
 	previous_key = key;
 	return key;

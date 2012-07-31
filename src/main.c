@@ -14,9 +14,9 @@ Launches the executable.
 
 #include "gnu.h"//__*__
 #include "util.h"//intern
-#include "prob.h"//*_PROBLEM
-#include "log.h"//error, warning, note, PROPAGATE
-#include "exec.h"//executable_*
+#include "prob.h"//PROPAGATE*, *_PROBLEM
+#include "log.h"//error, warning, note
+#include "exec.h"//exec_*
 #include "cfg.h"//*
 
 /**
@@ -39,14 +39,14 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 
 	Similar to the command-line option -n.
 	*/
-	if (executable_config_path != NULL) {
-		FILE * const stream = fopen(executable_config_path, "w");
+	if (exec_config_path != NULL) {
+		FILE * const stream = fopen(exec_config_path, "w");
 		if (stream == NULL) {
 			error(CONFIG_OPEN_PROBLEM);
 		}
 		else {
-			const size_t size = strlen(executable_config) + 1;
-			if (fwrite(executable_config, size, 1, stream) != 1) {
+			const size_t size = strlen(exec_config) + 1;
+			if (fwrite(exec_config, size, 1, stream) != 1) {
 				error(CONFIG_WRITE_PROBLEM);
 			}
 			if (fclose(stream) == EOF) {
@@ -58,10 +58,10 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	/*
 	Removes the process lock.
 	*/
-	if (executable_process_path != NULL) {
+	if (exec_process_path != NULL) {
 		struct stat process_stat;
-		if (stat(executable_process_path, &process_stat) == 0) {
-			if (unlink(executable_process_path) != 0) {
+		if (stat(exec_process_path, &process_stat) == 0) {
+			if (unlink(exec_process_path) != 0) {
 				return error(PROCESS_UNLINK_PROBLEM);
 			}
 		}
@@ -72,14 +72,14 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 
 	Similar to the command-line option -k.
 	*/
-	if (executable_keybind_path != NULL) {
-		FILE * const stream = fopen(executable_keybind_path, "w");
+	if (exec_keybind_path != NULL) {
+		FILE * const stream = fopen(exec_keybind_path, "w");
 		if (stream == NULL) {
 			error(KEYBIND_OPEN_PROBLEM);
 		}
 		else {
-			const size_t size = strlen(executable_keybind) + 1;
-			if (fwrite(executable_keybind, size, 1, stream) != 1) {
+			const size_t size = strlen(exec_keybind) + 1;
+			if (fwrite(exec_keybind, size, 1, stream) != 1) {
 				error(KEYBIND_WRITE_PROBLEM);
 			}
 			if (fclose(stream) == EOF) {
@@ -91,20 +91,20 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	/*
 	Verifies the version.
 	*/
-	if (executable_version_path != NULL) {
-		FILE * const stream = fopen(executable_version_path, "rb");
+	if (exec_version_path != NULL) {
+		FILE * const stream = fopen(exec_version_path, "rb");
 		if (stream == NULL) {
 			error(VERSION_OPEN_PROBLEM);
 		}
 		else {
-			unsigned char version[sizeof executable_version];
+			unsigned char version[sizeof exec_version];
 			if (fread(version, sizeof version, 1, stream) != 1) {
 				error(VERSION_READ_PROBLEM);
 			}
 			if (fclose(stream) == EOF) {
 				error(VERSION_CLOSE_PROBLEM);
 			}
-			if (memcmp(version, executable_version, sizeof version) != 0) {
+			if (memcmp(version, exec_version, sizeof version) != 0) {
 				error(VERSION_MISMATCH_PROBLEM);
 			}
 		}
@@ -113,10 +113,10 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	/*
 	Removes the error log.
 	*/
-	if (executable_error_path != NULL) {
+	if (exec_error_path != NULL) {
 		struct stat error_stat;
-		if (stat(executable_error_path, &error_stat) == 0) {
-			if (unlink(executable_error_path) != 0) {
+		if (stat(exec_error_path, &error_stat) == 0) {
+			if (unlink(exec_error_path) != 0) {
 				return error(ERROR_UNLINK_PROBLEM);
 			}
 		}
@@ -125,8 +125,8 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	/*
 	Sets the amount of generated characters.
 	*/
-	if (executable_count_path != NULL) {
-		FILE * const stream = fopen(executable_count_path, "wb");
+	if (exec_count_path != NULL) {
+		FILE * const stream = fopen(exec_count_path, "wb");
 		if (stream == NULL) {
 			error(COUNT_OPEN_PROBLEM);
 		}
@@ -153,17 +153,17 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	/*
 	Launches the executable.
 	*/
-	if (executable_path == NULL) {
+	if (exec_path == NULL) {
 		return error(NULL_PROBLEM);
 	}
-	else if (execv(executable_path, argv) == -1) {
+	else if (execv(exec_path, argv) == -1) {
 		return error(EXEC_PROBLEM);
 	}
 
 	/*
 	Suppresses warnings:
 	<pre>
-	'executable_path' is never deallocated [-Wleak]
+	'exec_path' is never deallocated [-Wleak]
 	</pre>
 	*/
 	PROPAGATE(uninit_config());

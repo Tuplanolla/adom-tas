@@ -17,7 +17,7 @@ Manages processes.
 #include <curses.h>
 
 #include "util.h"
-#include "prob.h"//problem_t
+#include "prob.h"//problem_d
 #include "log.h"
 #include "cfg.h"
 #include "shm.h"
@@ -29,7 +29,7 @@ Manages processes.
 /**
 Saves the game to memory.
 **/
-problem_t save(const int state) {
+problem_d save(const int state) {
 	pid_t pid;
 	beginning: pid = fork();//returns 0 in child, process id of child in parent, -1 on error
 	if (pid == -1) {
@@ -64,11 +64,11 @@ problem_t save(const int state) {
 		fprintfl(error_stream, "[stop]");
 		shm.pids[0] = pid;
 
-		for (unsigned int level = 0; level < executable_temporary_levels; level++) {
-			const unsigned int offset = level * executable_temporary_parts;
-			for (unsigned int part = 0; part < executable_temporary_parts; part++) {
+		for (unsigned int level = 0; level < exec_temporary_levels; level++) {
+			const unsigned int offset = level * exec_temporary_parts;
+			for (unsigned int part = 0; part < exec_temporary_parts; part++) {
 				const unsigned int path = offset + part;
-				const size_t size = strlen(executable_temporary_paths[path]) + 1
+				const size_t size = strlen(exec_temporary_paths[path]) + 1
 						+ uintlen(state) + 1;
 				char * const state_path = malloc(size);
 				if (state_path == NULL) {
@@ -76,9 +76,9 @@ problem_t save(const int state) {
 				}
 				else {
 					snprintf(state_path, size, "%s_%u",
-							executable_temporary_paths[path],
+							exec_temporary_paths[path],
 							state);
-					copy(state_path, executable_temporary_paths[path]);
+					copy(state_path, exec_temporary_paths[path]);
 					free(state_path);
 				}
 			}
@@ -110,13 +110,13 @@ problem_t save(const int state) {
 /**
 Loads the game from memory.
 **/
-problem_t load(const int state) {
+problem_d load(const int state) {
 	if (shm.pids[state] != 0) {
-		for (unsigned int level = 0; level < executable_temporary_levels; level++) {
-			const unsigned int offset = level * executable_temporary_parts;
-			for (unsigned int part = 0; part < executable_temporary_parts; part++) {
+		for (unsigned int level = 0; level < exec_temporary_levels; level++) {
+			const unsigned int offset = level * exec_temporary_parts;
+			for (unsigned int part = 0; part < exec_temporary_parts; part++) {
 				const unsigned int path = offset + part;
-				const size_t size = strlen(executable_temporary_paths[path]) + 1
+				const size_t size = strlen(exec_temporary_paths[path]) + 1
 						+ uintlen(state) + 1;
 				char * const state_path = malloc(size);
 				if (state_path == NULL) {
@@ -124,9 +124,9 @@ problem_t load(const int state) {
 				}
 				else {
 					snprintf(state_path, size, "%s_%u",
-							executable_temporary_paths[path],
+							exec_temporary_paths[path],
 							state);
-					copy(executable_temporary_paths[path], state_path);
+					copy(exec_temporary_paths[path], state_path);
 					free(state_path);
 				}
 			}

@@ -13,7 +13,7 @@ Serves as a template.
 #include "util.h"
 #include "exec.h"
 #include "shm.h"
-#include "prob.h"//problem_t, *_PROBLEM
+#include "prob.h"//problem_d, *_PROBLEM
 #include "rec.h"
 #include "def.h"
 #include "lib.h"
@@ -23,18 +23,9 @@ Serves as a template.
 
 #include "gui.h"
 
-/*
-Modes.
-*/
-intern bool quitting = FALSE;
-intern bool inactive = FALSE;
-intern bool condensed = FALSE;
-intern bool hidden = FALSE;
-intern bool playing = FALSE;
-intern bool paused = FALSE;
-unsigned int previous_count = 0;
-char * previous_codes;
-frame_t * frame = NULL;
+/**
+The amount of colors.
+**/
 const size_t colors = sizeof interface_colors / sizeof *interface_colors;
 
 /**
@@ -53,8 +44,38 @@ WINDOW * menu_states_win = NULL;
 The save state preview subwindow.
 **/
 WINDOW * menu_chs_win = NULL;
+/**
+The map overlay window.
+**/
+WINDOW * overlay_win = NULL;
 
-problem_t init_interface(void) {
+/**
+Uninitializes the interface.
+**/
+problem_d uninit_gui(void) {
+	if (delwin(status_win)) {
+		return error(DELWIN_PROBLEM);
+	}
+	if (delwin(menu_win)) {
+		return error(DELWIN_PROBLEM);
+	}
+	if (delwin(menu_chs_win)) {
+		return error(DELWIN_PROBLEM);
+	}
+	if (delwin(menu_states_win)) {
+		return error(DELWIN_PROBLEM);
+	}
+	if (delwin(overlay_win)) {
+		return error(DELWIN_PROBLEM);
+	}
+
+	return NO_PROBLEM;
+}
+
+/**
+Initializes the interface.
+**/
+problem_d init_gui(void) {
 	/*
 	Initializes the custom color pairs.
 	*/
@@ -100,15 +121,10 @@ problem_t init_interface(void) {
 	if (menu_chs_win == NULL) {
 		return error(NEWWIN_PROBLEM);
 	}
-
-	return NO_PROBLEM;
-}
-
-problem_t uninit_interface(void) {
-	delwin(status_win);
-	delwin(menu_win);
-	delwin(menu_chs_win);
-	delwin(menu_states_win);
+	overlay_win = newwin(rows - 5, cols, 2, 0);
+	if (overlay_win == NULL) {
+		return error(NEWWIN_PROBLEM);
+	}
 
 	return NO_PROBLEM;
 }
@@ -116,9 +132,9 @@ problem_t uninit_interface(void) {
 /**
 Draws the status bar in the bottom of a window from right to left.
 
-@param win The window.
+@return The error code.
 **/
-problem_t draw_status(void) {
+problem_d draw_status(void) {
 	wclear(status_win);
 	const size_t size = cols + 1;
 	char * const str = malloc(size);
@@ -141,8 +157,8 @@ problem_t draw_status(void) {
 	//draw_status_ADDSTR("P: %u", (unsigned int )getpid());
 	draw_status_ADDSTR("I: %s", previous_inputs);
 	draw_status_ADDSTR("F: %u/%u", record.count - previous_count, record.count);
-	draw_status_ADDSTR("T: 0/%u", (unsigned int )(*executable_turns + surplus_turns));
-	const unsigned int durr = (unsigned int )dur + 1;
+	draw_status_ADDSTR("T: 0/%u", (unsigned int )(*exec_turns + surplus_turns));
+	const unsigned int durr = (unsigned int )current_duration + 1;
 	if (durr < frame_rate) {
 		draw_status_ADDSTR("D: 1/%u", frame_rate / durr);
 	}
@@ -150,9 +166,11 @@ problem_t draw_status(void) {
 		draw_status_ADDSTR("D: %u", durr / frame_rate);
 	}
 	draw_status_ADDSTR("E: %u/%u", (unsigned int )(timestamp - record.timestamp), (unsigned int )timestamp);
-	draw_status_ADDSTR("R: 0x%08x", (unsigned int )hash(executable_arc4_s, 0x100));
+	draw_status_ADDSTR("R: 0x%08x", (unsigned int )hash(exec_arc4_s, 0x100));
 	draw_status_ADDSTR("S: %u/%u", current_state, states - 1);
 	free(str);
+
+	wrefresh(status_win);
 
 	return NO_PROBLEM;
 }
@@ -160,9 +178,9 @@ problem_t draw_status(void) {
 /**
 Draws the save state menu in the middle of a window.
 
-@param win The window.
+@return The error code.
 **/
-problem_t draw_menu(void) {
+problem_d draw_menu(void) {
 	const chtype attr = COLOR_PAIR(pairs + colors);
 	const chtype eattr = COLOR_PAIR(pairs + colors + 1);//TODO improve
 	const chtype ch = attr | ' ';
@@ -296,17 +314,101 @@ problem_t draw_menu(void) {
 		}
 	}
 
+	/*
+	Refreshes the menu window.
+	*/
+	wrefresh(menu_win);
+	wrefresh(menu_chs_win);
+	wrefresh(menu_states_win);
+
 	return NO_PROBLEM;
 }
 
-problem_t draw_interface(void) {
-	draw_status();
-	um_wrefresh(status_win);
+/**
+Draws the overlay.
+
+@param win The window.
+@return The error code.
+**/
+problem_d draw_overlay(WINDOW * const win) {
+	for (int row = 0; row < rows - 5; row++) {
+		for (int col = 0; col < cols; col++) {
+			const chtype ch = mvwinch(win, row + 2, col);
+			const chtype sch = A_CHARTEXT & ch;
+			if (sch == ' ') {
+				const attr_t attr = COLOR_PAIR(8) | A_BOLD;
+				wattron(overlay_win, attr);
+				const unsigned char terrain = (*exec_terrain)[row * cols + col];
+				mvwaddch(overlay_win, row, col, exec_terrain_chars[terrain]);
+				const unsigned char object = (*exec_objects)[row * cols + col];
+				if (object != 0) {
+					mvwaddch(overlay_win, row, col, exec_object_chars[object]);
+				}
+				wattroff(overlay_win, attr);
+			}
+			else {
+				mvwaddch(overlay_win, row, col, ch);
+			}
+		}
+	}
+	for (int row = 0; row < rows - 5; row++) {
+		for (int col = 0; col < cols; col++) {
+			const exec_map_item_d * item = (*exec_items)[row * cols + col];
+			if (item != NULL) {
+				while (item->next != NULL) {
+					item = item->next;
+					if (item->item != NULL) {
+						const exec_item_data_d i = exec_item_data[item->item->type];
+						int color = i.color;
+						if (color == -1) {
+							color = exec_material_colors[i.material];
+						}
+						attr_t attr = COLOR_PAIR(color);
+						if (color >= 8) {
+							attr |= A_BOLD;
+						}
+						wattron(overlay_win, attr);
+						chtype ch = ' ';
+						if (item->item->type == 53 || item->item->type == 580) {
+							ch = exec_item_chars[22];
+						}
+						else {
+							ch = exec_item_chars[i.category];
+						}
+						mvwaddch(overlay_win, row, col, ch);
+						wattroff(overlay_win, attr);
+					}
+				}
+			}
+		}
+	}
+	const exec_map_monster_d * monster = *exec_monsters;
+	while (monster->next != NULL) {
+		monster = monster->next;
+		if (monster->monster != NULL) {
+			const exec_monster_data_d m = exec_monster_data[monster->monster->type];
+			attr_t attr = COLOR_PAIR(m.color);
+			if (m.color >= 8) {
+				attr |= A_BOLD;
+			}
+			wattron(overlay_win, attr);
+			mvwaddch(overlay_win, monster->monster->y, monster->monster->x, (chtype )m.character);
+			wattroff(overlay_win, attr);
+		}
+	}
+	wrefresh(win);
+	wrefresh(overlay_win);
+
+	return NO_PROBLEM;
+}
+
+problem_d draw_gui(void) {
 	if (inactive) {
-		draw_menu();
-		um_wrefresh(menu_win);
-		um_wrefresh(menu_chs_win);
-		um_wrefresh(menu_states_win);
+		PROPAGATE(draw_overlay(stdscr));
+	}
+	PROPAGATE(draw_status());
+	if (inactive) {
+		PROPAGATE(draw_menu());
 	}
 
 	return NO_PROBLEM;

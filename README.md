@@ -520,12 +520,12 @@ The assumption is checked by using
 	    0x08125d1e:  call  0x08049420 <time@plt>
 	=>  0x08125d23:  push  %eax
 	    0x08125d24:  call  0x080496d0 <srandom@plt>
-	    0x08125d29:  add   $0x20,%esp
-	    0x08125d2c:  add   $0xfffffff4,%esp
+	    0x08125d29:  add   $0x20, %esp
+	    0x08125d2c:  add   $0xfffffff4, %esp
 	    0x08125d2f:  call  0x08049380 <random@plt>
 	    0x08125d34:  push  %eax
 	    0x08125d35:  call  0x08125ea0
-	    0x08125d3a:  mov   %ebp,%esp
+	    0x08125d3a:  mov   %ebp, %esp
 	    0x08125d3c:  pop   %ebp
 	    0x08125d3d:  ret
 
@@ -582,7 +582,7 @@ Upon closer inspection one of the bytes stands out as
 Two of the bytes change haphazardly, so they're probably unrelated.
 The layout of the storage means
  the random number generator is most likely
-  a variation of an ARC4 stream cipher.
+  a variation of the ARC4 stream cipher.
 ARC4 uses three variables: the state S and the iterators i and j.
 
 	(gdb) set $s = (unsigned char * )0x082ada40
@@ -634,8 +634,8 @@ The variables of the random number generator can now be tracked reliably
 	(gdb) wa *$j
 	(gdb) c
 
-First `s` changes from 0 to 103 at 0x08125f2c,
- so the watchpoints are late to the party.
+First `s` changes from 0 to 103 at 0x08125f2c, so
+ the watchpoints are late to the party.
 Analyzing the state should tell how late exactly.
 
 	(gdb) def ds
@@ -651,10 +651,10 @@ The first byte is 0x67 and the rest are uninitialized (so that `s[i] = i`),
 
 Then `j` changes from 0 to 15 at 0x0812615d and
  `i` from 0 to 1 in 0x081261a3.
-The random number generator is obviously a variant of ARC4.
-The initialization has already started,
- so the state can't be inspected any further,
- but the breakpoints for the next run can be set now.
+The random number generator is obviously a variant of the ARC4.
+The initialization has already started, so
+ the state can't be inspected any further, but
+ the breakpoints for the next run can be set now.
 
 	(gdb) disa 5
 	(gdb) i s
@@ -669,14 +669,15 @@ The initialization has already started,
 	(gdb) fin
 	(gdb) fin
 	(gdb) x /4i $pc - 0x8
-	   0x81504e4:  add   $0x20,%esp
+	   0x81504e4:  add   $0x20, %esp
 	   0x81504e7:  call  0x080d15f0
-	=> 0x81504ec:  add   $0xfffffff4,%esp
+	=> 0x81504ec:  add   $0xfffffff4, %esp
 	   0x81504ef:  push  $0x082614eb
 	(gdb) b *0x081504e7
 	(gdb) c
 
-The initial state is dumped once the breakpoint is reached.
+The initial state is dumped to the file `s1` once
+ the breakpoint is reached.
 
 	(gdb) r
 	(gdb) fin
@@ -684,7 +685,8 @@ The initial state is dumped once the breakpoint is reached.
 	(gdb) c
 	(gdb) ds s1
 
-The next two states are dumped after the iterators have changed.
+The next two states are dumped to files `s2` and `s3` after
+ the iterators have changed.
 
 	(gdb) c
 	(gdb) c
@@ -693,7 +695,6 @@ The next two states are dumped after the iterators have changed.
 	(gdb) c
 	(gdb) ds s3
 
-The state files `s1`, `s2` and `s3` show how to initialize a replica ARC4.
 The debugger has done its job and may `quit`.
 
 	(gdb) d br
@@ -701,80 +702,20 @@ The debugger has done its job and may `quit`.
 	(gdb) q
 
 However since the custom random number generator operates cyclically,
- its output must also to be replicated.
-It's more complicated, so `objdump` does the heavy lifting.
+ its output must also to be understood.
+The whole process is quite complicated, so
+ `objdump` is used for the heavy lifting.
 
 	[user@arch adom]$ objdump -d -w adom >adom.s
 
-The disassembly is 333620 lines long,
- but searching for the relevant parts (accesses to `s`, `i` and `j`) is easy.
+It produces a disassembly that's approximately 333620 lines long, so
+ reading through the whole thing is not an option.
+Searching for calls to functions that access `s` after the calls to
+ `srandom` and
+ `random`
+  should suffice, since the seed has to be passed through somewhere.
 
-	.data
-	s:
-	0x082ada40:  00 01 02 ... ff       .byte   0, 1, 2, ..., 255
-	i:
-	0x082adb40:  00                    .byte   0
-	j:
-	0x082adb41:  00                    .byte   0
-	n:
-	0x082beb00:  00 00 00 ... 00       .int    0, 1, 2, ..., 19
-	z:
-	0x082beb4c:  00                    .int    0
 	.text
-	init:
-	0x0815055c:  e8 3f f3 fc ff        call    0x0811f8a0 <init_rng>
-	init_rng:
-	0x0811f8a0:  55                    push    %ebp
-	0x0811f8a1:  89 e5                 mov     %esp, %ebp
-	0x0811f8a3:  83 ec 0c              sub     $0xc, %esp
-	0x0811f8a6:  b8 4c eb 2b 08        mov     z, %eax
-	0x0811f8ab:  57                    push    %edi
-	0x0811f8ac:  56                    push    %esi
-	0x0811f8ad:  53                    push    %ebx
-	0x0811f8ae:  bb 13 00 00 00        mov     $0x13, %ebx
-	0x0811f8b3:  89 18                 mov     %ebx, (%eax) <----------------.
-	0x0811f8b5:  83 c0 fc              add     $0xfffffffc, %eax <sub $0x3>  |
-	0x0811f8b8:  4b                    dec     %ebx                          |
-	0x0811f8b9:  79 f8                 jns     0x0811f8b3 <init_rng + 0x13> -´
-	0x0811f8bb:  83 c4 f4              add     $0xfffffff4, %esp <sub $0xb>
-	0x0811f8be:  6a 14                 push    $0x14
-	0x0811f8c0:  e8 2b d9 fb ff        call    0x080dd1f0 <counted_rng>
-	0x0811f8c5:  83 c4 10              add     $0x10, %esp
-	0x0811f8c8:  8d 58 09              lea     0x9(%eax), %ebx
-	0x0811f8cb:  83 fb ff              cmp     $0xffffffff, %ebx
-	0x0811f8ce:  74 56                 je      0x0811f926 <init_rng + 0x86> -------.
-	0x0811f8d0:  83 c4 f4              add     $0xfffffff4, %esp <sub $0xb> <----. |
-	0x0811f8d3:  6a 12                 push    $0x12                             | |
-	0x0811f8d5:  e8 16 d9 fb ff        call    0x080dd1f0 <counted_rng>          | |
-	0x0811f8da:  89 c6                 mov     %eax, %esi                        | |
-	0x0811f8dc:  83 c4 10              add     $0x10, %esp                       | |
-	0x0811f8df:  8d 7b ff              lea     -0x1(%ebx), %edi                  | |
-	0x0811f8e2:  83 c4 f4              add     $0xfffffff4, %esp <sub $0xb> <-.  | |
-	0x0811f8e5:  6a 12                 push    $0x12                          |  | |
-	0x0811f8e7:  e8 04 d9 fb ff        call    0x080dd1f0 <counted_rng>       |  | |
-	0x0811f8ec:  83 c4 10              add     $0x10, %esp                    |  | |
-	0x0811f8ef:  39 c6                 cmp     %eax, %esi                     |  | |
-	0x0811f8f1:  74 ef                 je      0x0811f8e2 <init_rng + 0x42> --´  | |
-	0x0811f8f3:  8d 0c b5 00 00 00 00  lea     0x0(0, %esi, 4), %ecx             | |
-	0x0811f8fa:  8b 99 00 eb 2b 08     mov     n(%ecx), %ebx                     | |
-	0x0811f900:  83 fb 11              cmp     $0x11, %ebx                       | |
-	0x0811f903:  74 1a                 je      0x0811f91f <init_rng + 0x7f> ---. | |
-	0x0811f905:  c1 e0 02              shl     $0x2, %eax                      | | |
-	0x0811f908:  8b 90 00 eb 2b 08     mov     n(%eax), %edx                   | | |
-	0x0811f90e:  83 fa 11              cmp     $0x11, %edx                     | | |
-	0x0811f911:  74 0c                 je      0x0811f91f <init_rng + 0x7f> -. | | |
-	0x0811f913:  89 91 00 eb 2b 08     mov     %edx, n(%ecx)                 | | | |
-	0x0811f919:  89 98 00 eb 2b 08     mov     %ebx, n(%eax)                 , | | |
-	0x0811f91f:  89 fb                 mov     %edi, %ebx <-----------------<  | | |
-	0x0811f921:  83 fb ff              cmp     $0xffffffff, %ebx             `-´ | |
-	0x0811f924:  75 aa                 jne     0x0811f8d0 <init_rng + 0x30> -----´ |
-	0x0811f926:  8d 65 e8              lea     -0x18(%ebp), %esp <-----------------´
-	0x0811f929:  5b                    pop     %ebx
-	0x0811f92a:  5e                    pop     %esi
-	0x0811f92b:  5f                    pop     %edi
-	0x0811f92c:  89 ec                 mov     %ebp, %esp
-	0x0811f92e:  5d                    pop     %ebp
-	0x0811f92f:  c3                    ret
 	counted_rng:
 	0x080dd1f0:  55                    push    %ebp
 	0x080dd1f1:  89 e5                 mov     %esp, %ebp
@@ -787,6 +728,66 @@ The disassembly is 333620 lines long,
 	0x080dd208:  89 ec                 mov     %ebp, %esp
 	0x080dd20a:  5d                    pop     %ebp
 	0x080dd20b:  c3                    ret
+	init_rng:
+	0x080dd8f0:  55                    push    %ebp
+	0x080dd8f1:  89 e5                 mov     %esp, %ebp
+	0x080dd8f3:  83 ec 08              sub     $0x8, %esp
+	0x080dd8f6:  e8 15 84 04 00        call    0x08125d10 <seed_rng>
+	0x080dd8fb:  89 ec                 mov     %ebp, %esp
+	0x080dd8fd:  5d                    pop     %ebp
+	0x080dd8fe:  c3                    ret
+	use_rng:
+	0x0811f8a0:  55                    push    %ebp
+	0x0811f8a1:  89 e5                 mov     %esp, %ebp
+	0x0811f8a3:  83 ec 0c              sub     $0xc, %esp
+	0x0811f8a6:  b8 4c eb 2b 08        mov     cache + sizeof cache, %eax
+	0x0811f8ab:  57                    push    %edi
+	0x0811f8ac:  56                    push    %esi
+	0x0811f8ad:  53                    push    %ebx
+	0x0811f8ae:  bb 13 00 00 00        mov     $0x13, %ebx
+	0x0811f8b3:  89 18                 mov     %ebx, (%eax) <---------------.
+	0x0811f8b5:  83 c0 fc              add     $0xfffffffc, %eax <sub $0x3> |
+	0x0811f8b8:  4b                    dec     %ebx                         |
+	0x0811f8b9:  79 f8                 jns     0x0811f8b3 <use_rng + 0x13> -´
+	0x0811f8bb:  83 c4 f4              add     $0xfffffff4, %esp <sub $0xb>
+	0x0811f8be:  6a 14                 push    $0x14
+	0x0811f8c0:  e8 2b d9 fb ff        call    0x080dd1f0 <counted_rng>
+	0x0811f8c5:  83 c4 10              add     $0x10, %esp
+	0x0811f8c8:  8d 58 09              lea     0x9(%eax), %ebx
+	0x0811f8cb:  83 fb ff              cmp     $0xffffffff, %ebx
+	0x0811f8ce:  74 56                 je      0x0811f926 <use_rng + 0x86> -------.
+	0x0811f8d0:  83 c4 f4              add     $0xfffffff4, %esp <sub $0xb> <---. |
+	0x0811f8d3:  6a 12                 push    $0x12                            | |
+	0x0811f8d5:  e8 16 d9 fb ff        call    0x080dd1f0 <counted_rng>         | |
+	0x0811f8da:  89 c6                 mov     %eax, %esi                       | |
+	0x0811f8dc:  83 c4 10              add     $0x10, %esp                      | |
+	0x0811f8df:  8d 7b ff              lea     -0x1(%ebx), %edi                 | |
+	0x0811f8e2:  83 c4 f4              add     $0xfffffff4, %esp <sub $0xb> <-. | |
+	0x0811f8e5:  6a 12                 push    $0x12                          | | |
+	0x0811f8e7:  e8 04 d9 fb ff        call    0x080dd1f0 <counted_rng>       | | |
+	0x0811f8ec:  83 c4 10              add     $0x10, %esp                    | | |
+	0x0811f8ef:  39 c6                 cmp     %eax, %esi                     | | |
+	0x0811f8f1:  74 ef                 je      0x0811f8e2 <use_rng + 0x42> ---´ | |
+	0x0811f8f3:  8d 0c b5 00 00 00 00  lea     0x0(0, %esi, 4), %ecx            | |
+	0x0811f8fa:  8b 99 00 eb 2b 08     mov     cache(%ecx), %ebx                | |
+	0x0811f900:  83 fb 11              cmp     $0x11, %ebx                      | |
+	0x0811f903:  74 1a                 je      0x0811f91f <use_rng + 0x7f> ---. | |
+	0x0811f905:  c1 e0 02              shl     $0x2, %eax                     | | |
+	0x0811f908:  8b 90 00 eb 2b 08     mov     cache(%eax), %edx              | | |
+	0x0811f90e:  83 fa 11              cmp     $0x11, %edx                    | | |
+	0x0811f911:  74 0c                 je      0x0811f91f <use_rng + 0x7f> -. | | |
+	0x0811f913:  89 91 00 eb 2b 08     mov     %edx, cache(%ecx)            | | | |
+	0x0811f919:  89 98 00 eb 2b 08     mov     %ebx, cache(%eax)            , | | |
+	0x0811f91f:  89 fb                 mov     %edi, %ebx <----------------<  | | |
+	0x0811f921:  83 fb ff              cmp     $0xffffffff, %ebx            `-´ | |
+	0x0811f924:  75 aa                 jne     0x0811f8d0 <use_rng + 0x30> -----´ |
+	0x0811f926:  8d 65 e8              lea     -0x18(%ebp), %esp <----------------´
+	0x0811f929:  5b                    pop     %ebx
+	0x0811f92a:  5e                    pop     %esi
+	0x0811f92b:  5f                    pop     %edi
+	0x0811f92c:  89 ec                 mov     %ebp, %esp
+	0x0811f92e:  5d                    pop     %ebp
+	0x0811f92f:  c3                    ret
 	uncounted_rng:
 	0x08125b90:  55                    push    %ebp
 	0x08125b91:  89 e5                 mov     %esp, %ebp
@@ -798,6 +799,82 @@ The disassembly is 333620 lines long,
 	0x08125ba2:  89 ec                 mov     %ebp, %esp
 	0x08125ba4:  5d                    pop     %ebp
 	0x08125ba5:  c3                    ret
+	seed_rng:
+	0x08125d10:  55                    push    %ebp
+	0x08125d11:  89 e5                 mov     %esp, %ebp
+	0x08125d13:  83 ec 08              sub     $0x8, %esp
+	0x08125d16:  83 c4 f4              add     $0xfffffff4, %esp <sub $0xb>
+	0x08125d19:  83 c4 f4              add     $0xfffffff4, %esp <sub $0xb>
+	0x08125d1c:  6a 00                 push    $0x0
+	0x08125d1e:  e8 fd 36 f2 ff        call    0x08049420 <time>
+	0x08125d23:  50                    push    %eax
+	0x08125d24:  e8 a7 39 f2 ff        call    0x080496d0 <srandom>
+	0x08125d29:  83 c4 20              add     $0x20, %esp
+	0x08125d2c:  83 c4 f4              add     $0xfffffff4, %esp <sub $0xb>
+	0x08125d2f:  e8 4c 36 f2 ff        call    0x08049380 <random>
+	0x08125d34:  50                    push    %eax
+	0x08125d35:  e8 66 01 00 00        call    0x08125ea0 <seed_rng_with_integer>
+	0x08125d3a:  89 ec                 mov     %ebp, %esp
+	0x08125d3c:  5d                    pop     %ebp
+	0x08125d3d:  c3                    ret
+	seed_rng_with_integer:
+	0x08125ea0:  55                    push    %ebp
+	0x08125ea1:  89 e5                 mov     %esp, %ebp
+	0x08125ea3:  83 ec 1c              sub     $0x1c, %esp
+	0x08125ea6:  b8 3f db 2a 08        mov     $0x082adb3f, %eax
+	0x08125eab:  57                    push    %edi
+	0x08125eac:  56                    push    %esi
+	0x08125ead:  53                    push    %ebx
+	0x08125eae:  8b 75 08              mov     0x8(%ebp), %esi
+	0x08125eb1:  89 35 44 db 2a 08     mov     %esi, 0x082adb44
+	0x08125eb7:  8d 7d fc              lea     -0x4(%ebp), %edi
+	0x08125eba:  bb ff 00 00 00        mov     $0xff, %ebx
+	0x08125ebf:  90                    nop
+	0x08125ec0:  88 18                 mov     %bl, (%eax) <-----------------.
+	0x08125ec2:  48                    dec     %eax                          |
+	0x08125ec3:  4b                    dec     %ebx                          |
+	0x08125ec4:  79 fa                 jns     0x08125ec0 <seed_rng + 0x20> -´
+	0x08125ec6:  89 f0                 mov     %esi, %eax
+	0x08125ec8:  88 45 fc              mov     %al, -0x4(%ebp)
+	0x08125ecb:  89 f0                 mov     %esi, %eax
+	0x08125ecd:  25 00 ff 00 00        and     $0xff00, %eax
+	0x08125ed2:  8b 55 fc              mov     -0x4(%ebp), %edx
+	0x08125ed5:  81 e2 ff 00 00 ff     and     $0xff0000ff, %edx
+	0x08125edb:  89 f3                 mov     %esi, %ebx
+	0x08125edd:  81 e3 00 00 ff 00     and     $0xff0000, %ebx
+	0x08125ee3:  09 c2                 or      %eax, %edx
+	0x08125ee5:  09 da                 or      %ebx, %edx
+	0x08125ee7:  81 e6 00 00 00 ff     and     $0xff000000, %esi
+	0x08125eed:  81 e2 ff ff ff 00     and     $0xffffff, %edx
+	0x08125ef3:  09 f2                 or      %esi, %edx
+	0x08125ef5:  89 55 fc              mov     %edx, -0x4(%ebp)
+	0x08125ef8:  31 db                 xor     %ebx, %ebx
+	0x08125efa:  c6 45 fb 00           movb    $0x0, -0x5(%ebp)
+	0x08125efe:  89 fe                 mov     %edi, %esi
+	0x08125f00:  8a 83 40 da 2a 08     mov     s(%ebx), %al <----------------.
+	0x08125f06:  88 45 fa              mov     %al, -0x6(%ebp)               |
+	0x08125f09:  8a 55 fb              mov     -0x5(%ebp), %dl               |
+	0x08125f0c:  89 d9                 mov     %ebx, %ecx                    |
+	0x08125f0e:  83 e1 03              and     $0x3, %ecx                    |
+	0x08125f11:  00 c2                 add     %al, %dl                      |
+	0x08125f13:  8a 04 31              mov     (%ecx, %esi, 1), %al          |
+	0x08125f16:  00 c2                 add     %al, %dl                      |
+	0x08125f18:  88 55 fb              mov     %dl, -0x5(%ebp)               |
+	0x08125f1b:  31 d2                 xor     %edx, %edx                    |
+	0x08125f1d:  8a 55 fb              mov     -0x5(%ebp), %dl               |
+	0x08125f20:  8a 82 40 da 2a 08     mov     s(%edx), %al                  |
+	0x08125f26:  88 83 40 da 2a 08     mov     %al, s(%ebx)                  |
+	0x08125f2c:  8a 45 fa              mov     -0x6(%ebp), %al               |
+	0x08125f2f:  88 82 40 da 2a 08     mov     %al, s(%edx)                  |
+	0x08125f35:  43                    inc     %ebx                          |
+	0x08125f36:  81 fb ff 00 00 00     cmp     $0xff, %ebx                   |
+	0x08125f3c:  7e c2                 jle     0x08125f00 <seed_rng + 0x60> -´
+	0x08125f3e:  5b                    pop     %ebx
+	0x08125f3f:  5e                    pop     %esi
+	0x08125f40:  5f                    pop     %edi
+	0x08125f41:  89 ec                 mov     %ebp, %esp
+	0x08125f43:  5d                    pop     %ebp
+	0x08125f44:  c3                    ret
 	rng:
 	0x08126130:  55                    push    %ebp
 	0x08126131:  89 e5                 mov     %esp, %ebp
@@ -928,8 +1005,31 @@ The disassembly is 333620 lines long,
 	0x081262db:  89 ec                 mov     %ebp, %esp
 	0x081262dd:  5d                    pop     %ebp
 	0x081262de:  c3                    ret
+	low_level_init:
+	0x0814f710:  55                    push    %ebp
+	...
+	0x0814fb5c:  e8 8f dd f8 ff        call    0x080dd8f0 <init_rng>
+	...
+	0x0814ffab:  c3                    ret
+	high_level_init:
+	0x08150390:  55                    push    %ebp
+	...
+	0x0815055c:  e8 3f f3 fc ff        call    0x0811f8a0 <use_rng>
+	...
+	0x081506ea:  c3                    ret
+	.data
+	c:
+	0x08264a60:  00                    .int    0
+	s:
+	0x082ada40:  00 01 02 ... ff       .byte   0, 1, 2, ..., 255
+	i:
+	0x082adb40:  00                    .byte   0
+	j:
+	0x082adb41:  00                    .byte   0
+	cache:
+	0x082beb00:  00 00 00 ... 00       .int    0, 1, 2, ..., 19
 
-The disassembly shows how to operate the replica ARC4.
+The manually annotated disassembly shows how to build the replica ARC4.
 It also shows that the order of operations is atypical as
  `i` is incremented after the rest of the operations,
  how bytes combined into an integer and

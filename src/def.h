@@ -24,7 +24,7 @@ extern const char * const log_warning;
 extern const char * const log_note;
 extern const char * const log_call;
 
-extern const char * const default_executable_path;
+extern const char * const default_exec_path;
 extern const char * const default_loader_path;
 extern const char * const default_libc_path;
 extern const char * const default_libncurses_path;

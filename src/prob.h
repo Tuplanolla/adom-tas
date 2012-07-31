@@ -51,29 +51,29 @@ enum problem_e {
 	HOME_GETENV_PROBLEM,
 	HOME_GETPWUID_PROBLEM,
 	HOME_STAT_PROBLEM,
-	EXECUTABLE_DATA_CONFIG_PROBLEM,
-	EXECUTABLE_DATA_HOME_PROBLEM,
-	EXECUTABLE_DATA_STAT_PROBLEM,
-	EXECUTABLE_TEMPORARY_STAT_PROBLEM,
+	EXEC_DATA_CONFIG_PROBLEM,
+	EXEC_DATA_HOME_PROBLEM,
+	EXEC_DATA_STAT_PROBLEM,
+	EXEC_TEMPORARY_STAT_PROBLEM,
 
 	LD_PRELOAD_CONFIG_PROBLEM,
 	LD_PRELOAD_GETENV_PROBLEM,
 	LD_PRELOAD_STAT_PROBLEM,
-	EXECUTABLE_CONFIG_PROBLEM,
-	EXECUTABLE_STAT_PROBLEM,
-	EXECUTABLE_TYPE_PROBLEM,
-	EXECUTABLE_PERMISSION_PROBLEM,
-	EXECUTABLE_SIZE_PROBLEM,
-	EXECUTABLE_OPEN_PROBLEM,
-	EXECUTABLE_READ_PROBLEM,
-	EXECUTABLE_HASH_PROBLEM,
-	EXECUTABLE_CLOSE_PROBLEM,
-	EXECUTABLE_CONFIG_STAT_PROBLEM,
-	EXECUTABLE_PROCESS_STAT_PROBLEM,
-	EXECUTABLE_KEYBIND_STAT_PROBLEM,
-	EXECUTABLE_VERSION_STAT_PROBLEM,
-	EXECUTABLE_ERROR_STAT_PROBLEM,
-	EXECUTABLE_COUNT_STAT_PROBLEM,
+	EXEC_CONFIG_PROBLEM,
+	EXEC_STAT_PROBLEM,
+	EXEC_TYPE_PROBLEM,
+	EXEC_PERMISSION_PROBLEM,
+	EXEC_SIZE_PROBLEM,
+	EXEC_OPEN_PROBLEM,
+	EXEC_READ_PROBLEM,
+	EXEC_HASH_PROBLEM,
+	EXEC_CLOSE_PROBLEM,
+	EXEC_CONFIG_STAT_PROBLEM,
+	EXEC_PROCESS_STAT_PROBLEM,
+	EXEC_KEYBIND_STAT_PROBLEM,
+	EXEC_VERSION_STAT_PROBLEM,
+	EXEC_ERROR_STAT_PROBLEM,
+	EXEC_COUNT_STAT_PROBLEM,
 
 	LIBC_CONFIG_PROBLEM,
 	LIBC_STAT_PROBLEM,
@@ -155,6 +155,7 @@ enum problem_e {
 	*/
 	INIT_PAIR_PROBLEM,
 	NEWWIN_PROBLEM,
+	DELWIN_PROBLEM,
 
 	/*
 	asm.c
@@ -162,14 +163,14 @@ enum problem_e {
 	ASM_MPROTECT_PROBLEM,
 	ASM_MEMCMP_PROBLEM
 };
-typedef enum problem_e problem_t;
+typedef enum problem_e problem_d;
 
 /**
 Propagates an error code.
 
 Returns the error code of an error if one occurs:
 <pre>
-problem_t method {
+problem_d method(void) {
 	PROPAGATE(another_method());
 	yet_another_method();
 	return NO_PROBLEM;
@@ -179,12 +180,33 @@ problem_t method {
 @param code The error code.
 **/
 #define PROPAGATE(code) do {\
-		const problem_t problem = code;\
+		const problem_d problem = code;\
 		if (problem != NO_PROBLEM) {\
 			return problem;\
 		}\
 	} while (0)
 
-const char * problem_message(problem_t code);
+/**
+Propagates an error code to a function.
+
+Calls a function with the error code of an error if one occurs:
+<pre>
+void method(void) {
+	PROPAGATEF(another_method(), exit);
+	yet_another_method();
+	return NO_PROBLEM;
+}
+</pre>
+
+@param code The error code.
+**/
+#define PROPAGATEF(code, function) do {\
+		const problem_d problem = code;\
+		if (problem != NO_PROBLEM) {\
+			function(problem);\
+		}\
+	} while (0)
+
+const char * problem_message(problem_d code);
 
 #endif

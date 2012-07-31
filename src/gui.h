@@ -5,19 +5,10 @@
 #ifndef GUI_H
 #define GUI_H
 
-#include <curses.h>
+#include "prob.h"//problem_d
 
-#include "util.h"//bool
-#include "prob.h"//problem_t
-
-extern bool quitting;
-extern bool inactive;
-extern bool condensed;
-extern bool hidden;
-extern bool playing;
-extern bool paused;
-
-problem_t init_interface(void);
-problem_t draw_interface(void);
+problem_d uninit_gui(void);
+problem_d init_gui(void);
+problem_d draw_gui(void);
 
 #endif

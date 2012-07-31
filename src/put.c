@@ -20,7 +20,7 @@ Saves a record.
 @param path The record location.
 @return The error code.
 **/
-problem_t fwritep(const char * const path) {
+problem_d fwritep(const char * const path) {
 	FILE * const stream = fopen(path, "wb");
 	if (stream == NULL) {
 		return error(OUTPUT_OPEN_PROBLEM);
@@ -30,7 +30,7 @@ problem_t fwritep(const char * const path) {
 	if (fwrite(header, sizeof header, 1, stream)) {//TODO header
 		error(OUTPUT_WRITE_PROBLEM);
 	}
-	frame_t * frame = record.first;
+	frame_d * frame = record.first;
 	while (frame != NULL) {
 		size_t result;
 		result = fwrite(&frame->duration, sizeof frame->duration, 1, stream);
@@ -53,7 +53,7 @@ Loads a record.
 @param path The record location.
 @return The error code.
 **/
-problem_t freadp(const char * const path) {
+problem_d freadp(const char * const path) {
 	FILE * const stream = fopen(path, "rb");
 	if (stream == NULL) {
 		return error(INPUT_OPEN_PROBLEM);

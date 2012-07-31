@@ -19,10 +19,10 @@ Some redundant conditions are used to
 #include <libconfig.h>//config_*, CONFIG_*
 
 #include "util.h"//intern, hash, stdstr, SUBNULL
-#include "prob.h"//problem_t, *_PROBLEM
+#include "prob.h"//problem_d, *_PROBLEM
 #include "log.h"//error, warning, note
 #include "def.h"//default_*
-#include "exec.h"//executable_*
+#include "exec.h"//exec_*
 
 #include "cfg.h"
 
@@ -30,16 +30,16 @@ Some redundant conditions are used to
 Undocumented.
 */
 intern char * home_path;
-intern char * executable_path;
-intern char * executable_data_path;
-intern char * executable_temporary_path;
-intern char ** executable_temporary_paths;
-intern char * executable_config_path;
-intern char * executable_process_path;
-intern char * executable_keybind_path;
-intern char * executable_version_path;
-intern char * executable_error_path;
-intern char * executable_count_path;
+intern char * exec_path;
+intern char * exec_data_path;
+intern char * exec_temporary_path;
+intern char ** exec_temporary_paths;
+intern char * exec_config_path;
+intern char * exec_process_path;
+intern char * exec_keybind_path;
+intern char * exec_version_path;
+intern char * exec_error_path;
+intern char * exec_count_path;
 intern char * loader_path;
 intern char * libc_path;
 intern char * libncurses_path;
@@ -84,28 +84,28 @@ Uninitializes the configuration variables.
 
 @return The error code.
 **/
-problem_t uninit_config(void) {
+problem_d uninit_config(void) {
 	/*
 	Closes files and deallocates manually allocated memory.
 	*/
 	free(home_path);
-	free(executable_path);
-	free(executable_data_path);
-	free(executable_temporary_path);
-	for (unsigned int level = 0; level < executable_temporary_levels; level++) {
-		const unsigned int offset = level * executable_temporary_parts;
-		for (unsigned int part = 0; part < executable_temporary_parts; part++) {
+	free(exec_path);
+	free(exec_data_path);
+	free(exec_temporary_path);
+	for (unsigned int level = 0; level < exec_temporary_levels; level++) {
+		const unsigned int offset = level * exec_temporary_parts;
+		for (unsigned int part = 0; part < exec_temporary_parts; part++) {
 			const unsigned int path = offset + part;
-			free(executable_temporary_paths[path]);
+			free(exec_temporary_paths[path]);
 		}
 	}
-	free(executable_temporary_paths);
-	free(executable_config_path);
-	free(executable_process_path);
-	free(executable_keybind_path);
-	free(executable_version_path);
-	free(executable_error_path);
-	free(executable_count_path);
+	free(exec_temporary_paths);
+	free(exec_config_path);
+	free(exec_process_path);
+	free(exec_keybind_path);
+	free(exec_version_path);
+	free(exec_error_path);
+	free(exec_count_path);
 	free(loader_path);
 	free(libc_path);
 	free(libncurses_path);
@@ -145,7 +145,7 @@ Initializes the common configuration variables.
 
 @return The error code.
 **/
-problem_t init_config(void) {
+problem_d init_config(void) {
 	/*
 	Sets the streams to their default values.
 	*/
@@ -236,37 +236,37 @@ problem_t init_config(void) {
 	the location of the directory is then guessed and
 	the existence of the directory is finally checked.
 	*/
-	const char * new_executable_data_path;
-	if (config_lookup_string(&config, "data", &new_executable_data_path) == CONFIG_FALSE) {
-		new_executable_data_path = NULL;
-		//warning(EXECUTABLE_DATA_CONFIG_PROBLEM);
+	const char * new_exec_data_path;
+	if (config_lookup_string(&config, "data", &new_exec_data_path) == CONFIG_FALSE) {
+		new_exec_data_path = NULL;
+		//warning(EXEC_DATA_CONFIG_PROBLEM);
 		if (home_path == NULL) {
-			executable_data_path = NULL;
+			exec_data_path = NULL;
 		}
 		else {
 			const size_t size = strlen(home_path) + 1
-					+ strlen(executable_data_directory) + 1;
-			executable_data_path = malloc(size);
-			if (executable_data_path == NULL) {
+					+ strlen(exec_data_directory) + 1;
+			exec_data_path = malloc(size);
+			if (exec_data_path == NULL) {
 				error(MALLOC_PROBLEM);
 			}
 			else {
-				snprintf(executable_data_path, size, "%s/%s",
+				snprintf(exec_data_path, size, "%s/%s",
 						home_path,
-						executable_data_directory);
+						exec_data_directory);
 			}
 		}
 	}
 	else {
-		executable_data_path = astrrep(new_executable_data_path, "~", home_path);
+		exec_data_path = astrrep(new_exec_data_path, "~", home_path);
 	}
-	if (executable_data_path == NULL) {
+	if (exec_data_path == NULL) {
 		return error(NULL_PROBLEM);
 	}
 	else {
-		struct stat executable_data_stat;
-		if (stat(executable_data_path, &executable_data_stat) == -1) {
-			warning(EXECUTABLE_DATA_STAT_PROBLEM);
+		struct stat exec_data_stat;
+		if (stat(exec_data_path, &exec_data_stat) == -1) {
+			warning(EXEC_DATA_STAT_PROBLEM);
 		}
 	}
 
@@ -276,23 +276,23 @@ problem_t init_config(void) {
 	The location of the directory is first guessed and
 	the existence of the directory is then checked.
 	*/
-	if (executable_data_path == NULL) {
-		executable_temporary_path = NULL;
+	if (exec_data_path == NULL) {
+		exec_temporary_path = NULL;
 	}
 	else {
-		const size_t size = strlen(executable_data_path) + 1
-				+ strlen(executable_temporary_directory) + 1;
-		executable_temporary_path = malloc(size);
-		if (executable_temporary_path == NULL) {
+		const size_t size = strlen(exec_data_path) + 1
+				+ strlen(exec_temporary_directory) + 1;
+		exec_temporary_path = malloc(size);
+		if (exec_temporary_path == NULL) {
 			error(MALLOC_PROBLEM);
 		}
 		else {
-			snprintf(executable_temporary_path, size, "%s/%s",
-					executable_data_path,
-					executable_temporary_directory);
-			struct stat executable_temporary_stat;
-			if (stat(executable_temporary_path, &executable_temporary_stat) == -1) {
-				warning(EXECUTABLE_TEMPORARY_STAT_PROBLEM);
+			snprintf(exec_temporary_path, size, "%s/%s",
+					exec_data_path,
+					exec_temporary_directory);
+			struct stat exec_temporary_stat;
+			if (stat(exec_temporary_path, &exec_temporary_stat) == -1) {
+				warning(EXEC_TEMPORARY_STAT_PROBLEM);
 			}
 		}
 	}
@@ -306,30 +306,30 @@ problem_t init_config(void) {
 	the existence of the directory is then checked and
 	the file paths are finally guessed.
 	*/
-	if (executable_temporary_path == NULL) {
-		executable_temporary_paths = NULL;
+	if (exec_temporary_path == NULL) {
+		exec_temporary_paths = NULL;
 	}
 	else {
-		executable_temporary_paths = malloc(executable_temporary_levels * executable_temporary_parts * sizeof *executable_temporary_paths);
-		if (executable_temporary_paths == NULL) {
+		exec_temporary_paths = malloc(exec_temporary_levels * exec_temporary_parts * sizeof *exec_temporary_paths);
+		if (exec_temporary_paths == NULL) {
 			error(MALLOC_PROBLEM);
 		}
 		else {
-			for (unsigned int level = 0; level < executable_temporary_levels; level++) {
-				const unsigned int offset = level * executable_temporary_parts;
-				for (unsigned int part = 0; part < executable_temporary_parts; part++) {
+			for (unsigned int level = 0; level < exec_temporary_levels; level++) {
+				const unsigned int offset = level * exec_temporary_parts;
+				for (unsigned int part = 0; part < exec_temporary_parts; part++) {
 					const unsigned int path = offset + part;
-					const size_t size = strlen(executable_temporary_path) + 1
-							+ strlen(executable_temporary_file)
+					const size_t size = strlen(exec_temporary_path) + 1
+							+ strlen(exec_temporary_file)
 							+ 4 + 1;
-					executable_temporary_paths[path] = malloc(size);
-					if (executable_temporary_paths[path] == NULL) {
+					exec_temporary_paths[path] = malloc(size);
+					if (exec_temporary_paths[path] == NULL) {
 						error(MALLOC_PROBLEM);
 					}
 					else {
-						snprintf(executable_temporary_paths[path], size, "%s/%s%02u_%01u",
-								executable_temporary_path,
-								executable_temporary_file,
+						snprintf(exec_temporary_paths[path], size, "%s/%s%02u_%01u",
+								exec_temporary_path,
+								exec_temporary_file,
 								level,
 								part);
 					}
@@ -346,7 +346,7 @@ Finishes initializing the configuration.
 
 @return The error code.
 **/
-problem_t end_init_config(void) {
+problem_d end_init_config(void) {
 	/*
 	Closes the configuration file.
 
@@ -357,7 +357,7 @@ problem_t end_init_config(void) {
 	return NO_PROBLEM;
 }
 
-problem_t init_external_config(void) {
+problem_d init_external_config(void) {
 	PROPAGATE(init_config());
 
 	/*
@@ -400,41 +400,41 @@ problem_t init_external_config(void) {
 	the size of the file is then verified and
 	the hash code of the file is finally verified.
 	*/
-	const char * new_executable_path;
-	if (config_lookup_string(&config, "executable", &new_executable_path) == CONFIG_FALSE) {
-		new_executable_path = default_executable_path;
-		//warning(EXECUTABLE_CONFIG_PROBLEM);
+	const char * new_exec_path;
+	if (config_lookup_string(&config, "executable", &new_exec_path) == CONFIG_FALSE) {
+		new_exec_path = default_exec_path;
+		//warning(EXEC_CONFIG_PROBLEM);
 	}
-	if (new_executable_path == NULL) {
-		executable_path = NULL;
+	if (new_exec_path == NULL) {
+		exec_path = NULL;
 	}
 	else {
-		executable_path = astrrep(new_executable_path, "~", home_path);
-		struct stat executable_stat;
-		if (stat(executable_path, &executable_stat) == -1) {
-			free(executable_path);
-			executable_path = NULL;
-			return error(EXECUTABLE_STAT_PROBLEM);
+		exec_path = astrrep(new_exec_path, "~", home_path);
+		struct stat exec_stat;
+		if (stat(exec_path, &exec_stat) == -1) {
+			free(exec_path);
+			exec_path = NULL;
+			return error(EXEC_STAT_PROBLEM);
 		}
-		else if (S_ISDIR(executable_stat.st_mode)) {
-			free(executable_path);
-			executable_path = NULL;
-			return error(EXECUTABLE_TYPE_PROBLEM);
+		else if (S_ISDIR(exec_stat.st_mode)) {
+			free(exec_path);
+			exec_path = NULL;
+			return error(EXEC_TYPE_PROBLEM);
 		}
-		else if ((executable_stat.st_mode & (S_ISUID | S_ISGID)) != 0) {
-			free(executable_path);
-			executable_path = NULL;
-			return error(EXECUTABLE_PERMISSION_PROBLEM);
+		else if ((exec_stat.st_mode & (S_ISUID | S_ISGID)) != 0) {
+			free(exec_path);
+			exec_path = NULL;
+			return error(EXEC_PERMISSION_PROBLEM);
 		}
 		else {
-			const size_t size = (size_t )executable_stat.st_size;
-			if (size != executable_size) {
-				warning(EXECUTABLE_SIZE_PROBLEM);
+			const size_t size = (size_t )exec_stat.st_size;
+			if (size != exec_size) {
+				warning(EXEC_SIZE_PROBLEM);
 			}
 			else {
-				FILE * stream = fopen(executable_path, "rb");
+				FILE * stream = fopen(exec_path, "rb");
 				if (stream == NULL) {
-					error(EXECUTABLE_OPEN_PROBLEM);
+					error(EXEC_OPEN_PROBLEM);
 				}
 				else {
 					unsigned char * ptr = malloc(size);
@@ -442,15 +442,15 @@ problem_t init_external_config(void) {
 						error(MALLOC_PROBLEM);
 					}
 					else {
-						if (fread(ptr, 1, size, stream) != executable_size) {
-							error(EXECUTABLE_READ_PROBLEM);
+						if (fread(ptr, 1, size, stream) != exec_size) {
+							error(EXEC_READ_PROBLEM);
 						}
-						else if (hash(ptr, executable_size) != executable_hash) {
-							warning(EXECUTABLE_HASH_PROBLEM);
+						else if (hash(ptr, exec_size) != exec_hash) {
+							warning(EXEC_HASH_PROBLEM);
 						}
 						free(ptr);
 						if (fclose(stream) == EOF) {
-							error(EXECUTABLE_CLOSE_PROBLEM);
+							error(EXEC_CLOSE_PROBLEM);
 						}
 					}
 				}
@@ -464,23 +464,23 @@ problem_t init_external_config(void) {
 	The location of the file is first guessed and
 	the existence of the file is then checked.
 	*/
-	if (executable_data_path == NULL) {
-		executable_config_path = NULL;
+	if (exec_data_path == NULL) {
+		exec_config_path = NULL;
 	}
 	else {
-		const size_t size = strlen(executable_data_path) + 1
-				+ strlen(executable_config_file) + 1;
-		executable_config_path = malloc(size);
-		if (executable_config_path == NULL) {
+		const size_t size = strlen(exec_data_path) + 1
+				+ strlen(exec_config_file) + 1;
+		exec_config_path = malloc(size);
+		if (exec_config_path == NULL) {
 			error(MALLOC_PROBLEM);
 		}
 		else {
-			snprintf(executable_config_path, size, "%s/%s",
-					executable_data_path,
-					executable_config_file);
-			struct stat executable_config_stat;
-			if (stat(executable_config_path, &executable_config_stat) == -1) {
-				warning(EXECUTABLE_CONFIG_STAT_PROBLEM);
+			snprintf(exec_config_path, size, "%s/%s",
+					exec_data_path,
+					exec_config_file);
+			struct stat exec_config_stat;
+			if (stat(exec_config_path, &exec_config_stat) == -1) {
+				warning(EXEC_CONFIG_STAT_PROBLEM);
 			}
 		}
 	}
@@ -491,23 +491,23 @@ problem_t init_external_config(void) {
 	The location of the file is first guessed and
 	the existence of the file is then checked.
 	*/
-	if (executable_data_path == NULL) {
-		executable_process_path = NULL;
+	if (exec_data_path == NULL) {
+		exec_process_path = NULL;
 	}
 	else {
-		const size_t size = strlen(executable_data_path) + 1
-				+ strlen(executable_process_file) + 1;
-		executable_process_path = malloc(size);
-		if (executable_process_path == NULL) {
+		const size_t size = strlen(exec_data_path) + 1
+				+ strlen(exec_process_file) + 1;
+		exec_process_path = malloc(size);
+		if (exec_process_path == NULL) {
 			error(MALLOC_PROBLEM);
 		}
 		else {
-			snprintf(executable_process_path, size, "%s/%s",
-					executable_data_path,
-					executable_process_file);
-			struct stat executable_process_stat;
-			if (stat(executable_process_path, &executable_process_stat) == -1) {
-				//note(EXECUTABLE_PROCESS_STAT_PROBLEM);
+			snprintf(exec_process_path, size, "%s/%s",
+					exec_data_path,
+					exec_process_file);
+			struct stat exec_process_stat;
+			if (stat(exec_process_path, &exec_process_stat) == -1) {
+				//note(EXEC_PROCESS_STAT_PROBLEM);
 			}
 		}
 	}
@@ -518,23 +518,23 @@ problem_t init_external_config(void) {
 	The location of the file is first guessed and
 	the existence of the file is then checked.
 	*/
-	if (executable_data_path == NULL) {
-		executable_keybind_path = NULL;
+	if (exec_data_path == NULL) {
+		exec_keybind_path = NULL;
 	}
 	else {
-		const size_t size = strlen(executable_data_path) + 1
-				+ strlen(executable_keybind_file) + 1;
-		executable_keybind_path = malloc(size);
-		if (executable_keybind_path == NULL) {
+		const size_t size = strlen(exec_data_path) + 1
+				+ strlen(exec_keybind_file) + 1;
+		exec_keybind_path = malloc(size);
+		if (exec_keybind_path == NULL) {
 			error(MALLOC_PROBLEM);
 		}
 		else {
-			snprintf(executable_keybind_path, size, "%s/%s",
-					executable_data_path,
-					executable_keybind_file);
-			struct stat executable_keybind_stat;
-			if (stat(executable_keybind_path, &executable_keybind_stat) == -1) {
-				warning(EXECUTABLE_KEYBIND_STAT_PROBLEM);
+			snprintf(exec_keybind_path, size, "%s/%s",
+					exec_data_path,
+					exec_keybind_file);
+			struct stat exec_keybind_stat;
+			if (stat(exec_keybind_path, &exec_keybind_stat) == -1) {
+				warning(EXEC_KEYBIND_STAT_PROBLEM);
 			}
 		}
 	}
@@ -545,23 +545,23 @@ problem_t init_external_config(void) {
 	The location of the file is first guessed and
 	the existence of the file is then checked.
 	*/
-	if (executable_data_path == NULL) {
-		executable_version_path = NULL;
+	if (exec_data_path == NULL) {
+		exec_version_path = NULL;
 	}
 	else {
-		const size_t size = strlen(executable_data_path) + 1
-				+ strlen(executable_version_file) + 1;
-		executable_version_path = malloc(size);
-		if (executable_version_path == NULL) {
+		const size_t size = strlen(exec_data_path) + 1
+				+ strlen(exec_version_file) + 1;
+		exec_version_path = malloc(size);
+		if (exec_version_path == NULL) {
 			error(MALLOC_PROBLEM);
 		}
 		else {
-			snprintf(executable_version_path, size, "%s/%s",
-					executable_data_path,
-					executable_version_file);
-			struct stat executable_version_stat;
-			if (stat(executable_version_path, &executable_version_stat) == -1) {
-				warning(EXECUTABLE_VERSION_STAT_PROBLEM);
+			snprintf(exec_version_path, size, "%s/%s",
+					exec_data_path,
+					exec_version_file);
+			struct stat exec_version_stat;
+			if (stat(exec_version_path, &exec_version_stat) == -1) {
+				warning(EXEC_VERSION_STAT_PROBLEM);
 			}
 		}
 	}
@@ -572,23 +572,23 @@ problem_t init_external_config(void) {
 	The location of the file is first guessed and
 	the existence of the file is then checked.
 	*/
-	if (executable_data_path == NULL) {
-		executable_error_path = NULL;
+	if (exec_data_path == NULL) {
+		exec_error_path = NULL;
 	}
 	else {
-		const size_t size = strlen(executable_data_path) + 1
-				+ strlen(executable_error_file) + 1;
-		executable_error_path = malloc(size);
-		if (executable_error_path == NULL) {
+		const size_t size = strlen(exec_data_path) + 1
+				+ strlen(exec_error_file) + 1;
+		exec_error_path = malloc(size);
+		if (exec_error_path == NULL) {
 			error(MALLOC_PROBLEM);
 		}
 		else {
-			snprintf(executable_error_path, size, "%s/%s",
-					executable_data_path,
-					executable_error_file);
-			struct stat executable_error_stat;
-			if (stat(executable_error_path, &executable_error_stat) == -1) {
-				//note(EXECUTABLE_ERROR_STAT_PROBLEM);
+			snprintf(exec_error_path, size, "%s/%s",
+					exec_data_path,
+					exec_error_file);
+			struct stat exec_error_stat;
+			if (stat(exec_error_path, &exec_error_stat) == -1) {
+				//note(EXEC_ERROR_STAT_PROBLEM);
 			}
 		}
 	}
@@ -599,23 +599,23 @@ problem_t init_external_config(void) {
 	The location of the file is first guessed and
 	the existence of the file is then checked.
 	*/
-	if (executable_data_path == NULL) {
-		executable_count_path = NULL;
+	if (exec_data_path == NULL) {
+		exec_count_path = NULL;
 	}
 	else {
-		const size_t size = strlen(executable_data_path) + 1
-				+ strlen(executable_count_file) + 1;
-		executable_count_path = malloc(size);
-		if (executable_count_path == NULL) {
+		const size_t size = strlen(exec_data_path) + 1
+				+ strlen(exec_count_file) + 1;
+		exec_count_path = malloc(size);
+		if (exec_count_path == NULL) {
 			error(MALLOC_PROBLEM);
 		}
 		else {
-			snprintf(executable_count_path, size, "%s/%s",
-					executable_data_path,
-					executable_count_file);
-			struct stat executable_count_stat;
-			if (stat(executable_count_path, &executable_count_stat) == -1) {
-				warning(EXECUTABLE_COUNT_STAT_PROBLEM);
+			snprintf(exec_count_path, size, "%s/%s",
+					exec_data_path,
+					exec_count_file);
+			struct stat exec_count_stat;
+			if (stat(exec_count_path, &exec_count_stat) == -1) {
+				warning(EXEC_COUNT_STAT_PROBLEM);
 			}
 		}
 	}
@@ -625,7 +625,7 @@ problem_t init_external_config(void) {
 	return NO_PROBLEM;
 }
 
-problem_t init_internal_config(void) {
+problem_d init_internal_config(void) {
 	PROPAGATE(init_config());
 
 	/*
@@ -691,8 +691,8 @@ problem_t init_internal_config(void) {
 		new_rows = default_rows;
 		//warning(ROW_CONFIG_PROBLEM);
 	}
-	if (new_rows < executable_rows_min || new_rows > executable_rows_max) {
-		new_rows = MIN(MAX(executable_rows_min, new_rows), executable_rows_max);
+	if (new_rows < exec_rows_min || new_rows > exec_rows_max) {
+		new_rows = MIN(MAX(exec_rows_min, new_rows), exec_rows_max);
 		warning(ROW_AMOUNT_PROBLEM);
 	}
 	rows = new_rows;
@@ -709,8 +709,8 @@ problem_t init_internal_config(void) {
 		new_cols = default_cols;
 		//warning(COL_CONFIG_PROBLEM);
 	}
-	if (new_cols < executable_cols_min || new_cols > executable_cols_max) {
-		new_cols = MIN(MAX(executable_cols_min, new_cols), executable_cols_max);
+	if (new_cols < exec_cols_min || new_cols > exec_cols_max) {
+		new_cols = MIN(MAX(exec_cols_min, new_cols), exec_cols_max);
 		warning(COL_AMOUNT_PROBLEM);
 	}
 	cols = new_cols;
@@ -979,6 +979,7 @@ problem_t init_internal_config(void) {
 		}
 	}
 	free(call_path);
+
 	if (new_error_stream != error_stream
 			|| new_warning_stream != warning_stream
 			|| new_note_stream != note_stream

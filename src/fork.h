@@ -5,9 +5,9 @@
 #ifndef FORK_H
 #define FORK_H
 
-#include "prob.h"//problem_t
+#include "prob.h"//problem_d
 
-problem_t save(int state);
-problem_t load(int state);
+problem_d save(int state);
+problem_d load(int state);
 
 #endif

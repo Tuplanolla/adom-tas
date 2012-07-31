@@ -14,7 +14,7 @@ Logs messages.
 #include <sys/time.h>//gettimeofday, struct timeval
 #include <unistd.h>//getpid
 
-#include "prob.h"//problem_message, problem_t, *_PROBLEM
+#include "prob.h"//problem_message, problem_d, *_PROBLEM
 #include "def.h"//log_*
 #include "cfg.h"//*_stream
 
@@ -73,7 +73,7 @@ Logs an error message and returns its error code.
 @param code The error code.
 @return The error code.
 **/
-problem_t error(const problem_t code) {
+problem_d error(const problem_d code) {
 	if (error_stream != NULL) {
 		fprintfl(error_stream, "%s%s%s",
 				log_error, log_separator, problem_message(code));
@@ -87,7 +87,7 @@ Logs a warning message and returns its error code.
 @param code The error code.
 @return The error code.
 **/
-problem_t warning(const problem_t code) {
+problem_d warning(const problem_d code) {
 	if (warning_stream != NULL) {
 		fprintfl(warning_stream, "%s%s%s",
 				log_warning,
@@ -103,7 +103,7 @@ Logs a note message and returns its error code.
 @param code The error code.
 @return The error code.
 **/
-problem_t note(const problem_t code) {
+problem_d note(const problem_d code) {
 	if (note_stream != NULL) {
 		fprintfl(note_stream, "%s%s%s",
 				log_note,
@@ -120,7 +120,7 @@ Logs a call and returns its error code.
 @param ... The function parameters.
 @return The error code.
 **/
-problem_t call(const char * const fmt, ...) {
+problem_d call(const char * const fmt, ...) {
 	if (call_stream != NULL) {
 		va_list	ap;
 		va_start(ap, fmt);

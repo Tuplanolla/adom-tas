@@ -9,7 +9,7 @@
 
 #include <curses.h>//chtype
 
-#include "prob.h"//problem_t
+#include "prob.h"//problem_d
 
 /**
 Contains the objects in the shared memory segment.
@@ -66,13 +66,13 @@ struct shm_s {
 	pid_t * pids;
 	chtype *** chs;
 };
-typedef struct shm_s shm_t;
+typedef struct shm_s shm_d;
 
-extern shm_t shm;
+extern shm_d shm;
 
-problem_t init_shm(void);
-problem_t attach_shm(void);
-problem_t detach_shm(void);
-problem_t uninit_shm(void);
+problem_d init_shm(void);
+problem_d attach_shm(void);
+problem_d detach_shm(void);
+problem_d uninit_shm(void);
 
 #endif

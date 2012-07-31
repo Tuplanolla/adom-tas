@@ -87,7 +87,7 @@ intern const char * const log_call = "Call";
 /*
 Undocumented.
 */
-intern const char * const default_executable_path = "adom/adom";
+intern const char * const default_exec_path = "adom/adom";
 intern const char * const default_loader_path = "bin/adom-tas.so";
 intern const char * const default_libc_path = "/lib/libc.so.6";
 intern const char * const default_libncurses_path = "/usr/lib/libncurses.so.5";

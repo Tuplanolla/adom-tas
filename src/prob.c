@@ -10,7 +10,7 @@ Notes are not problems.
 #ifndef PROB_C
 #define PROB_C
 
-#include "prob.h"//problem_t, *_PROBLEM
+#include "prob.h"//problem_d, *_PROBLEM
 
 /**
 Converts an error code to an error message.
@@ -18,7 +18,7 @@ Converts an error code to an error message.
 @param code The error code.
 @return The error message.
 **/
-const char * problem_message(const problem_t code) {
+const char * problem_message(const problem_d code) {
 	switch (code) {
 		/*
 		*.c
@@ -62,29 +62,29 @@ const char * problem_message(const problem_t code) {
 		case HOME_GETENV_PROBLEM: return "Finding the location of the home directory in the environment variable failed.";
 		case HOME_GETPWUID_PROBLEM: return "Finding the location of the home directory in the environment variable failed. It will be guessed.";
 		case HOME_STAT_PROBLEM: return "Accessing the home directory failed. Shell expansions will be unavailable.";
-		case EXECUTABLE_DATA_CONFIG_PROBLEM: return "Finding the location of the executable's data directory in the configuration file failed. It will be guessed.";
-		case EXECUTABLE_DATA_HOME_PROBLEM: return "Guessing the location of the executable's data directory failed.";
-		case EXECUTABLE_DATA_STAT_PROBLEM: return "Accessing the executable's data directory failed.";
-		case EXECUTABLE_TEMPORARY_STAT_PROBLEM: return  "Accessing at least one of the executable's temporary file failed.";
+		case EXEC_DATA_CONFIG_PROBLEM: return "Finding the location of the executable's data directory in the configuration file failed. It will be guessed.";
+		case EXEC_DATA_HOME_PROBLEM: return "Guessing the location of the executable's data directory failed.";
+		case EXEC_DATA_STAT_PROBLEM: return "Accessing the executable's data directory failed.";
+		case EXEC_TEMPORARY_STAT_PROBLEM: return  "Accessing at least one of the executable's temporary file failed.";
 
 		case LD_PRELOAD_CONFIG_PROBLEM: return "Finding the location of the library to preload in the configuration file failed.";
 		case LD_PRELOAD_GETENV_PROBLEM: return "Finding the location of the library to preload in the environment variable failed. It will be guessed.";
 		case LD_PRELOAD_STAT_PROBLEM: return "Accessing the library to preload failed.";
-		case EXECUTABLE_CONFIG_PROBLEM: return "Finding the location of the executable in the configuration file failed. It will be guessed.";
-		case EXECUTABLE_STAT_PROBLEM: return "Accessing the executable failed.";
-		case EXECUTABLE_TYPE_PROBLEM: return "Ensuring the executable is a file failed.";
-		case EXECUTABLE_PERMISSION_PROBLEM: return "Checking the permissions of the executable failed.";
-		case EXECUTABLE_SIZE_PROBLEM: return "Verifying the size of the executable failed.";
-		case EXECUTABLE_OPEN_PROBLEM: return "Opening the executable for reading failed.";
-		case EXECUTABLE_READ_PROBLEM: return "Reading the executable failed.";
-		case EXECUTABLE_HASH_PROBLEM: return "Verifying the hash code of the executable failed.";
-		case EXECUTABLE_CLOSE_PROBLEM: return "Closing the executable failed.";
-		case EXECUTABLE_CONFIG_STAT_PROBLEM: return "Accessing the executable's configuration file failed.";
-		case EXECUTABLE_PROCESS_STAT_PROBLEM: return "Accessing the executable's process lock file failed.";
-		case EXECUTABLE_KEYBIND_STAT_PROBLEM: return "Accessing the executable's keybinding file failed.";
-		case EXECUTABLE_VERSION_STAT_PROBLEM: return "Accessing the executable's version file failed.";
-		case EXECUTABLE_ERROR_STAT_PROBLEM: return "Accessing the executable's error log file failed.";
-		case EXECUTABLE_COUNT_STAT_PROBLEM: return "Accessing the executable's count file failed.";
+		case EXEC_CONFIG_PROBLEM: return "Finding the location of the executable in the configuration file failed. It will be guessed.";
+		case EXEC_STAT_PROBLEM: return "Accessing the executable failed.";
+		case EXEC_TYPE_PROBLEM: return "Ensuring the executable is a file failed.";
+		case EXEC_PERMISSION_PROBLEM: return "Checking the permissions of the executable failed.";
+		case EXEC_SIZE_PROBLEM: return "Verifying the size of the executable failed.";
+		case EXEC_OPEN_PROBLEM: return "Opening the executable for reading failed.";
+		case EXEC_READ_PROBLEM: return "Reading the executable failed.";
+		case EXEC_HASH_PROBLEM: return "Verifying the hash code of the executable failed.";
+		case EXEC_CLOSE_PROBLEM: return "Closing the executable failed.";
+		case EXEC_CONFIG_STAT_PROBLEM: return "Accessing the executable's configuration file failed.";
+		case EXEC_PROCESS_STAT_PROBLEM: return "Accessing the executable's process lock file failed.";
+		case EXEC_KEYBIND_STAT_PROBLEM: return "Accessing the executable's keybinding file failed.";
+		case EXEC_VERSION_STAT_PROBLEM: return "Accessing the executable's version file failed.";
+		case EXEC_ERROR_STAT_PROBLEM: return "Accessing the executable's error log file failed.";
+		case EXEC_COUNT_STAT_PROBLEM: return "Accessing the executable's count file failed.";
 
 		case LIBC_CONFIG_PROBLEM: return "Finding the location of the C standard library in the configuration file failed. It will be guessed.";
 		case LIBC_STAT_PROBLEM: return "Accessing the C standard library failed.";
@@ -166,6 +166,7 @@ const char * problem_message(const problem_t code) {
 		*/
 		case INIT_PAIR_PROBLEM: return "Creating a new color pair failed.";
 		case NEWWIN_PROBLEM: return "Creating a new window failed.";
+		case DELWIN_PROBLEM: return "Removing new window failed.";
 
 		/*
 		asm.c

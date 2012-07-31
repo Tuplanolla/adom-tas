@@ -11,7 +11,7 @@
 #include <curses.h>//WINDOW
 
 #include "gnu.h"//__*__
-#include "prob.h"//problem_t
+#include "prob.h"//problem_d
 
 typedef int (* printf_f)(const char * format, ...);
 typedef int (* unlink_f)(const char * path);
@@ -40,13 +40,13 @@ extern wgetch_f um_wgetch;
 extern endwin_f um_endwin;
 
 extern int current_state;
-extern unsigned char dur;
+extern unsigned char current_duration;
 extern char previous_inputs[77];
 extern int surplus_turns;
 extern int previous_turns;
 
-problem_t init_fcn(void);
-problem_t uninit_fcn(void);
+problem_d init_fcn(void);
+problem_d uninit_fcn(void);
 void save_quit_load(void);
 
 #endif

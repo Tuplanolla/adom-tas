@@ -12,7 +12,7 @@ Injects assembly instructions.
 #include <limits.h>//CHAR_BIT
 
 #include "util.h"//PAGE*
-#include "prob.h"//problem_t, *_PROBLEM
+#include "prob.h"//problem_d, *_PROBLEM
 #include "log.h"//error, warning, note
 
 /**
@@ -38,7 +38,7 @@ The injected instructions:
 @param function The custom function.
 @return The error code.
 **/
-problem_t inject_save(void (* const function)(void)) {
+problem_d inject_save(void (* const function)(void)) {
 	const unsigned char original[10] = {
 		0x83, 0xc4, 0xf8,
 		0x6a, 0x00,

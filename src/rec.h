@@ -20,7 +20,7 @@ enum input_e {
 	TIME_INPUT,
 	SEED_INPUT
 };
-typedef enum input_e input_t;
+typedef enum input_e input_d;
 </pre>
 <code>KEY_INPUT</code> represents pressing a key,
 <code>TIME_INPUT</code> represents changing the system time and
@@ -28,13 +28,13 @@ typedef enum input_e input_t;
 The variables required to represent a frame depend on the inputs:
 <pre>
 struct frame_s {
-	input_t input;
+	input_d input;
 	int key;
 	time_t timestamp;
 	unsigned char duration;
 	struct frame_s * next;
 };
-typedef struct frame_s frame_t;
+typedef struct frame_s frame_d;
 </pre>
 Since a <code>time_t</code> can be treated as an <code>int</code> or a <code>long</code>,
 only <code>KEY_INPUT</code> inputs are visible and
@@ -46,7 +46,7 @@ struct frame_s {
 	int value;//duration != 0 ? key = value : timestamp += value
 	struct frame_s * next;
 };
-typedef struct frame_s frame_t;
+typedef struct frame_s frame_d;
 </pre>
 Thus only five bytes are needed.
 
@@ -61,7 +61,7 @@ struct frame_s {
 	int value;
 	unsigned char duration;
 };
-typedef struct frame_s frame_t;
+typedef struct frame_s frame_d;
 
 /**
 Represents a collection of recorded frames.
@@ -72,20 +72,20 @@ Represents a collection of recorded frames.
 @var timestamp The system time of the previous <code>SEED_INPUT</code> frame.
 **/
 struct record_s {
-	frame_t * first;
-	frame_t * last;
+	frame_d * first;
+	frame_d * last;
 	unsigned int count;
 	time_t timestamp;
 };
-typedef struct record_s record_t;
+typedef struct record_s record_d;
 
-extern record_t record;
+extern record_d record;
 
 extern unsigned char frame_rate;
 
 void clear_record(void);
-frame_t * add_frame(unsigned char duration, int value) __attribute__ ((malloc));
-frame_t * add_key_frame(unsigned char duration, int key);
-frame_t * add_seed_frame(time_t timestamp);
+frame_d * add_frame(unsigned char duration, int value) __attribute__ ((malloc));
+frame_d * add_key_frame(unsigned char duration, int key);
+frame_d * add_seed_frame(time_t timestamp);
 
 #endif

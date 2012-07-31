@@ -5,8 +5,8 @@
 #ifndef ASM_H
 #define ASM_H
 
-#include "prob.h"//problem_t
+#include "prob.h"//problem_d
 
-problem_t inject_save(void (* function)(void));
+problem_d inject_save(void (* function)(void));
 
 #endif

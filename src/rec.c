@@ -18,7 +18,7 @@ Records are built around linked lists.
 /**
 The record.
 **/
-intern record_t record = {
+intern record_d record = {
 	.first = NULL,
 	.last = NULL,
 	.count = 0,
@@ -37,13 +37,13 @@ intern unsigned char frame_rate = 16;
 Removes all frames from a record.
 **/
 void clear_record(void) {
-	frame_t * frame = record.first;
+	frame_d * frame = record.first;
 	record.first = NULL;
 	record.last = NULL;
 	record.count = 0;
 	record.timestamp = 0;
 	while (frame != NULL) {
-		frame_t * previous = frame;
+		frame_d * previous = frame;
 		frame = frame->next;
 		free(previous);
 	}
@@ -56,8 +56,8 @@ Adds a frame to a record.
 @param value The key or the time difference of the frame.
 @return The new frame if successful and <code>NULL</code> otherwise.
 **/
-frame_t * add_frame(const unsigned char duration, const int value) {
-	frame_t * frame = malloc(sizeof (frame_t));
+frame_d * add_frame(const unsigned char duration, const int value) {
+	frame_d * frame = malloc(sizeof (frame_d));
 	if (frame == NULL) {
 		return NULL;
 	}
@@ -82,7 +82,7 @@ Adds a <code>KEY_INPUT</code> frame to a record.
 @param key The key of the frame.
 @return The new frame.
 **/
-frame_t * add_key_frame(const unsigned char duration, const int key) {
+frame_d * add_key_frame(const unsigned char duration, const int key) {
 	return add_frame(duration, key);
 }
 
@@ -92,7 +92,7 @@ Adds a <code>TIME_INPUT</code> and <code>SEED_INPUT</code> frame to a record.
 @param timestamp The time of the frame.
 @return The new frame.
 **/
-frame_t * add_seed_frame(const time_t timestamp) {
+frame_d * add_seed_frame(const time_t timestamp) {
 	const time_t difference = timestamp - record.timestamp;
 	record.timestamp = timestamp;
 	return add_frame(0, (int )difference);

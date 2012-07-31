@@ -20,7 +20,7 @@ removes
 #include <curses.h>//chtype
 
 #include "util.h"//hash, intern, SUBNULL
-#include "prob.h"//problem_t, PROPAGATE, *_PROBLEM
+#include "prob.h"//problem_d, PROPAGATE*, *_PROBLEM
 #include "log.h"//error, warning, note
 #include "def.h"//project_name
 #include "cfg.h"//*
@@ -30,7 +30,7 @@ removes
 /**
 Pointers to the shared memory segment.
 **/
-intern shm_t shm = {
+intern shm_d shm = {
 	.ppid = NULL,
 	.pids = NULL,
 	.chs = NULL
@@ -56,7 +56,7 @@ Finds the shared memory segment.
 
 @return The error code.
 **/
-problem_t get_shm(const int shmflg) {
+problem_d get_shm(const int shmflg) {
 	/*
 	Finds the shared memory segment.
 	*/
@@ -105,7 +105,7 @@ Initializes the shared memory segment.
 
 @return The error code.
 **/
-problem_t init_shm(void) {
+problem_d init_shm(void) {
 	/*
 	Generates a key for the shared memory segment.
 	*/
@@ -143,7 +143,7 @@ Attaches the shared memory segment.
 
 @return The error code.
 **/
-problem_t attach_shm(void) {
+problem_d attach_shm(void) {
 	/*
 	Accesses the shared memory segment.
 	*/
@@ -157,7 +157,7 @@ Detaches the shared memory segment.
 
 @return The error code.
 **/
-problem_t detach_shm(void) {
+problem_d detach_shm(void) {
 	shm.ppid = NULL;
 	shm.pids = NULL;
 	for (int state = 0; state < states; state++) {
@@ -184,7 +184,7 @@ Removes the shared memory segment.
 
 @return The error code.
 **/
-problem_t uninit_shm(void) {
+problem_d uninit_shm(void) {
 	if (shmctl(shmid, IPC_RMID, NULL) == -1) {
 		return error(SHM_REMOVE_PROBLEM);
 	}

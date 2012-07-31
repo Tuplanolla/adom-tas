@@ -105,19 +105,47 @@ Returns the sign of a number.
 /**
 Increments a number modularly.
 
+Values outside the range are bound to the opposite extreme:
+<pre>
+x  INC(x, 3, 7)
+1  7
+2  7
+3  4
+4  5
+5  6
+6  7
+7  3
+8  3
+</pre>
+
 @param x The number.
-@param m The modulo.
-@return The incremented integer.
+@param l The lower limit.
+@param u The upper limit.
+@return The incremented number.
 **/
-#define MODINC(x, m) x = x % ((m) - 1) + 1;
+#define INC(x, l, u) ((x) = (x) < (l) ? (u) : (x) < (u) ? (x) + 1 : (l))
 /**
 Decrements a number modularly.
 
+Values outside the range are bound to the opposite extreme:
+<pre>
+x  DEC(x, 3, 7)
+9  3
+8  3
+7  6
+6  5
+5  4
+4  3
+3  7
+2  7
+</pre>
+
 @param x The number.
-@param m The modulo.
-@return The decremented integer.
+@param l The lower limit.
+@param u The upper limit.
+@return The decremented number.
 **/
-#define MODDEC(x, m) x = ((x - 2) % ((m) - 1)) + 1;
+#define DEC(x, l, u) ((x) = (x) > (u) ? (l) : (x) > (l) ? (x) - 1 : (u))
 
 /**
 Returns the page boundary of a pointer.
@@ -143,9 +171,9 @@ Swaps two variables.
 **/
 #define SWAP(x, y) do {\
 		unsigned char z[sizeof (x) == sizeof (y) ? sizeof (x) : 0];\
-		memcpy(z, &y, sizeof (x));\
-		memcpy(&y, &x, sizeof (x));\
-		memcpy(&x, z, sizeof (x));\
+		memcpy(z, &(y), sizeof (x));\
+		memcpy(&(y), &(x), sizeof (x));\
+		memcpy(&(x), z, sizeof (x));\
 	} while (FALSE)
 
 /**

@@ -9,19 +9,19 @@
 #include <time.h>//time_t
 
 #include "util.h"//bool
-#include "prob.h"//problem_t
+#include "prob.h"//problem_d
 
 extern char * home_path;
-extern char * executable_path;
-extern char * executable_data_path;
-extern char * executable_temporary_path;
-extern char ** executable_temporary_paths;
-extern char * executable_config_path;
-extern char * executable_process_path;
-extern char * executable_keybind_path;
-extern char * executable_version_path;
-extern char * executable_error_path;
-extern char * executable_count_path;
+extern char * exec_path;
+extern char * exec_data_path;
+extern char * exec_temporary_path;
+extern char ** exec_temporary_paths;
+extern char * exec_config_path;
+extern char * exec_process_path;
+extern char * exec_keybind_path;
+extern char * exec_version_path;
+extern char * exec_error_path;
+extern char * exec_count_path;
 extern char * loader_path;
 extern char * libc_path;
 extern char * libncurses_path;
@@ -56,8 +56,8 @@ extern int play_key;
 extern int stop_key;
 extern int quit_key;
 
-problem_t init_external_config(void);
-problem_t init_internal_config(void);
-problem_t uninit_config(void);
+problem_d init_external_config(void);
+problem_d init_internal_config(void);
+problem_d uninit_config(void);
 
 #endif
