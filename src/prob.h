@@ -79,6 +79,7 @@ enum problem_e {
 	LIBC_STAT_PROBLEM,
 	LIBNCURSES_CONFIG_PROBLEM,
 	LIBNCURSES_STAT_PROBLEM,
+	ENFORCE_CONFIG_PROBLEM,
 	ROW_CONFIG_PROBLEM,
 	ROW_AMOUNT_PROBLEM,
 	COL_CONFIG_PROBLEM,
@@ -89,8 +90,9 @@ enum problem_e {
 	SHM_STAT_PROBLEM,
 	GENERATIONS_CONFIG_PROBLEM,
 	SQL_CONFIG_PROBLEM,
+	PRESERVE_CONFIG_PROBLEM,
 	AUTOPLAY_CONFIG_PROBLEM,
-	COLOR_CONFIG_PROBLEM,
+	MONOCHROME_CONFIG_PROBLEM,
 	ITERATOR_CONFIG_PROBLEM,
 	INPUT_CONFIG_PROBLEM,
 	INPUT_STAT_PROBLEM,
@@ -115,7 +117,7 @@ enum problem_e {
 	LOG_CHANGE_PROBLEM,
 
 	/*
-	fcn.c
+	lib.c
 	*/
 	LIBC_DLOPEN_PROBLEM,
 	LIBC_DLSYM_PROBLEM,
@@ -166,7 +168,7 @@ enum problem_e {
 typedef enum problem_e problem_d;
 
 /**
-Propagates an error code.
+Propagates an error code by returning.
 
 Returns the error code of an error if one occurs:
 <pre>
@@ -180,19 +182,19 @@ problem_d method(void) {
 @param code The error code.
 **/
 #define PROPAGATE(code) do {\
-		const problem_d problem = code;\
-		if (problem != NO_PROBLEM) {\
-			return problem;\
+		const problem_d PROPAGATE_problem = code;\
+		if (PROPAGATE_problem != NO_PROBLEM) {\
+			return PROPAGATE_problem;\
 		}\
 	} while (0)
 
 /**
-Propagates an error code to a function.
+Propagates an error code by calling a function.
 
 Calls a function with the error code of an error if one occurs:
 <pre>
 void method(void) {
-	PROPAGATEF(another_method(), exit);
+	PROPAGATEC(another_method(), exit);
 	yet_another_method();
 	return NO_PROBLEM;
 }
@@ -200,10 +202,31 @@ void method(void) {
 
 @param code The error code.
 **/
-#define PROPAGATEF(code, function) do {\
-		const problem_d problem = code;\
-		if (problem != NO_PROBLEM) {\
-			function(problem);\
+#define PROPAGATEC(code, function) do {\
+		const problem_d PROPAGATEC_problem = code;\
+		if (PROPAGATEC_problem != NO_PROBLEM) {\
+			function(PROPAGATEC_problem);\
+		}\
+	} while (0)
+
+/**
+Propagates an error code by assigning a variable.
+
+Calls a function with the error code of an error if one occurs:
+<pre>
+problem_d method(problem_d problem) {
+	PROPAGATEA(another_method(), problem);
+	yet_another_method();
+	return problem;
+}
+</pre>
+
+@param code The error code.
+**/
+#define PROPAGATEA(code, variable) do {\
+		const problem_d PROPAGATEC_problem = code;\
+		if (PROPAGATEC_problem != NO_PROBLEM) {\
+			variable = PROPAGATEC_problem;\
 		}\
 	} while (0)
 

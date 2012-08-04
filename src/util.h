@@ -10,7 +10,7 @@ Provides general-purpose macros.
 #include <stddef.h>//size_t, ptrdiff_t
 #include <stdio.h>//FILE
 #include <string.h>//mem*
-#include <unistd.h>//getpagesize
+#include <unistd.h>////*page*
 
 #include "gnu.h"//__*__
 
@@ -188,6 +188,18 @@ The Ctrl modifier for the New Cursor Optimization library.
 The Meta modifier for the New Cursor Optimization library.
 **/
 #define MOD_META 27
+/**
+The not-a-key key for the New Cursor Optimization library.
+**/
+#define KEY_NAK (KEY_MIN - 1)
+/**
+The end-of-file key for the New Cursor Optimization library.
+**/
+#define KEY_EOF (KEY_MAX + 1)
+/**
+The timer resolution of the New Cursor Optimization library.
+**/
+#define TIMER_RATE 1000
 
 size_t intlen(int x);
 size_t uintlen(unsigned int x);

@@ -90,6 +90,7 @@ const char * problem_message(const problem_d code) {
 		case LIBC_STAT_PROBLEM: return "Accessing the C standard library failed.";
 		case LIBNCURSES_CONFIG_PROBLEM: return "Finding the location of the New Cursor Optimization library in the configuration file failed. It will be guessed.";
 		case LIBNCURSES_STAT_PROBLEM: return "Accessing the New Cursor Optimization library failed.";
+		case ENFORCE_CONFIG_PROBLEM: return "Finding whether configurations should be enforced in the configuration file failed. The default value will be assumed.";
 		case ROW_CONFIG_PROBLEM: return "Finding the height of the terminal in the configuration file failed. The default value will be assumed.";
 		case ROW_AMOUNT_PROBLEM: return "Setting the height of the terminal failed. The closest estimate will be used.";
 		case COL_CONFIG_PROBLEM: return "Finding the width of the terminal in the configuration file failed. The default value will be assumed.";
@@ -100,8 +101,9 @@ const char * problem_message(const problem_d code) {
 		case SHM_STAT_PROBLEM: return "Accessing the shared memory segment failed.";
 		case GENERATIONS_CONFIG_PROBLEM: return "Finding the amount of generated characters in the configuration file failed. The default value will be assumed.";
 		case SQL_CONFIG_PROBLEM: return "Finding whether the save-quit-load emulation is enabled in the configuration file failed. The default value will be assumed.";
+		case PRESERVE_CONFIG_PROBLEM: return "Finding whether save states should be preserved upon loading in the configuration file failed. The default value will be assumed.";
 		case AUTOPLAY_CONFIG_PROBLEM: return "Finding the playback mode in the configuration file failed. The default value will be assumed.";
-		case COLOR_CONFIG_PROBLEM: return "Finding the color mode in the configuration file failed. The default value will be assumed.";
+		case MONOCHROME_CONFIG_PROBLEM: return "Finding the color mode in the configuration file failed. The default value will be assumed.";
 		case ITERATOR_CONFIG_PROBLEM: return "Finding the iterator string in the configuration file failed. The default value will be assumed.";
 		case INPUT_CONFIG_PROBLEM: return "Finding the location of the input file in the configuration file failed. The default value will be assumed.";
 		case INPUT_STAT_PROBLEM: return "The input file doesn't exist.";
@@ -130,7 +132,7 @@ const char * problem_message(const problem_d code) {
 		*/
 		case SHM_MALLOC_PROBLEM: return "Allocating shared memory failed.";
 		case SHM_KEY_PROBLEM: return "Generating a shared memory key failed.";
-		case SHM_GET_PROBLEM: return "Creating the shared memory segment failed.";
+		case SHM_GET_PROBLEM: return "Finding the shared memory segment failed.";
 		case SHM_ATTACH_PROBLEM: return "Attaching the shared memory segment failed.";
 		case SHM_DETACH_PROBLEM: return "Detaching the shared memory segment failed.";
 		case SHM_REMOVE_PROBLEM: return "Removing the shared memory segment failed.";
@@ -146,7 +148,7 @@ const char * problem_message(const problem_d code) {
 		case OUTPUT_CLOSE_PROBLEM: return "Closing the output file failed.";
 
 		/*
-		fcn.c
+		lib.c
 		*/
 		case LIBC_DLOPEN_PROBLEM: return "Opening the C standard library for linking failed.";
 		case LIBC_DLSYM_PROBLEM: return "Reading at least one of the symbols from the C standard library failed.";

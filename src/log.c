@@ -31,10 +31,10 @@ Formats and logs a message.
 int vfprintfl(FILE * const stream, const char * const fmt, va_list ap) {
 	/*
 	Creativity is required since
-		<code>time</code>,
-		<code>localtime</code> and
-		<code>printf</code>
-			are unavailable.
+	 <code>time</code>,
+	 <code>localtime</code> and
+	 <code>printf</code>
+	  are unavailable.
 	*/
 	int result = 0;
 	struct timeval tv;
@@ -60,7 +60,7 @@ Formats and logs a message.
 @return The amount of characters written.
 **/
 int fprintfl(FILE * const stream, const char * const fmt, ...) {
-	va_list	ap;
+	va_list ap;
 	va_start(ap, fmt);
 	const int result = vfprintfl(stream, fmt, ap);
 	va_end(ap);
@@ -80,7 +80,6 @@ problem_d error(const problem_d code) {
 	}
 	return code;
 }
-
 /**
 Logs a warning message and returns its error code.
 
@@ -90,13 +89,10 @@ Logs a warning message and returns its error code.
 problem_d warning(const problem_d code) {
 	if (warning_stream != NULL) {
 		fprintfl(warning_stream, "%s%s%s",
-				log_warning,
-				log_separator,
-				problem_message(code));
+				log_warning, log_separator, problem_message(code));
 	}
 	return code;
 }
-
 /**
 Logs a note message and returns its error code.
 
@@ -106,9 +102,7 @@ Logs a note message and returns its error code.
 problem_d note(const problem_d code) {
 	if (note_stream != NULL) {
 		fprintfl(note_stream, "%s%s%s",
-				log_note,
-				log_separator,
-				problem_message(code));
+				log_note, log_separator, problem_message(code));
 	}
 	return code;
 }
@@ -124,15 +118,15 @@ problem_d call(const char * const fmt, ...) {
 	if (call_stream != NULL) {
 		va_list	ap;
 		va_start(ap, fmt);
-		const size_t size = strlen(log_call) + strlen(log_separator) + strlen(fmt) + 1;
+		const size_t size = strlen(log_call)
+				+ strlen(log_separator)
+				+ strlen(fmt) + 1;
 		char * const call_fmt = malloc(size);
 		if (call_fmt == NULL) {
 			return error(MALLOC_PROBLEM);
 		}
 		snprintf(call_fmt, size, "%s%s%s",
-				log_call,
-				log_separator,
-				fmt);
+				log_call, log_separator, fmt);
 		vfprintfl(call_stream, call_fmt, ap);
 		free(call_fmt);
 		va_end(ap);

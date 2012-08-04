@@ -1,6 +1,8 @@
 /**
 @see exec.c
 @author Sampsa "Tuplanolla" Kiiskinen
+
+TODO sort
 **/
 #ifndef EXEC_H
 #define EXEC_H
@@ -8,7 +10,7 @@
 #include <stddef.h>//size_t
 
 extern short int pairs;
-extern int turns;
+extern long int turns;
 
 extern const size_t exec_size;
 extern const int exec_hash;
@@ -30,9 +32,6 @@ extern const char * const exec_keybind_file;
 extern const char * const exec_version_file;
 extern const char * const exec_count_file;
 extern const char * const exec_error_file;
-
-extern const char * const exec_config;
-extern const char * const exec_keybind;
 
 extern const int exec_question_effects[51][4][9];
 extern const int * const exec_questions;
@@ -70,9 +69,6 @@ typedef struct exec_monster_data_s exec_monster_data_d;
 extern const exec_item_data_d * const exec_item_data;
 extern const exec_monster_data_d * const exec_monster_data;
 
-extern int * const exec_turns;
-extern int * const exec_saves;
-
 struct exec_item_s {
 	unsigned int type;
 	//...
@@ -107,6 +103,9 @@ extern unsigned char ** const exec_objects;
 extern exec_map_item_d *** const exec_items;
 extern exec_map_monster_d ** const exec_monsters;
 
+extern long int * const exec_turns;
+extern long int * const exec_saves;
+
 extern unsigned char * const exec_arc4_c;
 extern unsigned char * const exec_arc4_s;
 extern unsigned char * const exec_arc4_i;
@@ -116,7 +115,7 @@ extern const unsigned int exec_arc4_calls;
 extern const unsigned int exec_arc4_calls_automatic_load;
 extern const unsigned int exec_arc4_calls_manual_load;
 
-void iarc4(unsigned int seed, unsigned int calls);
+void iarc4(unsigned long int seed, unsigned int calls);
 const char * key_code(int key);
 
 #endif

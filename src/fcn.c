@@ -75,7 +75,7 @@ frame_d * current_frame;
 bool running = TRUE;
 char previous_inputs[77];
 unsigned char current_duration = 15;
-int surplus_turns = 0;
+int negative_turns = 0;
 int previous_turns = 0;
 
 /**
@@ -186,7 +186,7 @@ Intercepts printing anything and initializes this process.
 int printf(const char * const format, ...) {
 	if (fcn_state == NOT_INITIALIZED) {
 		fcn_state = SOMEWHAT_INITIALIZED;
-		PROPAGATEF(init_parent(), uninit_parent);
+		PROPAGATEC(init_parent(), uninit_parent);
 	}
 
 	call("printf(...).");
@@ -349,7 +349,7 @@ Draws the custom interface.
 int waddnstr(WINDOW * const win, const char * const str, const int n) {
 	if (fcn_state == SOMEWHAT_INITIALIZED) {
 		fcn_state = FULLY_INITIALIZED;
-		PROPAGATEF(init_interface(), uninit_parent);
+		PROPAGATEC(init_interface(), uninit_parent);
 	}
 
 	return um_waddnstr(win, str, n);
@@ -403,7 +403,7 @@ int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme fo
 	if (playbacking) {
 	}
 
-	if (*exec_turns < previous_turns) surplus_turns++;
+	if (*exec_turns < previous_turns) negative_turns++;
 	previous_turns = *exec_turns;
 	int key = um_wgetch(win);
 	if (key == play_key) {
@@ -513,7 +513,7 @@ int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme fo
 				shm.pids[state] = 0;
 			}
 		}
-		kill(shm.ppid[0], SIGKILL);
+		kill(*shm.ppid, SIGKILL);
 		kill(shm.pids[0], SIGKILL);
 		return 0;//nice and elegant
 	}

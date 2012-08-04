@@ -175,7 +175,7 @@ int copy(const char * const dest, const char * const src) {
 Converts a string to a standard stream.
 
 @param str The string to convert.
-@return The standard stream if the string is valid and <code>SUBNULL</code> otherwise.
+@return The standard stream if the string is valid and <code>NULL</code> otherwise.
 **/
 FILE * stdstr(const char * const str) {
 	if (strcmp(str, "stdin") == 0) return stdin;

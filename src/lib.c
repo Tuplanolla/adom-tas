@@ -1,16 +1,22 @@
 /**
 Does something unnecessary.
 
+Don't forget:
+<pre>
+napms(100);
+</pre>
+
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef LIB_C
 #define LIB_C
 
 #include <stdarg.h>//va_*, exit
+#include <limits.h>//*_MAX
 #include <stdlib.h>//*env, NULL
 #include <stdio.h>//*open, *close, *read, *write, FILE
 #include <string.h>//str*, mem*
-#include <unistd.h>//fork, sleep, temporary kill
+#include <unistd.h>//fork, sleep
 #include <time.h>//time_t
 #include <signal.h>//sig*, SIG*
 #include <dlfcn.h>//dl*, RTLD_*
@@ -38,32 +44,17 @@ Does something unnecessary.
 #include "fork.h"
 #include "log.h"
 #include "cfg.h"
+#include "play.h"
 #include "gui.h"
 
 #include "lib.h"
 
 /**
-The states of this module.
-**/
-enum fcn_state_e {
-	NOT_INITIALIZED,
-	SOMEWHAT_INITIALIZED,
-	FULLY_INITIALIZED
-};
-typedef enum fcn_state_e fcn_state_d;
-
-/**
-The state of this module.
-**/
-fcn_state_d fcn_state = NOT_INITIALIZED;
-
-/**
 The most important variable ever defined.
 **/
-frame_d * current_frame = NULL;
-unsigned char current_duration = 15;
-int surplus_turns = 0;
-int previous_turns = 0;
+intern unsigned char current_duration = 15;
+long int negative_turns = 0;
+long int previous_turns = 0;
 /**
 The amount of frames at the previous input.
 **/
@@ -76,7 +67,19 @@ intern int current_state = 1;
 /**
 The four last inputs.
 **/
-intern int previous_inputs[4];
+intern int previous_inputs[4] = {0, 0, 0, 0};
+/**
+Whether time passed.
+**/
+intern bool in_game = FALSE;
+/**
+Whether initialization has started.
+**/
+intern bool initializing = FALSE;
+/**
+Whether initialization has ended.
+**/
+intern bool initialized = FALSE;
 /**
 Whether a menu is open and inputs are blocked.
 **/
@@ -112,75 +115,15 @@ Some dlfcn stuff.
 void * libc_handle;
 void * libncurses_handle;
 
-/**
-Emulates the process of saving, quitting and loading.
-**/
-void save_quit_load(void) {
-	/*
-	The only reliable case (automatic loading) is assumed.
-
-	Manual loading changes the random number generator's state depending on
-		the available save games and
-		actions in the menu.
-	*/
-	iarc4((unsigned int )timestamp, exec_arc4_calls_automatic_load);
-	(*exec_saves)++;
-	add_seed_frame(timestamp);
-	wrefresh(stdscr);
-}
+pid_t pid = 0;
 
 /**
-Uninitializes this process.
+Throws an assertion error if a function is called before it's loaded.
+
+May be unreliable.
 **/
-problem_d uninit_common(void) {
-	PROPAGATE(detach_shm());
-
-	PROPAGATE(uninit_config());
-
-	return NO_PROBLEM;
-}
-
-/**
-Uninitializes this process.
-
-@param problem The error code to return.
-**/
-problem_d uninit_child(const problem_d problem) {
-	//PROPAGATE(uninit_fcn());
-
-	/*
-	Exits gracefully.
-	*/
-	exit(problem);
-
-	return NO_PROBLEM;
-}
-
-/**
-Uninitializes all processes.
-
-@param problem The error code to return.
-**/
-problem_d uninit_parent(const problem_d problem) {
-	if (dlclose(libc_handle) != 0) {
-		return error(LIBC_DLCLOSE_PROBLEM);
-	}
-	if (dlclose(libncurses_handle) != 0) {
-		return error(LIBNCURSES_DLCLOSE_PROBLEM);
-	}
-
-	PROPAGATE(uninit_shm());
-
-	/*
-	Exits gracefully.
-	*/
-	exit(problem);
-
-	return NO_PROBLEM;
-}
-
 void dlnull(void) {
-	uninit_parent(error(ASSERT_PROBLEM));
+	exit(error(ASSERT_PROBLEM));
 }
 
 intern printf_f um_printf = (printf_f )dlnull;
@@ -197,14 +140,45 @@ intern wgetch_f um_wgetch = (wgetch_f )dlnull;
 intern endwin_f um_endwin = (endwin_f )dlnull;
 
 /**
-Initializes this process.
+Emulates the process of saving, quitting and loading.
 **/
-problem_d init_parent(void) {
-	PROPAGATE(init_internal_config());
-
+void save_quit_load(void) {
 	/*
-	Loads the unmodified functions.
+	The only reliable case (automatic loading) is assumed.
 
+	Manual loading changes the random number generator's state depending on
+		the amount of available save games and
+		the actions taken in the menu.
+	*/
+	iarc4((unsigned long int )timestamp, exec_arc4_calls_automatic_load);
+	(*exec_saves)++;
+	add_seed_frame(timestamp);
+	wrefresh(stdscr);
+}
+
+/**
+Closes the dynamically linked libraries.
+
+@return The error code.
+**/
+problem_d uninit_lib(void) {
+	if (dlclose(libc_handle) != 0) {
+		error(LIBC_DLCLOSE_PROBLEM);
+	}
+	if (dlclose(libncurses_handle) != 0) {
+		error(LIBNCURSES_DLCLOSE_PROBLEM);
+	}
+
+	return NO_PROBLEM;
+}
+
+/**
+Opens the dynamically linked libraries.
+
+@return The error code.
+**/
+problem_d init_lib(void) {
+	/*
 	<code>RTLD_LAZY</code> is faster than <code>RTLD_NOW</code>.
 	*/
 	const int mode = RTLD_LAZY;
@@ -253,44 +227,232 @@ problem_d init_parent(void) {
 		warning(LD_PRELOAD_UNSETENV_PROBLEM);
 	}
 
-	//PROPAGATE(init_interface());//TODO move
+	return NO_PROBLEM;
+}
+
+void uninit_curses(void) {
+	const int x = curs_set(1);
+	const int y = nocbreak();
+	const int z = echo();
+	const int c = um_endwin();
+	fprintfl(error_stream, "Exiting %d, %d, %d and %d.", x, y, z, c);
+}
+
+void partial_uninit(const problem_d problem) {
+	detach_shm();
+
+	//uninit_config();
+
+	exit(problem);
+}
+
+void uninit(const problem_d problem) {
+	detach_shm();
+	uninit_shm();
+
+	//uninit_config();
+
+	uninit_curses();
+	exit(problem);
+}
+
+problem_d copy_temporary(const int state, const bool save) {
+	for (unsigned int level = 0; level < exec_temporary_levels; level++) {
+		const unsigned int offset = level * exec_temporary_parts;
+		for (unsigned int part = 0; part < exec_temporary_parts; part++) {
+			const unsigned int path = offset + part;
+			const size_t size = strlen(exec_temporary_paths[path]) + 1
+					+ uintlen(state) + 1;
+			char * const state_path = malloc(size);
+			if (state_path == NULL) {
+				return error(MALLOC_PROBLEM);
+			}
+			else {
+				snprintf(state_path, size, "%s_%u",
+						exec_temporary_paths[path],
+						state);
+				if (save) {
+					copy(state_path, exec_temporary_paths[path]);
+				}
+				else {
+					copy(exec_temporary_paths[path], state_path);
+				}
+				free(state_path);
+			}
+		}
+	}
+
+	return NO_PROBLEM;
+}
+
+/**
+Initializes this module.
+**/
+problem_d init(void) {
+	/*
+	Initializes the configuration.
+	*/
+	PROPAGATE(init_internal_config());
+	record.timestamp = timestamp;
 
 	/*
-	Enables save-quit-load emulation.
+	Initializes the functions.
 	*/
-	if (sql_emulation) {
+	PROPAGATE(init_lib());
+
+	/*
+	Enables or disables the save-quit-load emulation.
+	*/
+	if (sql) {
 		inject_save(&save_quit_load);
 	}
 	else {
-		//inject_save(&nothing);
+		//inject_save(NULL);
 	}
 
 	/*
 	Initializes the shared memory segment.
 	*/
 	PROPAGATE(init_shm());
+	PROPAGATE(attach_shm());
 
-	record.timestamp = timestamp;
+	return NO_PROBLEM;
+}
 
-	const pid_t pid = 0;//fork();//disabled to make debugging easier
-	if (pid == -1) {
+problem_d init_fork(void) {
+	/*
+	Creates a process monitor to avoid accidental daemonization.
+	*/
+	const pid_t child_pid = fork();
+	if (child_pid == -1) {
 		return error(FORK_PROBLEM);
 	}
-	else if (pid == 0) {//child
-		PROPAGATE(attach_shm());
-		shm.ppid[0] = getppid();
-		shm.pids[0] = getpid();
+	else {
+		pid = getpid();
+		if (child_pid == 0) {//child
+			PROPAGATE(attach_shm());
+
+			/*
+			Synchronizes with the parent process.
+			*/
+			while (shm.pids[0] != pid);
+
+			return NO_PROBLEM;
+		}
+		else {//parent
+			*shm.ppid = pid;
+			shm.pids[0] = child_pid;
+
+			/*
+			Prevents defunct processes from appearing.
+			*/
+			signal(SIGCHLD, SIG_IGN);
+
+			while (*shm.mode != HAD_ENOUGH) {
+				napms(TIMER_RATE / frame_rate);
+			}
+			/*do {
+				bool done_quitting = TRUE;
+				for (int state = 0; state < states; state++) {
+					if (shm.pids[state] != 0) {
+						done_quitting = FALSE;
+					}
+				}
+				if (done_quitting) break;
+				napms(TIMER_RATE / frame_rate);
+			} while (TRUE);*/
+			uninit(NO_PROBLEM);
+		}
 	}
-	else {//parent
-		signal(SIGCHLD, SIG_IGN);
 
-		sigset_t mask;
-		sigfillset(&mask);
-		sigdelset(&mask, SIGINT);//temporary
-		sigdelset(&mask, SIGTERM);
-		sigsuspend(&mask);
+	return NO_PROBLEM;
+}
 
-		PROPAGATE(uninit_parent(NO_PROBLEM));
+/**
+Saves the game to memory.
+**/
+problem_d save(const int state) {
+	do {
+		const pid_t child_pid = fork();
+		if (child_pid == -1) {
+			return error(FORK_PROBLEM);
+		}
+		else {
+			pid = getpid();
+			if (child_pid == 0) {//child
+				PROPAGATE(attach_shm());
+
+				while (shm.pids[0] != pid);
+
+				return NO_PROBLEM;
+			}
+			else {//parent
+				shm.pids[0] = child_pid;
+				shm.pids[state] = pid;
+
+				signal(SIGCHLD, SIG_IGN);
+
+				/*
+				Saves the temporary files.
+				*/
+				PROPAGATE(copy_temporary(state, TRUE));
+
+				while (TRUE) {
+					if (shm.pids[0] == pid) break;//someone activated this slot
+					if (shm.pids[state] != pid) partial_uninit(NO_PROBLEM);//someone took this slot
+					if (*shm.mode == HAD_ENOUGH) partial_uninit(NO_PROBLEM);//everyone is shutting down
+					napms(1000 / frame_rate);
+				}
+
+				/*
+				Stores the position of the cursor.
+				*/
+				short int y, x;
+				getyx(stdscr, y, x);
+
+				/*
+				Saves the screen.
+				*/
+				for (int row = 0; row < rows; row++) {
+					for (int col = 0; col < cols; col++) {
+						shm.chs[state][row][col] = mvwinch(stdscr, row, col);
+					}
+				}
+
+				/*
+				Restores the position of the cursor.
+				*/
+				wmove(stdscr, y, x);
+
+				/*
+				Redraws the window.
+				*/
+				redrawwin(stdscr);
+				wrefresh(stdscr);
+			}
+		}
+	} while (preserve);
+
+	return NO_PROBLEM;
+}
+
+/**
+Loads the game from memory.
+**/
+problem_d load(const int state) {
+	if (shm.pids[state] != 0) {
+		/*
+		Loads the temporary files.
+		*/
+		PROPAGATE(copy_temporary(state, FALSE));
+
+		const pid_t parent_pid = shm.pids[state];
+		shm.pids[state] = (pid_t )0;
+		shm.pids[0] = parent_pid;
+
+		//TODO empty screen
+
+		partial_uninit(NO_PROBLEM);
 	}
 
 	return NO_PROBLEM;
@@ -305,12 +467,14 @@ Intercepts printing anything and initializes this process.
 @return The amount of characters printed.
 **/
 int printf(const char * const format, ...) {
-	if (fcn_state == NOT_INITIALIZED) {
-		fcn_state = SOMEWHAT_INITIALIZED;
-		PROPAGATEF(init_parent(), uninit_parent);
+	if (!initializing && !initialized) {
+		initializing = TRUE;
+		initialized = FALSE;
+		PROPAGATEC(init(), uninit);
 	}
 
 	call("printf(...).");
+
 	return (int )strlen(format);//approximate
 }
 
@@ -324,6 +488,7 @@ Intercepts removing the debug file if it exists.
 **/
 int unlink(const char * const path) {
 	call("unlink(\"%s\").", path);
+
 	if (strcmp(path, "ADOM.DBG") == 0) {
 		struct stat buf;
 		if (stat(path, &buf) == 0) {
@@ -349,7 +514,9 @@ int ioctl(const int d, const unsigned long request, ...) {
 	va_list	argp;
 	va_start(argp, request);
 	void * arg = va_arg(argp, void *);
+
 	call("ioctl(0x%08x, 0x%08x, 0x%08x).", (unsigned int )d, (unsigned int )request, (unsigned int )arg);
+
 	const int result = um_ioctl(d, request, arg);
 	if (request == TIOCGWINSZ) {
 		struct winsize * size = (struct winsize * )arg;
@@ -370,6 +537,7 @@ Replaces the system time with a fixed time.
 **/
 time_t time(time_t * const t) {
 	call("time(0x%08x).", (unsigned int )t);
+
 	if (t != NULL) *t = timestamp;
 	return timestamp;//reduces entropy
 }
@@ -384,6 +552,7 @@ Replaces <code>localtime</code> with <code>gmtime</code> to disregard timezones.
 **/
 struct tm * localtime(const time_t * const timep) {
 	call("localtime(0x%08x).", (unsigned int )timep);
+
 	return gmtime(timep);//reduces entropy
 }
 
@@ -394,6 +563,7 @@ Seeds the pseudorandom number generator.
 **/
 void srandom(const unsigned int seed) {
 	call("srandom(%u).", seed);
+
 	um_srandom(seed);
 }
 
@@ -404,6 +574,7 @@ Generates the next pseudorandom number.
 **/
 long int random(void) {
 	call("random().");
+
 	return um_random();
 }
 
@@ -432,13 +603,13 @@ int wrefresh(WINDOW * const win) {
 	</pre>
 	*/
 	int y, x;
-	attr_t attrs; attr_t * _attrs = &attrs;
-	short int pair; short int * _pair = &pair;
-	wattr_get(win, _attrs, _pair, NULL);
+	attr_t attrs; attr_t * const attrs_ptr = &attrs;
+	short int pair; short int * const pair_ptr = &pair;
+	wattr_get(win, attrs_ptr, pair_ptr, NULL);
 	getyx(win, y, x);
 	wattrset(win, A_NORMAL);
 	const int result = um_wrefresh(win);
-	draw_interface();
+	draw_gui(win);
 	wmove(win, y, x);
 	wattr_set(win, attrs, pair, NULL);
 
@@ -455,6 +626,7 @@ Initializes a new color pair.
 **/
 int init_pair(const short int pair, const short int f, const short int b) {
 	call("init_pair(%d, %d, %d).", pair, f, b);
+
 	pairs++;
 	return um_init_pair(pair, f, b);
 }
@@ -468,15 +640,17 @@ Draws the custom interface.
 @return 0 if no errors occurred and -1 otherwise.
 **/
 int waddnstr(WINDOW * const win, const char * const str, const int n) {
-	if (fcn_state == SOMEWHAT_INITIALIZED) {
-		fcn_state = FULLY_INITIALIZED;
-		PROPAGATEF(init_interface(), uninit_parent);
+	call("waddnstr(0x%08x, %s, %d).", (unsigned int )win, str, n);
+
+	if (initializing && !initialized) {
+		initializing = FALSE;
+		initialized = TRUE;
+		PROPAGATEC(init_fork(), uninit);
+		PROPAGATEC(init_gui(), uninit);
 	}
 
 	return um_waddnstr(win, str, n);
 }
-
-int previous_key = 0;
 
 /**
 Reads a key code from a window.
@@ -484,159 +658,130 @@ Reads a key code from a window.
 @param win The window to read from.
 @return The key code.
 **/
-int wgetch(WINDOW * const win) {//TODO remove bloat and refactor with extreme force
+int wgetch(WINDOW * const win) {
 	call("wgetch(0x%08x).", (unsigned int )win);
 
+	if (playing) {
+		playing = next_key(win) != KEY_EOF;
+	}
 	if (rolling) {
+		//roll
 	}
 
-	if (playbacking) {
+	/**
+	Keeps track of the actual turn count.
+	**/
+	if (*exec_turns < previous_turns) {
+		negative_turns++;
 	}
-
-	if (*exec_turns < previous_turns) surplus_turns++;
+	else if (*exec_turns > previous_turns) {
+		in_game = TRUE;
+	}
+	else {
+		in_game = FALSE;
+	}
 	previous_turns = *exec_turns;
-	int key = um_wgetch(win);
+	turns = *exec_turns + negative_turns;
+
+	const int key = um_wgetch(win);
 	if (key == play_key) {
-		if (record.count == 1) {//move to roll
-			rolling = TRUE;
-			timestamp--;
-			goto front;
-			back: timestamp++;
-			struct tm * tm;
-			tm = gmtime(&timestamp);
-			if (!(tm->tm_mon == 11 && tm->tm_mday == 31)) {
-				tm->tm_sec = 0;
-				tm->tm_min = 0;
-				tm->tm_hour = 0;
-				tm->tm_mday = 31;
-				tm->tm_mon = 11;
-				tm->tm_isdst = 0;
-				timestamp = mktime(tm) - timezone;
-			}
-			front: iarc4((unsigned int )timestamp, 0);
-			for (size_t question = 0; question < 51; question++) {
-				rollasked[question] = FALSE;
-			}
-			if (fork() > 0) {
-				int s;
-				wait(&s);
-				if (s == 0) goto back;
-			}
-			else skipwr = TRUE;
-			return 0;
-		}
-		if (record.count == 0) {//move to playback
+		if (record.count == 0) {
+			playing = TRUE;
 			freadp(input_path);
-			playbacking = TRUE;
-			current_frame = record.first;
+			record.current = record.first;
 		}
 
 		else condensed = !condensed;
-		wrefresh(win);
-		return 0;
 	}
 	else if (key == save_key) {
 		fwritep(output_paths[current_state]);
 		save(current_state);
-		wrefresh(win);
-		return 0;
 	}
 	else if (key == load_key) {
-		load(current_state);
-		wrefresh(win);
-		return 0;//redundant
+		load(current_state);//redundant
 	}
 	else if (key == state_key) {
-		iarc4((unsigned int )timestamp, 0);//TODO remove
-		for (size_t question = 0; question < 51; question++) {
-			answers[question] = '?';
-		}
-		const int attreqs[9] = {1, 7, 2, 4, 3, 0, 8, 5, 6};//Le > Ma > Wi > To > Dx > St > Pe > Ch > Ap
-		for (int q = 0; q < 51; q++) {
-			char result = qathing(q, attreqs);
-			fprintfl(error_stream, "%d -> %c", q, result == 0 ? '!' : result);
-		}
-
 		INC(current_state, 1, states);
-		wrefresh(win);
-		return 0;
 	}
 	else if (key == unstate_key) {
 		DEC(current_state, 1, states);
-		wrefresh(win);
-		return 0;
 	}
-	else if (key == menu_key) {
-		/*if (inactive) {
-			redrawwin(win);
-			wrefresh(win);
-		}*/
-		inactive = !inactive;
-		return 0;
+	else if (key == duration_key) {
+		if (current_duration < UCHAR_MAX) {
+			current_duration = (unsigned char )((current_duration + 1) * 2 - 1);
+		}
+	}
+	else if (key == unduration_key) {
+		if (current_duration > 0) {
+			current_duration = (unsigned char )((current_duration + 1) / 2 - 1);
+		}
 	}
 	else if (key == time_key) {
-		timestamp++;
-		wrefresh(win);
-		return 0;
+		if (timestamp - record.timestamp < INT_MAX) {//prevents rewinding time
+			timestamp++;
+		}
 	}
 	else if (key == untime_key) {
 		if (timestamp - record.timestamp > 0) {//prevents rewinding time
 			timestamp--;
 		}
-		wrefresh(win);
-		return 0;
 	}
-	else if (key == duration_key) {
-		//save_quit_load();//TODO remove
-		if (current_duration < 255) current_duration = (unsigned char )((current_duration + 1) * 2 - 1);
-		wrefresh(win);
-		return 0;
+	else if (key == menu_key) {
+		inactive = !inactive;
 	}
-	else if (key == unduration_key) {
-		if (current_duration > 0) current_duration = (unsigned char )((current_duration + 1) / 2 - 1);
-		wrefresh(win);
-		return 0;
+	else if (key == condense_key) {
+		condensed = !condensed;
 	}
-	else if (key == quit_key) {//quits everything (stupid implementation)
-		running = FALSE;
-		um_endwin();
-		//uninit_parent(NO_PROBLEM);
-		fprintf(stdout, "Ctrl C will get you back to your beloved terminal if nothing else works.\n"); fflush(stdout);
-		for (int state = 1; state < states; state++) {
-			if (shm.pids[state] != 0) {
-				kill(shm.pids[state], SIGKILL);
-				shm.pids[state] = 0;
+	else if (key == hide_key) {
+		hidden = !hidden;
+	}
+	else if (key == play_key) {
+		paused = !paused;
+	}
+	else if (key == stop_key) {
+		playing = FALSE;
+		record.current = NULL;
+	}
+	else if (key == quit_key) {
+		quitting = TRUE;
+		*shm.mode = HAD_ENOUGH;
+		shm.pids[current_state] = 0;
+		partial_uninit(NO_PROBLEM);
+	}
+	else if (!inactive) {
+		if (record.count > 0 || key == ' ') {
+			const size_t inputs = sizeof previous_inputs / sizeof *previous_inputs - 1;
+			for (size_t input = 0; input < inputs; input++) {//shifts the array left
+				previous_inputs[input] = previous_inputs[input + 1];
 			}
+			previous_inputs[inputs] = key;
+
+			add_key_frame(current_duration, key);
 		}
-		kill(shm.ppid[0], SIGKILL);
-		kill(shm.pids[0], SIGKILL);
-		return 0;//nice and elegant
+
+		return key;
 	}
-	const char * code = key_code(key);
-	strcpy(previous_inputs, "");
-	strcat(previous_inputs, code);
-	add_key_frame(current_duration, key);
 	wrefresh(win);
-	previous_key = key;
-	return key;
+	return 0;
 }
 
 /**
 Ends drawing to the screen.
 
 Intercepts exiting prematurely.
-Currently the process jams.
 
 @return <code>OK</code> if successful and <code>ERR</code> otherwise.
 **/
-int _endwin(void) {
+int endwin(void) {
 	call("endwin().");
-	while (running) {
+
+	noecho();
+	wclear(stdscr);
+	while (!quitting) {
 		wgetch(stdscr);
 	}
-	uninit_gui();//TODO exit
-	curs_set(1);
-	return um_endwin();
+	partial_uninit(NO_PROBLEM);
+	return OK;
 }
 
 #endif

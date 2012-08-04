@@ -42,7 +42,7 @@ extern endwin_f um_endwin;
 extern int current_state;
 extern unsigned char current_duration;
 extern char previous_inputs[77];
-extern int surplus_turns;
+extern int negative_turns;
 extern int previous_turns;
 
 problem_d init_fcn(void);

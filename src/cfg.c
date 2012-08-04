@@ -5,6 +5,9 @@ Some redundant conditions are used to
 	enforce predictable behavior and
 	make maintenance (return point changes) easier.
 
+TODO add enforce
+TODO check output_paths management
+
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef CFG_C
@@ -29,36 +32,38 @@ Some redundant conditions are used to
 /*
 Undocumented.
 */
-intern char * home_path;
-intern char * exec_path;
-intern char * exec_data_path;
-intern char * exec_temporary_path;
-intern char ** exec_temporary_paths;
-intern char * exec_config_path;
-intern char * exec_process_path;
-intern char * exec_keybind_path;
-intern char * exec_version_path;
-intern char * exec_error_path;
-intern char * exec_count_path;
-intern char * loader_path;
-intern char * libc_path;
-intern char * libncurses_path;
+intern char * home_path = NULL;
+intern char * exec_path = NULL;
+intern char * exec_data_path = NULL;
+intern char * exec_temporary_path = NULL;
+intern char ** exec_temporary_paths = NULL;
+intern char * exec_config_path = NULL;
+intern char * exec_process_path = NULL;
+intern char * exec_keybind_path = NULL;
+intern char * exec_version_path = NULL;
+intern char * exec_error_path = NULL;
+intern char * exec_count_path = NULL;
+intern char * loader_path = NULL;
+intern char * libc_path = NULL;
+intern char * libncurses_path = NULL;
+intern bool enforce;
 intern int states;
 intern int rows;
 intern int cols;
-intern char * shm_path;
+intern char * shm_path = NULL;
 intern time_t timestamp;
 intern unsigned int generations;
-intern bool sql_emulation;
-intern bool automatic_playback;
-intern bool colorful_interface;
-intern char * iterator;
-intern char * input_path;
-intern char ** output_paths;
-intern FILE * error_stream;
-intern FILE * warning_stream;
-intern FILE * note_stream;
-intern FILE * call_stream;
+intern bool sql;
+intern bool preserve;
+intern bool autoplay;
+intern bool monochrome;
+intern char * iterator = NULL;
+intern char * input_path = NULL;
+intern char ** output_paths = NULL;
+intern FILE * error_stream = NULL;
+intern FILE * warning_stream = NULL;
+intern FILE * note_stream = NULL;
+intern FILE * call_stream = NULL;
 intern int save_key;
 intern int load_key;
 intern int state_key;
@@ -92,14 +97,16 @@ problem_d uninit_config(void) {
 	free(exec_path);
 	free(exec_data_path);
 	free(exec_temporary_path);
-	for (unsigned int level = 0; level < exec_temporary_levels; level++) {
-		const unsigned int offset = level * exec_temporary_parts;
-		for (unsigned int part = 0; part < exec_temporary_parts; part++) {
-			const unsigned int path = offset + part;
-			free(exec_temporary_paths[path]);
+	if (exec_temporary_paths != NULL) {
+		for (unsigned int level = 0; level < exec_temporary_levels; level++) {
+			const unsigned int offset = level * exec_temporary_parts;
+			for (unsigned int part = 0; part < exec_temporary_parts; part++) {
+				const unsigned int path = offset + part;
+				free(exec_temporary_paths[path]);
+			}
 		}
+		free(exec_temporary_paths);
 	}
-	free(exec_temporary_paths);
 	free(exec_config_path);
 	free(exec_process_path);
 	free(exec_keybind_path);
@@ -112,23 +119,49 @@ problem_d uninit_config(void) {
 	free(shm_path);
 	free(iterator);
 	free(input_path);
-	for (int state = 0; state < states; state++) {
-		free(output_paths[state]);
+	if (output_paths != NULL) {
+		for (int state = 0; state < states; state++) {
+			free(output_paths[state]);
+		}
+		free(output_paths);
 	}
-	free(output_paths);
 	if (error_stream != NULL) {
 		if (fclose(error_stream) == EOF) {
 			error(ERROR_CLOSE_PROBLEM);
+		}
+		else {
+			if (warning_stream == error_stream) {
+				warning_stream = NULL;
+			}
+			if (note_stream == error_stream) {
+				note_stream = NULL;
+			}
+			if (call_stream == error_stream) {
+				call_stream = NULL;
+			}
 		}
 	}
 	if (warning_stream != NULL) {
 		if (fclose(warning_stream) == EOF) {
 			error(WARNING_CLOSE_PROBLEM);
 		}
+		else {
+			if (note_stream == warning_stream) {
+				note_stream = NULL;
+			}
+			if (call_stream == warning_stream) {
+				call_stream = NULL;
+			}
+		}
 	}
 	if (note_stream != NULL) {
 		if (fclose(note_stream) == EOF) {
 			error(NOTE_CLOSE_PROBLEM);
+		}
+		else {
+			if (call_stream == note_stream) {
+				call_stream = NULL;
+			}
 		}
 	}
 	if (call_stream != NULL) {
@@ -136,7 +169,6 @@ problem_d uninit_config(void) {
 			error(CALL_CLOSE_PROBLEM);
 		}
 	}
-
 	return NO_PROBLEM;
 }
 
@@ -216,7 +248,7 @@ problem_d init_config(void) {
 	else {
 		home_path = malloc(strlen(new_home_path) + 1);
 		if (home_path == NULL) {
-			error(MALLOC_PROBLEM);
+			return error(MALLOC_PROBLEM);
 		}
 		else {
 			strcpy(home_path, new_home_path);
@@ -248,7 +280,7 @@ problem_d init_config(void) {
 					+ strlen(exec_data_directory) + 1;
 			exec_data_path = malloc(size);
 			if (exec_data_path == NULL) {
-				error(MALLOC_PROBLEM);
+				return error(MALLOC_PROBLEM);
 			}
 			else {
 				snprintf(exec_data_path, size, "%s/%s",
@@ -284,7 +316,7 @@ problem_d init_config(void) {
 				+ strlen(exec_temporary_directory) + 1;
 		exec_temporary_path = malloc(size);
 		if (exec_temporary_path == NULL) {
-			error(MALLOC_PROBLEM);
+			return error(MALLOC_PROBLEM);
 		}
 		else {
 			snprintf(exec_temporary_path, size, "%s/%s",
@@ -312,9 +344,11 @@ problem_d init_config(void) {
 	else {
 		exec_temporary_paths = malloc(exec_temporary_levels * exec_temporary_parts * sizeof *exec_temporary_paths);
 		if (exec_temporary_paths == NULL) {
-			error(MALLOC_PROBLEM);
+			return error(MALLOC_PROBLEM);
 		}
 		else {
+			const int level_width = uintlen(exec_temporary_levels);
+			const int part_width = uintlen(exec_temporary_parts);
 			for (unsigned int level = 0; level < exec_temporary_levels; level++) {
 				const unsigned int offset = level * exec_temporary_parts;
 				for (unsigned int part = 0; part < exec_temporary_parts; part++) {
@@ -324,14 +358,12 @@ problem_d init_config(void) {
 							+ 4 + 1;
 					exec_temporary_paths[path] = malloc(size);
 					if (exec_temporary_paths[path] == NULL) {
-						error(MALLOC_PROBLEM);
+						return error(MALLOC_PROBLEM);
 					}
 					else {
-						snprintf(exec_temporary_paths[path], size, "%s/%s%02u_%01u",
+						snprintf(exec_temporary_paths[path], size, "%s/%s%0*u_%0*u",
 								exec_temporary_path,
-								exec_temporary_file,
-								level,
-								part);
+								exec_temporary_file, level_width, level, part_width, part);
 					}
 				}
 			}
@@ -439,7 +471,7 @@ problem_d init_external_config(void) {
 				else {
 					unsigned char * ptr = malloc(size);
 					if (ptr == NULL) {
-						error(MALLOC_PROBLEM);
+						return error(MALLOC_PROBLEM);
 					}
 					else {
 						if (fread(ptr, 1, size, stream) != exec_size) {
@@ -472,7 +504,7 @@ problem_d init_external_config(void) {
 				+ strlen(exec_config_file) + 1;
 		exec_config_path = malloc(size);
 		if (exec_config_path == NULL) {
-			error(MALLOC_PROBLEM);
+			return error(MALLOC_PROBLEM);
 		}
 		else {
 			snprintf(exec_config_path, size, "%s/%s",
@@ -499,7 +531,7 @@ problem_d init_external_config(void) {
 				+ strlen(exec_process_file) + 1;
 		exec_process_path = malloc(size);
 		if (exec_process_path == NULL) {
-			error(MALLOC_PROBLEM);
+			return error(MALLOC_PROBLEM);
 		}
 		else {
 			snprintf(exec_process_path, size, "%s/%s",
@@ -526,7 +558,7 @@ problem_d init_external_config(void) {
 				+ strlen(exec_keybind_file) + 1;
 		exec_keybind_path = malloc(size);
 		if (exec_keybind_path == NULL) {
-			error(MALLOC_PROBLEM);
+			return error(MALLOC_PROBLEM);
 		}
 		else {
 			snprintf(exec_keybind_path, size, "%s/%s",
@@ -553,7 +585,7 @@ problem_d init_external_config(void) {
 				+ strlen(exec_version_file) + 1;
 		exec_version_path = malloc(size);
 		if (exec_version_path == NULL) {
-			error(MALLOC_PROBLEM);
+			return error(MALLOC_PROBLEM);
 		}
 		else {
 			snprintf(exec_version_path, size, "%s/%s",
@@ -580,7 +612,7 @@ problem_d init_external_config(void) {
 				+ strlen(exec_error_file) + 1;
 		exec_error_path = malloc(size);
 		if (exec_error_path == NULL) {
-			error(MALLOC_PROBLEM);
+			return error(MALLOC_PROBLEM);
 		}
 		else {
 			snprintf(exec_error_path, size, "%s/%s",
@@ -607,7 +639,7 @@ problem_d init_external_config(void) {
 				+ strlen(exec_count_file) + 1;
 		exec_count_path = malloc(size);
 		if (exec_count_path == NULL) {
-			error(MALLOC_PROBLEM);
+			return error(MALLOC_PROBLEM);
 		}
 		else {
 			snprintf(exec_count_path, size, "%s/%s",
@@ -660,6 +692,16 @@ problem_d init_internal_config(void) {
 		libncurses_path = NULL;
 		return error(LIBNCURSES_STAT_PROBLEM);
 	}
+
+	/**
+	Sets the save state perseverance.
+	**/
+	int new_enforce;
+	if (config_lookup_bool(&config, "enforce", &new_enforce) == CONFIG_FALSE) {
+		new_enforce = default_enforce;
+		//warning(PRESERVE_CONFIG_PROBLEM);
+	}
+	enforce = new_enforce == CONFIG_TRUE;
 
 	/*
 	Finds the amount of save states.
@@ -755,14 +797,24 @@ problem_d init_internal_config(void) {
 	generations = (unsigned int )new_generations;
 
 	/**
-	Toggles the save-quit-load emulation.
+	Sets the save-quit-load emulation.
 	**/
 	int new_sql;
 	if (config_lookup_bool(&config, "sql", &new_sql) == CONFIG_FALSE) {
 		new_sql = default_sql;
 		//warning(SQL_CONFIG_PROBLEM);
 	}
-	sql_emulation = new_sql == CONFIG_TRUE;
+	sql = new_sql == CONFIG_TRUE;
+
+	/**
+	Sets the save state perseverance.
+	**/
+	int new_preserve_states;
+	if (config_lookup_bool(&config, "preserve", &new_preserve_states) == CONFIG_FALSE) {
+		new_preserve_states = default_preserve;
+		//warning(PRESERVE_CONFIG_PROBLEM);
+	}
+	preserve = new_preserve_states == CONFIG_TRUE;
 
 	/**
 	Sets the playback mode.
@@ -772,17 +824,17 @@ problem_d init_internal_config(void) {
 		new_autoplay = default_autoplay;
 		//warning(AUTOPLAY_CONFIG_PROBLEM);
 	}
-	automatic_playback = new_autoplay == CONFIG_TRUE;
+	autoplay = new_autoplay == CONFIG_TRUE;
 
 	/**
 	Sets the color mode.
 	**/
-	int new_color;
-	if (config_lookup_bool(&config, "color", &new_color) == CONFIG_FALSE) {
-		new_color = default_color;
-		//warning(COLOR_CONFIG_PROBLEM);
+	int new_monochrome;
+	if (config_lookup_bool(&config, "monochrome", &new_monochrome) == CONFIG_FALSE) {
+		new_monochrome = default_monochrome;
+		//warning(MONOCHROME_CONFIG_PROBLEM);
 	}
-	colorful_interface = new_color == CONFIG_TRUE;
+	monochrome = new_monochrome == CONFIG_TRUE;
 
 	/*
 	Finds the iterator string.
@@ -837,7 +889,7 @@ problem_d init_internal_config(void) {
 	char * const output_path = astrrep(new_output_path, "~", home_path);
 	output_paths = malloc((size_t )states * sizeof *output_paths);
 	if (output_paths == NULL) {
-		error(MALLOC_PROBLEM);
+		return error(MALLOC_PROBLEM);
 	}
 	else {
 		bool exists = FALSE;
@@ -845,10 +897,11 @@ problem_d init_internal_config(void) {
 			const size_t size = intlen(state) + 1;
 			char * const iterand = malloc(size);
 			if (iterand == NULL) {
-				error(MALLOC_PROBLEM);
+				output_paths = NULL;
+				return error(MALLOC_PROBLEM);
 			}
 			else {
-				snprintf(iterand, size, "%u", state);
+				snprintf(iterand, size, "%d", state);
 				output_paths[state] = astrrep(output_path, iterator, iterand);
 				free(iterand);
 				struct stat output_stat;
@@ -871,7 +924,7 @@ problem_d init_internal_config(void) {
 	the log stream is finally opened.
 	*/
 	const char * new_error_path;
-	if (config_lookup_string(&config, "errors", &new_error_path) == CONFIG_FALSE) {
+	if (config_lookup_string(&config, "error_log", &new_error_path) == CONFIG_FALSE) {
 		new_error_path = default_error_stream;
 		warning(ERROR_CONFIG_PROBLEM);
 	}
@@ -891,7 +944,7 @@ problem_d init_internal_config(void) {
 	free(error_path);
 
 	const char * new_warning_path;
-	if (config_lookup_string(&config, "warnings", &new_warning_path) == CONFIG_FALSE) {
+	if (config_lookup_string(&config, "warning_log", &new_warning_path) == CONFIG_FALSE) {
 		new_warning_path = default_warning_stream;
 		warning(ERROR_CONFIG_PROBLEM);
 	}
@@ -917,7 +970,7 @@ problem_d init_internal_config(void) {
 	free(warning_path);
 
 	const char * new_note_path;
-	if (config_lookup_string(&config, "notes", &new_note_path) == CONFIG_FALSE) {
+	if (config_lookup_string(&config, "note_log", &new_note_path) == CONFIG_FALSE) {
 		new_note_path = default_note_stream;
 		warning(ERROR_CONFIG_PROBLEM);
 	}
@@ -947,7 +1000,7 @@ problem_d init_internal_config(void) {
 	free(note_path);
 
 	const char * new_call_path;
-	if (config_lookup_string(&config, "calls", &new_call_path) == CONFIG_FALSE) {
+	if (config_lookup_string(&config, "call_log", &new_call_path) == CONFIG_FALSE) {
 		new_call_path = default_call_stream;
 		warning(ERROR_CONFIG_PROBLEM);
 	}

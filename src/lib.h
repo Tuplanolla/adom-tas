@@ -40,6 +40,7 @@ extern waddnstr_f um_waddnstr;
 extern wgetch_f um_wgetch;
 extern endwin_f um_endwin;
 
+extern bool in_game;
 extern bool inactive;
 extern bool condensed;
 extern bool hidden;
@@ -47,6 +48,11 @@ extern bool playing;
 extern bool paused;
 extern bool quitting;
 extern bool rolling;
+
+extern unsigned int previous_count;
+extern int current_state;
+extern unsigned char current_duration;
+extern int previous_inputs[4];
 
 /**
 Ensures overloaded functions aren't used outside this module.

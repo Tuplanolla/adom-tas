@@ -21,7 +21,7 @@ NAME = adom-tas
 MAIN = $(BIN)/$(NAME)
 LIB = $(BIN)/$(NAME).so
 MAIN_DEP = $(OBJ)/main.o $(OBJ)/cfg.o $(OBJ)/def.o $(OBJ)/exec.o $(OBJ)/log.o $(OBJ)/prob.o $(OBJ)/util.o
-LIB_DEP = $(OBJ)/asm.o $(OBJ)/exec.o $(OBJ)/gui.o $(OBJ)/put.o $(OBJ)/shm.o $(OBJ)/cfg.o $(OBJ)/lib.o $(OBJ)/meta.o $(OBJ)/rec.o $(OBJ)/def.o $(OBJ)/fork.o $(OBJ)/log.o $(OBJ)/prob.o $(OBJ)/roll.o $(OBJ)/util.o
+LIB_DEP = $(OBJ)/asm.o $(OBJ)/exec.o $(OBJ)/gui.o $(OBJ)/put.o $(OBJ)/shm.o $(OBJ)/cfg.o $(OBJ)/lib.o $(OBJ)/meta.o $(OBJ)/rec.o $(OBJ)/def.o $(OBJ)/log.o $(OBJ)/prob.o $(OBJ)/util.o# $(OBJ)/play.o# $(OBJ)/roll.o
 
 all: $(LIB) $(MAIN) sh
 

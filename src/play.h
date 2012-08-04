@@ -5,8 +5,8 @@
 #ifndef PLAY_H
 #define PLAY_H
 
-extern void * nowhere;
+#include <curses.h>//WINDOW
 
-void nothing(void);
+int next_key(WINDOW * win);
 
 #endif

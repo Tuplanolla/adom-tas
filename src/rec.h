@@ -31,7 +31,7 @@ struct frame_s {
 	input_d input;
 	int key;
 	time_t timestamp;
-	unsigned char duration;
+	unsigned short int duration;
 	struct frame_s * next;
 };
 typedef struct frame_s frame_d;
@@ -42,13 +42,13 @@ only <code>KEY_INPUT</code> inputs are visible and
 the struct can be condensed:
 <pre>
 struct frame_s {
-	unsigned char duration;//duration == 0 ? input = KEY_INPUT : input = SEED_INPUT
+	unsigned short int duration;//duration == 0 ? input = KEY_INPUT : input = SEED_INPUT
 	int value;//duration != 0 ? key = value : timestamp += value
 	struct frame_s * next;
 };
 typedef struct frame_s frame_d;
 </pre>
-Thus only five bytes are needed.
+Thus only six bytes are needed.
 
 The order is reversed to improve access times.
 
@@ -58,8 +58,8 @@ The order is reversed to improve access times.
 **/
 struct frame_s {
 	struct frame_s * next;
-	int value;
-	unsigned char duration;
+	long int value;
+	unsigned short int duration;
 };
 typedef struct frame_s frame_d;
 
@@ -67,25 +67,27 @@ typedef struct frame_s frame_d;
 Represents a collection of recorded frames.
 
 @var first The first frame.
+@var current The currently active frame.
 @var last The last frame.
 @var count The amount of frames.
 @var timestamp The system time of the previous <code>SEED_INPUT</code> frame.
 **/
 struct record_s {
 	frame_d * first;
+	frame_d * current;
 	frame_d * last;
-	unsigned int count;
+	unsigned long int count;
 	time_t timestamp;
 };
 typedef struct record_s record_d;
 
 extern record_d record;
 
-extern unsigned char frame_rate;
+extern unsigned short int frame_rate;
 
 void clear_record(void);
-frame_d * add_frame(unsigned char duration, int value) __attribute__ ((malloc));
-frame_d * add_key_frame(unsigned char duration, int key);
+frame_d * add_frame(unsigned short int duration, long int value) __attribute__ ((malloc));
+frame_d * add_key_frame(unsigned short int duration, int key);
 frame_d * add_seed_frame(time_t timestamp);
 
 #endif

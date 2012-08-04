@@ -1,10 +1,10 @@
 /**
 Creates,
-initializes,
-attaches,
-detaches and
-removes
-	the shared memory segment.
+	initializes,
+	attaches,
+	detaches and
+	removes
+		the shared memory segment.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
@@ -22,7 +22,7 @@ removes
 #include "util.h"//hash, intern, SUBNULL
 #include "prob.h"//problem_d, PROPAGATE*, *_PROBLEM
 #include "log.h"//error, warning, note
-#include "def.h"//project_name
+#include "def.h"//mode_d, project_name
 #include "cfg.h"//*
 
 #include "shm.h"
@@ -31,6 +31,7 @@ removes
 Pointers to the shared memory segment.
 **/
 intern shm_d shm = {
+	.mode = NULL,
 	.ppid = NULL,
 	.pids = NULL,
 	.chs = NULL
@@ -60,7 +61,8 @@ problem_d get_shm(const int shmflg) {
 	/*
 	Finds the shared memory segment.
 	*/
-	const size_t size = sizeof *shm.ppid
+	const size_t size = sizeof *shm.mode
+			+ sizeof *shm.ppid
 			+ (size_t )states * sizeof *shm.pids
 			+ (size_t )(states * rows * cols) * sizeof ***shm.chs;
 	shmid = shmget(key, size, shmflg);
@@ -78,6 +80,8 @@ problem_d get_shm(const int shmflg) {
 	The segment's location varies between processes.
 	*/
 	unsigned char * position = (unsigned char * )shmaddr;
+	shm.mode = (mode_d * )position;
+	position += (ptrdiff_t )sizeof *shm.mode;
 	shm.ppid = (pid_t * )position;
 	position += (ptrdiff_t )sizeof *shm.ppid;
 	shm.pids = (pid_t * )position;
@@ -101,7 +105,26 @@ problem_d get_shm(const int shmflg) {
 }
 
 /**
+Removes the shared memory segment.
+
+The segment needs to be detached before removal.
+
+@return The error code.
+**/
+problem_d uninit_shm(void) {
+	if (shmctl(shmid, IPC_RMID, NULL) == -1) {
+		return error(SHM_REMOVE_PROBLEM);
+	}
+	key = 0;
+	shmid = -1;
+
+	return NO_PROBLEM;
+}
+
+/**
 Initializes the shared memory segment.
+
+The segment needs to be attached before use.
 
 @return The error code.
 **/
@@ -123,7 +146,8 @@ problem_d init_shm(void) {
 	/*
 	Sets the default values of the objects in the shared memory segment.
 	*/
-	shm.ppid[0] = (pid_t )0;
+	*shm.mode = (mode_d )0;
+	*shm.ppid = (pid_t )0;
 	for (int state = 0; state < states; state++) {
 		shm.pids[state] = (pid_t )0;
 	}
@@ -139,34 +163,21 @@ problem_d init_shm(void) {
 }
 
 /**
-Attaches the shared memory segment.
-
-@return The error code.
-**/
-problem_d attach_shm(void) {
-	/*
-	Accesses the shared memory segment.
-	*/
-	PROPAGATE(get_shm(SHM_R | SHM_W));
-
-	return NO_PROBLEM;
-}
-
-/**
 Detaches the shared memory segment.
 
 @return The error code.
 **/
 problem_d detach_shm(void) {
+	shm.mode = NULL;
 	shm.ppid = NULL;
 	shm.pids = NULL;
-	for (int state = 0; state < states; state++) {
-		if (shm.chs[state] != NULL) {
-			free(shm.chs[state]);
-			shm.chs[state] = NULL;
-		}
-	}
 	if (shm.chs != NULL) {
+		for (int state = 0; state < states; state++) {
+			if (shm.chs[state] != NULL) {
+				free(shm.chs[state]);
+				shm.chs[state] = NULL;
+			}
+		}
 		free(shm.chs);
 		shm.chs = NULL;
 	}
@@ -180,16 +191,15 @@ problem_d detach_shm(void) {
 }
 
 /**
-Removes the shared memory segment.
+Attaches the shared memory segment.
 
 @return The error code.
 **/
-problem_d uninit_shm(void) {
-	if (shmctl(shmid, IPC_RMID, NULL) == -1) {
-		return error(SHM_REMOVE_PROBLEM);
-	}
-	key = 0;
-	shmid = -1;
+problem_d attach_shm(void) {
+	/*
+	Accesses the shared memory segment.
+	*/
+	PROPAGATE(get_shm(SHM_R | SHM_W));
 
 	return NO_PROBLEM;
 }

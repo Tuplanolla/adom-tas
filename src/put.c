@@ -1,5 +1,5 @@
 /**
-Manages inputs and outputs.
+Manages saving and loading records.
 **/
 #ifndef PUT_C
 #define PUT_C
@@ -10,7 +10,7 @@ Manages inputs and outputs.
 #include "util.h"//FALSE, TRUE
 #include "prob.h"//*_PROBLEM
 #include "log.h"//error, warning, note
-#include "rec.h"//record*
+#include "rec.h"//record*, *_frame
 
 #include "put.h"
 

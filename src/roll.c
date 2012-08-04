@@ -8,6 +8,8 @@ Rolls characters.
 
 #include <stddef.h>//NULL
 
+#include "util.h"
+
 int rollstage = 0;
 bool rollasked[51];
 char answers[51];
@@ -103,5 +105,36 @@ int rollthing(void) {
 	}
 	return 0;
 }
+
+/*
+	if (record.count == 0) {//move to roll
+		rolling = TRUE;
+		timestamp--;
+		goto front;
+		back: timestamp++;
+		struct tm * tm;
+		tm = gmtime(&timestamp);
+		if (!(tm->tm_mon == 11 && tm->tm_mday == 31)) {
+			tm->tm_sec = 0;
+			tm->tm_min = 0;
+			tm->tm_hour = 0;
+			tm->tm_mday = 31;
+			tm->tm_mon = 11;
+			tm->tm_isdst = 0;
+			timestamp = mktime(tm) - timezone;
+		}
+		front: iarc4((unsigned int )timestamp, 0);
+		for (size_t question = 0; question < 51; question++) {
+			rollasked[question] = FALSE;
+		}
+		if (fork() > 0) {
+			int s;
+			wait(&s);
+			if (s == 0) goto back;
+		}
+		else skipwr = TRUE;
+		goto r0;
+	}
+*/
 
 #endif

@@ -1,5 +1,7 @@
 /**
-Serves as a template.
+Draws the graphical user interface.
+
+TODO refactor
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
@@ -17,7 +19,6 @@ Serves as a template.
 #include "rec.h"
 #include "def.h"
 #include "lib.h"
-#include "fcn.h"
 #include "log.h"
 #include "cfg.h"
 
@@ -80,7 +81,7 @@ problem_d init_gui(void) {
 	Initializes the custom color pairs.
 	*/
 	for (size_t color = 0; color < colors; color++) {
-		if (colorful_interface) {
+		if (monochrome) {
 			if (um_init_pair(pairs + color, COLOR_BLACK, interface_colors[color]) == ERR) {
 				return error(INIT_PAIR_PROBLEM);
 			}
@@ -134,7 +135,7 @@ Draws the status bar in the bottom of a window from right to left.
 
 @return The error code.
 **/
-problem_d draw_status(void) {
+problem_d draw_status(WINDOW * const win) {
 	wclear(status_win);
 	const size_t size = cols + 1;
 	char * const str = malloc(size);
@@ -149,25 +150,34 @@ problem_d draw_status(void) {
 			pair = (pair + 1) % colors;\
 			mvwaddstr(status_win, 0, left_pos, str);\
 			left_pos += strlen(str) + 1;\
-			if (!colorful_interface) {\
+			if (monochrome) {\
 				left_pos++;\
 			}\
 		} while (0)
-	draw_status_ADDSTR("Status");
+	char buf[9];
+	winnstr(win, buf, 8);
+	draw_status_ADDSTR(buf);
 	//draw_status_ADDSTR("P: %u", (unsigned int )getpid());
-	draw_status_ADDSTR("I: %s", previous_inputs);
+	const size_t inputs = sizeof previous_inputs / sizeof *previous_inputs;
+	char input_string[4 * inputs];
+	input_string[0] = '\0';
+	for (size_t input = 0; input < inputs; input++) {
+		if (previous_inputs[input] != 0) {
+			strcat(input_string, key_code(previous_inputs[input]));
+		}
+	}
+	draw_status_ADDSTR("I: %s", input_string);
 	draw_status_ADDSTR("F: %u/%u", record.count - previous_count, record.count);
-	draw_status_ADDSTR("T: 0/%u", (unsigned int )(*exec_turns + surplus_turns));
-	const unsigned int durr = (unsigned int )current_duration + 1;
-	if (durr < frame_rate) {
-		draw_status_ADDSTR("D: 1/%u", frame_rate / durr);
+	draw_status_ADDSTR("T: 0/%u", turns);
+	if (current_duration < frame_rate) {
+		draw_status_ADDSTR("D: 1/%u", frame_rate / current_duration);
 	}
 	else {
-		draw_status_ADDSTR("D: %u", durr / frame_rate);
+		draw_status_ADDSTR("D: %u", current_duration / frame_rate);
 	}
-	draw_status_ADDSTR("E: %u/%u", (unsigned int )(timestamp - record.timestamp), (unsigned int )timestamp);
+	draw_status_ADDSTR("E: %ld/%ld", (long int )(timestamp - record.timestamp), (long int )timestamp);
 	draw_status_ADDSTR("R: 0x%08x", (unsigned int )hash(exec_arc4_s, 0x100));
-	draw_status_ADDSTR("S: %u/%u", current_state, states - 1);
+	draw_status_ADDSTR("S: %d/%d", current_state, states - 1);
 	free(str);
 
 	wrefresh(status_win);
@@ -308,8 +318,8 @@ problem_d draw_menu(void) {
 	*/
 	wclear(menu_chs_win);
 	getmaxyx(menu_chs_win, y, x);
-	for (unsigned int row = 0; row < rows; row++) {
-		for (unsigned int col = 0; col < cols; col++) {
+	for (int row = 0; row < rows; row++) {
+		for (int col = 0; col < cols; col++) {
 			mvwaddch(menu_chs_win, row / 2, col / 2, shm.chs[current_state][row][col]);
 		}
 	}
@@ -352,6 +362,7 @@ problem_d draw_overlay(WINDOW * const win) {
 		}
 	}
 	for (int row = 0; row < rows - 5; row++) {
+		if (*exec_items == NULL) break;
 		for (int col = 0; col < cols; col++) {
 			const exec_map_item_d * item = (*exec_items)[row * cols + col];
 			if (item != NULL) {
@@ -383,6 +394,7 @@ problem_d draw_overlay(WINDOW * const win) {
 		}
 	}
 	const exec_map_monster_d * monster = *exec_monsters;
+	if (monster == NULL) goto end;
 	while (monster->next != NULL) {
 		monster = monster->next;
 		if (monster->monster != NULL) {
@@ -396,19 +408,20 @@ problem_d draw_overlay(WINDOW * const win) {
 			wattroff(overlay_win, attr);
 		}
 	}
-	wrefresh(win);
-	wrefresh(overlay_win);
+	end: wrefresh(overlay_win);
 
 	return NO_PROBLEM;
 }
 
-problem_d draw_gui(void) {
-	if (inactive) {
-		PROPAGATE(draw_overlay(stdscr));
-	}
-	PROPAGATE(draw_status());
-	if (inactive) {
-		PROPAGATE(draw_menu());
+problem_d draw_gui(WINDOW * const win) {
+	if (!hidden) {
+		if (in_game) {
+			draw_overlay(win);
+		}
+		PROPAGATE(draw_status(win));
+		if (inactive) {
+			PROPAGATE(draw_menu());
+		}
 	}
 
 	return NO_PROBLEM;

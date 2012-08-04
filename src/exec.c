@@ -1,13 +1,14 @@
 /**
 Provides information about
-	the files,
-	the memory and
-	the behavior
-		of the executable and
-emulates
-	the random number generator and
-	the key number interpreter
-		of the executable.
+		the files,
+		the memory and
+		the behavior and
+	emulates
+		the random number generator and
+		the key number interpreter
+			of the executable.
+
+TODO sort
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
@@ -37,7 +38,7 @@ The actual turn count without negative turns.
 
 The value is set by <code>wgetch</code>.
 **/
-intern int turns = 0;
+intern long int turns = 0;
 
 /**
 The size of the executable.
@@ -113,273 +114,6 @@ intern const char * const exec_error_file = ".adom.err";
 The name of the count file.
 **/
 intern const char * const exec_count_file = ".adom.cnt";
-
-/**
-The default configuration.
-**/
-intern const char * const exec_config = \
-		"Allow_Default_Names    = false\n"
-		"Auto_Lock_Doors        = false\n"
-		"Auto_Lock_Nearest      = true\n"
-		"Auto_Open_Doors        = true\n"
-		"Auto_Pickup            = ['~(}/]{=\\!?\"%$*\n"
-		"Auto_Select_Doors      = true\n"
-		"Base_Delay_Factor      = 1\n"
-		"Check_Item_In_Hand     = true\n"
-		"Colored_Menus          = true\n"
-		"Colored_PC             = true\n"
-		"Fast_Missile_Readying  = true\n"
-		"Fast_More              = true\n"
-		"Item_Status_Color      = cyan\n"
-		"Low_Hitpoint_Warning   = true\n"
-		"Message_Buffer_Size    = 10000\n"
-		"Metric_Measuring       = true\n"
-		"Nice_Stuff             = true\n"
-		"No_Book_Spellcasting   = false\n"
-		"Persistence            = 10000\n"
-		"Questioned_Attributes  = true\n"
-		"Reload_Missiles        = false\n"
-		"Reverse_Message_Order  = true\n"
-		"Show_Experience        = true\n"
-		"Sorted_Skills          = true\n"
-		"Starvation_Warning     = true\n"
-		"Uncursed_String        = mundane\n"
-		"Verbose_Level_Messages = false\n"
-		"Walk_Carefully         = true\n"
-		"Zap_Wands_In_Hand      = true\n"
-	;
-
-/**
-The default keybindings.
-**/
-intern const char * const exec_keybind = \
-		"#Activate trap\n"
-		"ACT:\\Ct\n\n"
-		"#Apply skill\n"
-		"ASK:a\n\n"
-		"#Ascend stairway/Leave location\n"
-		"ASC:<\n\n"
-		"#Cast spell\n"
-		"CST:Z\n\n"
-		"#Chat with monsters\n"
-		"TLK:C\n\n"
-		"#Change highlight mode\n"
-		"HIL:H\n\n"
-		"#Change tactic\n"
-		"TAC:T\n\n"
-		"#Check literacy\n"
-		"LIT:L\n\n"
-		"#Clean ears\n"
-		"CLE:E\n\n"
-		"#Close door\n"
-		"CLO:c\n\n"
-		"#Continuous search\n"
-		"CSE:ws\n\n"
-		"#Create short character logfile\n"
-		"CSL:(\n\n"
-		"#Create verbose character logfile\n"
-		"CVL:)\n\n"
-		"#Create screenshot\n"
-		"CSS:[\n\n"
-		"#Descend stairway/Enter location\n"
-		"DSC:>\n\n"
-		"#Describe weather\n"
-		"DEW::W\n\n"
-		"#Dip (something) into (potion)\n"
-		"DIP:!\n\n"
-		"#Display available talents\n"
-		"DAT::T\n\n"
-		"#Display and quick-mark skills\n"
-		"DSK:A\n\n"
-		"#Display background\n"
-		"BKG:B\n\n"
-		"#Display bill\n"
-		"BIL:P\n\n"
-		"#Display burden levels\n"
-		"DBL::b\n\n"
-		"#Display configuration variables\n"
-		"CFG:=\n\n"
-		"#Display chaos powers\n"
-		"CHP:\\\\\n\n"
-		"#Display character information\n"
-		"DCI:\\Mq\n\n"
-		"#Display companions\n"
-		"DCO::c\n\n"
-		"#Display current wealth\n"
-		"MNY:$\n\n"
-		"#Display name of your deity\n"
-		"DID::g\n\n"
-		"#Display elapsed game time\n"
-		"DET:\\Ce\n\n"
-		"#Display identified items\n"
-		"IDI:/\n\n"
-		"#Display kick statistics\n"
-		"KST:K\n\n"
-		"#Display killed monsters\n"
-		"DKM::k\n\n"
-		"#Display level map\n"
-		"DLM:\\Ml\n\n"
-		"#Display message buffer\n"
-		"MSG::m\n\n"
-		"#Display missile statistics\n"
-		"DMS:M\n\n"
-		"#Display monster wound status\n"
-		"MWS::w\n\n"
-		"#Display quest status\n"
-		"QST:q\n\n"
-		"#Display recipes\n"
-		"RCP:R\n\n"
-		"#Display required experience\n"
-		"EXP:x\n\n"
-		"#Display talents\n"
-		"DTL:\\Mt\n\n"
-		"#Display version\n"
-		"VER:V\n\n"
-		"#Display weapon skills\n"
-		"DWS:\\Cw\n\n"
-		"#Display weapon statistics\n"
-		"WST:W\n\n"
-		"#Drink\n"
-		"DRK:D\n\n"
-		"#Drop item(s)\n"
-		"DRO:d\n\n"
-		"#Drop items in a comfortable way\n"
-		"DRC:\\Cd\n\n"
-		"#Eat\n"
-		"EAT:e\n\n"
-		"#Examine environment\n"
-		"EXE:l\n\n"
-		"#Extended drop\n"
-		"EDR::d\n\n"
-		"#Extended pay\n"
-		"EPA::p\n\n"
-		"#Extended use\n"
-		"EUS::u\n\n"
-		"#Give item to monster\n"
-		"GIV:g\n\n"
-		"#Handle something\n"
-		"HDL:h\n\n"
-		"#Inventory\n"
-		"INV:i\n\n"
-		"#Invoke mindcraft\n"
-		"INM:\\Ci\n\n"
-		"#Issue order to companion\n"
-		"ISO:\\Co\n\n"
-		"#Kick\n"
-		"KCK:k\n\n"
-		"#Look\n"
-		"LOK:\\Cl\n\n"
-		"#Mark spells\n"
-		"MSP::Z\n\n"
-		"#Miscellaneous equipment\n"
-		"STF:I\n\n"
-		"#Move to the southwest\n"
-		"MSW:1\n\n"
-		"#Move to the south\n"
-		"MOS:2 \\D\n\n"
-		"#Move to the southeast\n"
-		"MSE:3\n\n"
-		"#Move to the west\n"
-		"MOW:4 \\L\n\n"
-		"#Move to the east\n"
-		"MOE:6 \\R\n\n"
-		"#Move to the northwest\n"
-		"MNW:7\n\n"
-		"#Move to the north\n"
-		"MON:8 \\U\n\n"
-		"#Move to the northeast\n"
-		"MNE:9\n\n"
-		"#Name monster/yourself\n"
-		"BAP:n\n\n"
-		"#Online help\n"
-		"HLP:?\n\n"
-		"#Open door\n"
-		"OPN:o\n\n"
-		"#Pay\n"
-		"PAY:p\n\n"
-		"#Pick up items primitively (fast)\n"
-		"PPK:;\n\n"
-		"#Pick up items\n"
-		"PCK:,\n\n"
-		"#Pick up items comfortably\n"
-		"CPC:\\Cp\n\n"
-		"#Pray\n"
-		"PRA:_\n\n"
-		"#Quit game\n"
-		"QIT:Q\n\n"
-		"#Read\n"
-		"REA:r\n\n"
-		"#Recall monster memory\n"
-		"RMM:&\n\n"
-		"#Redraw screen\n"
-		"RED:\\Cr\n\n"
-		"#Sacrifice\n"
-		"SAC:O\n\n"
-		"#Save and quit game\n"
-		"SAV:S\n\n"
-		"#Search\n"
-		"SEA:s\n\n"
-		"#Set tactics to 'berserker'\n"
-		"ST0:\\1\n\n"
-		"#Set tactics to 'very aggressive'\n"
-		"ST1:\\2\n\n"
-		"#Set tactics to 'aggressive'\n"
-		"ST2:\\3\n\n"
-		"#Set tactics to 'normal'\n"
-		"ST3:\\4\n\n"
-		"#Set tactics to 'defensive'\n"
-		"ST4:\\5\n\n"
-		"#Set tactics to 'very defensive'\n"
-		"ST5:\\6\n\n"
-		"#Set tactics to 'coward'\n"
-		"ST6:\\7\n\n"
-		"#Set variable\n"
-		"SEV::=\n\n"
-		"#Shoot/Throw missile\n"
-		"SHT:t\n\n"
-		"#Swap position with monster\n"
-		"SWA::s\n\n"
-		"#Switch auto-pickup on/off\n"
-		"CAP:\\Ca\n\n"
-		"#Switch the dynamic display\n"
-		"STS::t\n\n"
-		"#Switch the required (more) key\n"
-		"CMK:\\Ck\n\n"
-		"#Unlock door\n"
-		"ULD:\\Cu\n\n"
-		"#Use item\n"
-		"USE:U\n\n"
-		"#Use class power\n"
-		"UMP:\\Cx\n\n"
-		"#Use special ability\n"
-		"SPA:m\n\n"
-		"#Use tool\n"
-		"UTO:u\n\n"
-		"#Wait\n"
-		"WAT:. 5\n\n"
-		"#Walk to the southwest\n"
-		"WM1:w1\n\n"
-		"#Walk to the south\n"
-		"WM2:w2\n\n"
-		"#Walk to the southeast\n"
-		"WM3:w3\n\n"
-		"#Walk to the west\n"
-		"WM4:w4\n\n"
-		"#Walk on the spot\n"
-		"WM5:w5\n\n"
-		"#Walk to the east\n"
-		"WM6:w6\n\n"
-		"#Walk to the northwest\n"
-		"WM7:w7\n\n"
-		"#Walk to the north\n"
-		"WM8:w8\n\n"
-		"#Walk to the northeast\n"
-		"WM9:w9\n\n"
-		"#Wipe face\n"
-		"WIF:F\n\n"
-		"#Zap wand\n"
-		"ZAP:z\n"
-	;
 
 /**
 The effects of the questions.
@@ -726,15 +460,6 @@ A pointer to the monster data.
 intern const exec_monster_data_d * const exec_monster_data = (void * )0x08264fc0;
 
 /**
-A pointer to the turn count.
-**/
-intern int * const exec_turns = (void * )0x082b16e0;
-/**
-A pointer to the save count.
-**/
-intern int * const exec_saves = (void * )0x082b6140;
-
-/**
 A pointer to the terrain map.
 **/
 intern unsigned char ** const exec_terrain = (void * )0x0829ea60;
@@ -937,6 +662,15 @@ intern const char * const exec_strainedness_abbreviation = "St";
 intern const char * const exec_burdenedness_abbreviation = "Bu";//?
 
 /**
+A pointer to the turn count.
+**/
+intern long int * const exec_turns = (void * )0x082b16e0;
+/**
+A pointer to the save count.
+**/
+intern long int * const exec_saves = (void * )0x082b6140;
+
+/**
 The random number generator's counter c.
 **/
 intern unsigned char * const exec_arc4_c = (void * )0x08264a60;
@@ -1014,12 +748,12 @@ Seeds the current state S with the seed k.
 
 Emulates an internal function:
 <pre>
-void (* const seed_arc4)(unsigned int seed) = (void * )0x08125ea0;
+void (* const seed_arc4)(unsigned long int seed) = (void * )0x08125ea0;
 </pre>
 
 @param k The seed k.
 **/
-void sarc4(const unsigned int k) {
+void sarc4(const unsigned long int k) {
 	unsigned char i = 0;
 	unsigned char j = 0;
 	do {
@@ -1054,9 +788,9 @@ Generates an integer w and increments the count c.
 
 @return The integer w.
 **/
-unsigned int carc4(void) {
+unsigned long int carc4(void) {
 	arc4_c++;
-	unsigned int w = 0;
+	unsigned long int w = 0;
 	for (size_t bit = 0; bit < sizeof w; bit++) {
 		w |= (size_t )arc4() << bit * CHAR_BIT;
 	}
@@ -1068,14 +802,14 @@ Generates a bound integer b at least 0 and at most s - 1.
 
 Emulates an internal function:
 <pre>
-unsigned int (* const bound_arc4)(unsigned int supremum) = (void * )0x08126130;
+unsigned long int (* const bound_arc4)(unsigned long int supremum) = (void * )0x08126130;
 </pre>
 
 @param s The supremum s.
 @return The integer b.
 **/
-unsigned int barc4(const unsigned int s) {
-	const unsigned int b = carc4();
+unsigned long int barc4(const unsigned long int s) {
+	const unsigned long int b = carc4();
 	if (s == 0) {
 		return b;
 	}
@@ -1091,19 +825,19 @@ Generates and injects
 @param k The seed k to use.
 @param calls The amount of calls to do.
 **/
-void iarc4(const unsigned int k, const unsigned int calls) {
+void iarc4(const unsigned long int k, const unsigned int calls) {
 	arc4_i = 0;
 	arc4_j = 0;
 	srandom(k);
-	sarc4((unsigned int )random());
+	sarc4((unsigned long int )random());
 	for (unsigned int call = 0; call < exec_arc4_calls; call++) {
 		carc4();
 	}
-	const unsigned int first_sup = 20;
-	const unsigned int second_sup = 18;
-	unsigned int first = barc4(first_sup) + 10;
-	for (unsigned int iterator = 0; iterator < first; iterator++) {
-		const unsigned int second = barc4(second_sup);
+	const unsigned long int first_sup = 20;
+	const unsigned long int second_sup = 18;
+	unsigned long int first = barc4(first_sup) + 10;
+	for (unsigned long int iterator = 0; iterator < first; iterator++) {
+		const unsigned long int second = barc4(second_sup);
 		while (barc4(second_sup) == second);
 	}
 	for (unsigned int call = 0; call < calls; call++) {

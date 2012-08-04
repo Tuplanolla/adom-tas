@@ -90,7 +90,7 @@ Acquiring ADoM TAS from GitHub also requires
  SSH and
  Git.
 
-	[user@arch ~]$ pacman -S ssh git
+	[user@arch ~]$ pacman -S openssh git
 
 Once the required packages are installed the repository can be cloned
 
@@ -669,10 +669,10 @@ The initialization has already started, so
 	(gdb) fin
 	(gdb) fin
 	(gdb) x /4i $pc - 0x8
-	   0x81504e4:  add   $0x20, %esp
-	   0x81504e7:  call  0x080d15f0
-	=> 0x81504ec:  add   $0xfffffff4, %esp
-	   0x81504ef:  push  $0x082614eb
+	   0x081504e4:  add   $0x20, %esp
+	   0x081504e7:  call  0x080d15f0
+	=> 0x081504ec:  add   $0xfffffff4, %esp
+	   0x081504ef:  push  $0x082614eb
 	(gdb) b *0x081504e7
 	(gdb) c
 
