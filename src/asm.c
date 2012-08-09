@@ -55,8 +55,8 @@ problem_d inject_save(void (* const function)(void)) {
 		const ptrdiff_t offset = 0x5;
 		const ptrdiff_t pointer = (ptrdiff_t )function - ((ptrdiff_t )location + offset);
 		injected[0] = (unsigned char )0xe8;
-		for (size_t bit = 0; bit < sizeof bit; bit++) {
-			injected[bit + 1] = (unsigned char )(pointer >> (bit * CHAR_BIT));
+		for (size_t byte = 0; byte < sizeof byte; byte++) {
+			injected[byte + 1] = (unsigned char )(pointer >> (byte * CHAR_BIT));
 		}
 	}
 	const int prot = PROT_READ | PROT_WRITE | PROT_EXEC;

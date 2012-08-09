@@ -58,7 +58,7 @@ long int previous_turns = 0;
 /**
 The amount of frames at the previous input.
 **/
-intern unsigned int previous_count = 0;
+intern unsigned int previous_frames = 0;
 
 /**
 The active save state.
@@ -147,8 +147,8 @@ void save_quit_load(void) {
 	The only reliable case (automatic loading) is assumed.
 
 	Manual loading changes the random number generator's state depending on
-		the amount of available save games and
-		the actions taken in the menu.
+	 the amount of available save games and
+	 the actions taken in the menu.
 	*/
 	iarc4((unsigned long int )timestamp, exec_arc4_calls_automatic_load);
 	(*exec_saves)++;
@@ -292,7 +292,7 @@ problem_d init(void) {
 	/*
 	Initializes the configuration.
 	*/
-	PROPAGATE(init_internal_config());
+	PROPAGATE(init_lib_config());
 	record.timestamp = timestamp;
 
 	/*
@@ -594,8 +594,8 @@ int wrefresh(WINDOW * const win) {
 
 	/*
 	Stores the state of the window,
-	draws the interface
-	and restores the state.
+	 draws the interface
+	 and restores the state.
 
 	Pointers are used to suppress a warning about a bug in a library.
 	<pre>
@@ -632,11 +632,13 @@ int init_pair(const short int pair, const short int f, const short int b) {
 }
 
 /**
-Redraws the window.
+Prints a string to a window.
 
 Draws the custom interface.
 
-@param win The window to redraw.
+@param win The window to print to.
+@param str The string to print.
+@param n The length of the string.
 @return 0 if no errors occurred and -1 otherwise.
 **/
 int waddnstr(WINDOW * const win, const char * const str, const int n) {
@@ -685,7 +687,7 @@ int wgetch(WINDOW * const win) {
 
 	const int key = um_wgetch(win);
 	if (key == play_key) {
-		if (record.count == 0) {
+		if (record.frames == 0) {
 			playing = TRUE;
 			freadp(input_path);
 			record.current = record.first;
@@ -749,7 +751,7 @@ int wgetch(WINDOW * const win) {
 		partial_uninit(NO_PROBLEM);
 	}
 	else if (!inactive) {
-		if (record.count > 0 || key == ' ') {
+		if (record.frames > 0 || key == ' ') {
 			const size_t inputs = sizeof previous_inputs / sizeof *previous_inputs - 1;
 			for (size_t input = 0; input < inputs; input++) {//shifts the array left
 				previous_inputs[input] = previous_inputs[input + 1];

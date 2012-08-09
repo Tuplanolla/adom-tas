@@ -167,7 +167,7 @@ problem_d draw_status(WINDOW * const win) {
 		}
 	}
 	draw_status_ADDSTR("I: %s", input_string);
-	draw_status_ADDSTR("F: %u/%u", record.count - previous_count, record.count);
+	draw_status_ADDSTR("F: %u/%u", record.frames - previous_frames, record.frames);
 	draw_status_ADDSTR("T: 0/%u", turns);
 	if (current_duration < frame_rate) {
 		draw_status_ADDSTR("D: 1/%u", frame_rate / current_duration);

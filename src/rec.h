@@ -69,17 +69,31 @@ Represents a collection of recorded frames.
 @var first The first frame.
 @var current The currently active frame.
 @var last The last frame.
-@var count The amount of frames.
+@var author The name of the author.
+@var executable The name of the executable.
+@var comments Comments like the date or the amount of attempts.
+@var category The category.
+@var frames The amount of frames.
+@var time The amount of time elapsed in seconds.
+@var turns The amount of turns spent.
 @var timestamp The system time of the previous <code>SEED_INPUT</code> frame.
 **/
 struct record_s {
 	frame_d * first;
 	frame_d * current;
 	frame_d * last;
-	unsigned long int count;
+	char author[256];
+	char executable[256];
+	char comments[256];
+	unsigned long int category;
+	unsigned long int frames;
+	unsigned long int time;
+	unsigned long int turns;
 	time_t timestamp;
 };
 typedef struct record_s record_d;
+
+extern const char record_type[4];
 
 extern record_d record;
 

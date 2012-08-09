@@ -1,8 +1,6 @@
 /**
 Sets the default values of various variables.
 
-TODO sort
-
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef DEF_C
@@ -89,165 +87,165 @@ intern const char * const log_call = "Call";
 /**
 The location of ADoM.
 **/
-intern const char * const default_exec_path = "adom/adom";
+intern const char * const def_exec_path = "adom/adom";
 /**
 The location of ADoM TAS's library.
 **/
-intern const char * const default_loader_path = "bin/adom-tas.so";
+intern const char * const def_lib_path = "bin/adom-tas.so";
 /**
 The location of the C standard library.
 **/
-intern const char * const default_libc_path = "/lib/libc.so.6";
+intern const char * const def_libc_path = "/lib/libc.so.6";
 /**
 The location of the New Cursor Optimization library.
 **/
-intern const char * const default_libncurses_path = "/usr/lib/libncurses.so.5";
+intern const char * const def_libncurses_path = "/usr/lib/libncurses.so.5";
 /**
 Whether default configurations are enforced.
 
 Custom configurations may cause desynchronization during played back.
 **/
-intern const int default_enforce = TRUE;
+intern const int def_enforce = TRUE;
 /**
 The amount of save states.
 **/
-intern const int default_states = 9;
+intern const int def_states = 9;
 /**
 The height of the terminal.
 **/
-intern const int default_rows = 25;
+intern const int def_rows = 25;
 /**
 The width of the terminal.
 **/
-intern const int default_cols = 77;
+intern const int def_cols = 77;
 /**
 The location of the shared memory segment.
 
 For System V it's relative to the current working directory and
  for POSIX it's relative to /dev/shm.
 **/
-intern const char * const default_shm_path = "adom-tas.shm";
+intern const char * const def_shm_path = "adom-tas.shm";
 /**
 The initial system time.
 **/
-intern const int default_timestamp = 0;
+intern const int def_timestamp = 0;
 /**
 The amount of generated characters.
 **/
-intern const int default_generations = 100;
+intern const int def_generations = 100;
 /**
 Whether save-quit-load emulation is enabled.
 **/
-intern const int default_sql = TRUE;
+intern const int def_sql = TRUE;
 /**
 Whether save states are preserved upon loading them.
 **/
-intern const int default_preserve = TRUE;
+intern const int def_preserve = TRUE;
 /**
-Whether a record is played back automatically.
+Whether the input file is played back automatically.
 **/
-intern const int default_autoplay = FALSE;
+intern const int def_autoplay = FALSE;
 /**
-Whether graphical user interface components are colorful.
+Whether the graphical user interface is colorful.
 **/
-intern const int default_monochrome = TRUE;
+intern const int def_monochrome = TRUE;
 /**
-The character to replace with a number.
+The string to replace with a number.
 **/
-intern const char * const default_iterator = "#";
+intern const char * const def_iterator = "#";
 /**
 The location of the input file.
 **/
-intern const char * const default_input_path = "input.tas";
+intern const char * const def_input_path = "input.tas";
 /**
 The location of the output file.
 **/
-intern const char * const default_output_path = "output.tas";
+intern const char * const def_output_path = "output.tas";
 /**
-The name of the default error stream.
+The name of the error stream.
 **/
-intern const char * const default_error_stream = "stderr";
+intern const char * const def_error_stream = "stderr";
 /**
-The name of the default warning stream.
+The name of the warning stream.
 **/
-intern const char * const default_warning_stream = "stderr";
+intern const char * const def_warning_stream = "stderr";
 /**
-The name of the default note stream.
+The name of the note stream.
 **/
-intern const char * const default_note_stream = "stderr";
+intern const char * const def_note_stream = "stderr";
 /**
-The name of the default call stream.
+The name of the call stream.
 **/
-intern const char * const default_call_stream = "/dev/null";
+intern const char * const def_call_stream = "/dev/null";
 /**
 The key used to save the active state.
 **/
-intern const int default_save_key = KEY_F(2);
+intern const int def_save_key = KEY_F(2);
 /**
 The key used to load the active state.
 **/
-intern const int default_load_key = KEY_F(3);
+intern const int def_load_key = KEY_F(3);
 /**
 The key used to change the active state by incrementing.
 **/
-intern const int default_state_key = KEY_F(8);
+intern const int def_state_key = KEY_F(8);
 /**
 The key used to change the active state by decrementing.
 **/
-intern const int default_unstate_key = MOD_SHIFT + KEY_F(8);
+intern const int def_unstate_key = MOD_SHIFT + KEY_F(8);
 /**
 The key used to change the frame duration by incrementing.
 **/
-intern const int default_duration_key = KEY_F(5);
+intern const int def_duration_key = KEY_F(5);
 /**
 The key used to change the frame duration by decrementing.
 **/
-intern const int default_unduration_key = MOD_SHIFT + KEY_F(5);
+intern const int def_unduration_key = MOD_SHIFT + KEY_F(5);
 /**
 The key used to change the system time by incrementing.
 **/
-intern const int default_time_key = KEY_F(6);
+intern const int def_time_key = KEY_F(6);
 /**
 The key used to change the system time by decrementing.
 **/
-intern const int default_untime_key = MOD_SHIFT + KEY_F(6);
+intern const int def_untime_key = MOD_SHIFT + KEY_F(6);
 /**
 The key used to open or close the save state menu.
 **/
-intern const int default_menu_key = KEY_F(9);
+intern const int def_menu_key = KEY_F(9);
 /**
 The key used to open or close the information screen.
 **/
-intern const int default_info_key = MOD_SHIFT + KEY_F(9);
+intern const int def_info_key = MOD_SHIFT + KEY_F(9);
 /**
 The key used to condense or expand the graphical user interface.
 **/
-intern const int default_condense_key = KEY_F(10);
+intern const int def_condense_key = KEY_F(10);
 /**
 The key used to hide or show the graphical user interface.
 **/
-intern const int default_hide_key = MOD_SHIFT + KEY_F(10);
+intern const int def_hide_key = MOD_SHIFT + KEY_F(10);
 /**
 The key used to play back a record.
 **/
-intern const int default_play_key = KEY_F(11);
+intern const int def_play_key = KEY_F(11);
 /**
 The key used to stop a record to create a branch.
 **/
-intern const int default_stop_key = MOD_SHIFT + KEY_F(11);
+intern const int def_stop_key = MOD_SHIFT + KEY_F(11);
 /**
 The key used to terminate all processes.
 **/
-intern const int default_quit_key = MOD_SHIFT + KEY_F(12);
+intern const int def_quit_key = MOD_SHIFT + KEY_F(12);
 
 /**
 The location of the configuration file.
 **/
-intern const char * const default_config_path = "adom-tas.cfg";
+intern const char * const def_config_path = "adom-tas.cfg";
 /**
 The template configuration.
 **/
-intern const char * const default_config = \
+intern const char * const def_config = \
 		"#required\n"
 		"executable     = \"adom/adom\"\n"
 		"data           = \"~/.adom.data\"\n"
@@ -295,7 +293,7 @@ intern const char * const default_config = \
 /**
 The default configuration of the executable.
 **/
-intern const char * const exec_config = \
+intern const char * const def_exec_config = \
 		"Allow_Default_Names    = false\n"
 		"Auto_Lock_Doors        = false\n"
 		"Auto_Lock_Nearest      = true\n"
@@ -329,7 +327,7 @@ intern const char * const exec_config = \
 /**
 The default keybindings of the executable.
 **/
-intern const char * const exec_keybind = \
+intern const char * const def_exec_keybind = \
 		"#Activate trap\n"
 		"ACT:\\Ct\n\n"
 		"#Apply skill\n"

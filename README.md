@@ -171,7 +171,7 @@ When ADoM TAS is run it
 By default the configuration file is called `adom-tas.cfg`
  in the current working directory,
 but the default location can be changed by
- modifying the variable `default_config_path` in the file `def.c` and
+ modifying the variable `def_config_path` in the file `def.c` and
  rebuilding ADoM TAS.
 The default file extension is `*.cfg` since
  the configuration file library uses it by default and
@@ -373,14 +373,15 @@ Files are named and organized in a typical manner. The directories are
 Records are saved to `*.tas` files in a custom format. The files contain
 
 * a 4-byte `char [4]` header (always `54 41 53 00` for "TAS"),
-* a 256-byte `char [256]` executable name (for example `61 64 6f 6d 00 ...` for ADoM),
-* a 4-byte `unsigned int` category (where `00 00 00 00` is uncategorized),
 * a 256-byte `char [256]` author (for example `54 75 70 6c 61 6e 6f 6c 6c 61 00 ...` for "Tuplanolla"),
-* a 4-byte `unsigned int` frames,
-* a 4-byte `unsigned int` time,
-* a 4-byte `unsigned int` turns,
+* a 256-byte `char [256]` executable name (for example `61 64 6f 6d 00 ...` for ADoM),
+* a 256-byte `char [256]` comments,
+* a 4-byte `unsigned int` category (where `00 00 00 00` is uncategorized),
+* a 4-byte `unsigned int` amount of frames,
+* a 4-byte `unsigned int` time elapsed,
+* a 4-byte `unsigned int` turns spent,
 * padding to 1024-byte alignment and
-* executable-specific `frame_t` chunks.
+* executable-specific `frame_d` chunks.
 
 For ADoM the categories are
 
@@ -398,7 +399,7 @@ Additionally characters are catalogued to `*.tac` files. The files contain
 * a 4-byte `char [4]` header (always `54 41 67 00` for "TAC"),
 * a 256-byte `char [256]` executable name (for example `61 64 6f 6d 00 ...` for ADoM),
 * padding to 1024-byte alignment and
-* an executable-specific `catalog_t` chunk.
+* an executable-specific `catalog_d` chunk.
 
 For ADoM the chunk consists of
 

@@ -49,7 +49,7 @@ extern bool paused;
 extern bool quitting;
 extern bool rolling;
 
-extern unsigned int previous_count;
+extern unsigned int previous_frames;
 extern int current_state;
 extern unsigned char current_duration;
 extern int previous_inputs[4];

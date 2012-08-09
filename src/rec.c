@@ -16,13 +16,24 @@ Records are built around linked lists.
 #include "rec.h"
 
 /**
+The type identifier used in record file headers.
+**/
+intern const char record_type[4] = "TAS";
+
+/**
 The record.
 **/
 intern record_d record = {
 	.first = NULL,
 	.current = NULL,
 	.last = NULL,
-	.count = 0,
+	.author = {0},
+	.executable = {0},
+	.comments = {0},
+	.category = 0,
+	.frames = 0,
+	.time = 0,
+	.turns = 0,
 	.timestamp = 0
 };
 
@@ -42,7 +53,13 @@ void clear_record(void) {
 	record.first = NULL;
 	record.current = NULL;
 	record.last = NULL;
-	record.count = 0;
+	memset(record.author, 0, sizeof record.author);
+	memset(record.executable, 0, sizeof record.executable);
+	memset(record.comments, 0, sizeof record.comments);
+	record.category = 0;
+	record.frames = 0;
+	record.time = 0;
+	record.turns = 0;
 	record.timestamp = 0;
 	while (frame != NULL) {
 		frame_d * const previous = frame;
@@ -66,14 +83,14 @@ frame_d * add_frame(const unsigned short int duration, const long int value) {
 	frame->duration = duration;
 	frame->value = value;
 	frame->next = NULL;
-	if (record.count == 0) {
+	if (record.frames == 0) {
 		record.first = frame;
 	}
 	else {
 		record.last->next = frame;
 	}
 	record.last = frame;
-	record.count++;
+	record.frames++;
 	return frame;
 }
 

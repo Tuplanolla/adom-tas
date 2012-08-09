@@ -22,7 +22,7 @@ extern char * exec_keybind_path;
 extern char * exec_version_path;
 extern char * exec_error_path;
 extern char * exec_count_path;
-extern char * loader_path;
+extern char * lib_path;
 extern char * libc_path;
 extern char * libncurses_path;
 extern bool enforce;
@@ -58,8 +58,8 @@ extern int play_key;
 extern int stop_key;
 extern int quit_key;
 
-problem_d init_external_config(void);
-problem_d init_internal_config(void);
 problem_d uninit_config(void);
+problem_d init_main_config(void);
+problem_d init_lib_config(void);
 
 #endif

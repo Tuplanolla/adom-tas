@@ -2,10 +2,9 @@
 Manages the configuration variables.
 
 Some redundant conditions are used to
-	enforce predictable behavior and
-	make maintenance (return point changes) easier.
+ enforce predictable behavior and
+ make maintenance (return point changes) easier.
 
-TODO add enforce
 TODO check output_paths management
 
 @author Sampsa "Tuplanolla" Kiiskinen
@@ -24,59 +23,198 @@ TODO check output_paths management
 #include "util.h"//intern, hash, stdstr, SUBNULL
 #include "prob.h"//problem_d, *_PROBLEM
 #include "log.h"//error, warning, note
-#include "def.h"//default_*
+#include "def.h"//def_*
 #include "exec.h"//exec_*
 
 #include "cfg.h"
 
-/*
-Undocumented.
-*/
-intern char * home_path = NULL;
-intern char * exec_path = NULL;
-intern char * exec_data_path = NULL;
-intern char * exec_temporary_path = NULL;
-intern char ** exec_temporary_paths = NULL;
-intern char * exec_config_path = NULL;
-intern char * exec_process_path = NULL;
-intern char * exec_keybind_path = NULL;
-intern char * exec_version_path = NULL;
-intern char * exec_error_path = NULL;
-intern char * exec_count_path = NULL;
-intern char * loader_path = NULL;
-intern char * libc_path = NULL;
-intern char * libncurses_path = NULL;
+/**
+The location of the home directory.
+**/
+intern char * home_path;
+/**
+The location of ADoM.
+**/
+intern char * exec_path;
+/**
+The location of ADoM's data directory.
+**/
+intern char * exec_data_path;
+/**
+The location of ADoM's temporary file directory.
+**/
+intern char * exec_temporary_path;
+/**
+The locations of ADoM's temporary files.
+**/
+intern char ** exec_temporary_paths;
+/**
+The location of ADoM's configuration file.
+**/
+intern char * exec_config_path;
+/**
+The location of ADoM's process lock file.
+**/
+intern char * exec_process_path;
+/**
+The location of ADoM's keybinding file.
+**/
+intern char * exec_keybind_path;
+/**
+The location of ADoM's version file.
+**/
+intern char * exec_version_path;
+/**
+The location of ADoM's error report file.
+**/
+intern char * exec_error_path;
+/**
+The location of ADoM's character count file.
+**/
+intern char * exec_count_path;
+/**
+The location of ADoM TAS's library.
+**/
+intern char * lib_path;
+/**
+The location of the C standard library.
+**/
+intern char * libc_path;
+/**
+The location of the New Cursor Optimization library.
+**/
+intern char * libncurses_path;
+/**
+Whether default configurations are enforced.
+**/
 intern bool enforce;
+/**
+The amount of save states.
+**/
 intern int states;
+/**
+The height of the terminal.
+**/
 intern int rows;
+/**
+The width of the terminal.
+**/
 intern int cols;
-intern char * shm_path = NULL;
+/**
+The location of the shared memory segment.
+**/
+intern char * shm_path;
+/**
+The initial system time.
+**/
 intern time_t timestamp;
+/**
+The amount of generated characters.
+**/
 intern unsigned int generations;
+/**
+Whether save-quit-load emulation is enabled.
+**/
 intern bool sql;
+/**
+Whether save states are preserved upon loading them.
+**/
 intern bool preserve;
+/**
+Whether the input file is played back automatically.
+**/
 intern bool autoplay;
+/**
+Whether the graphical user interface is colorful.
+**/
 intern bool monochrome;
-intern char * iterator = NULL;
-intern char * input_path = NULL;
-intern char ** output_paths = NULL;
-intern FILE * error_stream = NULL;
-intern FILE * warning_stream = NULL;
-intern FILE * note_stream = NULL;
-intern FILE * call_stream = NULL;
+/**
+The string to replace with a number.
+**/
+intern char * iterator;
+/**
+The location of the input file.
+**/
+intern char * input_path;
+/**
+The locations of the output files.
+**/
+intern char ** output_paths;
+/**
+The error stream.
+**/
+intern FILE * error_stream;
+/**
+The warning stream.
+**/
+intern FILE * warning_stream;
+/**
+The note stream.
+**/
+intern FILE * note_stream;
+/**
+The call stream.
+**/
+intern FILE * call_stream;
+/**
+The key used to save the active state.
+**/
 intern int save_key;
+/**
+The key used to load the active state.
+**/
 intern int load_key;
+/**
+The key used to change the active state by incrementing.
+**/
 intern int state_key;
+/**
+The key used to change the active state by decrementing.
+**/
 intern int unstate_key;
+/**
+The key used to change the frame duration by incrementing.
+**/
 intern int duration_key;
+/**
+The key used to change the frame duration by decrementing.
+**/
 intern int unduration_key;
+/**
+The key used to change the system time by incrementing.
+**/
 intern int time_key;
+/**
+The key used to change the system time by decrementing.
+**/
 intern int untime_key;
+/**
+The key used to open or close the save state menu.
+**/
 intern int menu_key;
+/**
+The key used to open or close the information screen.
+**/
+intern int info_key;
+/**
+The key used to condense or expand the graphical user interface.
+**/
 intern int condense_key;
+/**
+The key used to hide or show the graphical user interface.
+**/
 intern int hide_key;
+/**
+The key used to play back a record.
+**/
 intern int play_key;
+/**
+The key used to stop a record to create a branch.
+**/
 intern int stop_key;
+/**
+The key used to terminate all processes.
+**/
 intern int quit_key;
 
 /**
@@ -90,9 +228,6 @@ Uninitializes the configuration variables.
 @return The error code.
 **/
 problem_d uninit_config(void) {
-	/*
-	Closes files and deallocates manually allocated memory.
-	*/
 	free(home_path);
 	free(exec_path);
 	free(exec_data_path);
@@ -113,7 +248,7 @@ problem_d uninit_config(void) {
 	free(exec_version_path);
 	free(exec_error_path);
 	free(exec_count_path);
-	free(loader_path);
+	free(lib_path);
 	free(libc_path);
 	free(libncurses_path);
 	free(shm_path);
@@ -177,33 +312,34 @@ Initializes the common configuration variables.
 
 @return The error code.
 **/
-problem_d init_config(void) {
+problem_d begin_init_config(void) {
 	/*
 	Sets the streams to their default values.
 	*/
-	error_stream = stdstr(default_error_stream);
-	warning_stream = stdstr(default_warning_stream);
-	note_stream = stdstr(default_note_stream);
-	call_stream = stdstr(default_call_stream);
+	error_stream = stdstr(def_error_stream);
+	warning_stream = stdstr(def_warning_stream);
+	note_stream = stdstr(def_note_stream);
+	call_stream = stdstr(def_call_stream);
 
 	/*
 	Prepares the configuration file.
 
 	The existence of the configuration file is first checked,
-	if it does not exist
-		the configuration file is first created and
-		this process is then terminated,
-	otherwise
-		the configuration file is parsed.
+	 if it does not exist
+	  the configuration file is first created and
+	  this process is then terminated,
+	 otherwise
+	  the configuration file is parsed.
 	*/
 	struct stat config_stat;
-	if (stat(default_config_path, &config_stat) == -1) {
-		FILE * stream = fopen(default_config_path, "w");
+	if (stat(def_config_path, &config_stat) == -1) {
+		FILE * stream = fopen(def_config_path, "w");
 		if (stream == NULL) {
 			return error(CONFIGURATION_OPEN_PROBLEM);
 		}
 		else {
-			if ((size_t )fprintf(stream, "%s", default_config) != strlen(default_config)) {
+			const size_t size = strlen(def_config) + 1;
+			if (fwrite(def_config, size, 1, stream) != 1) {
 				error(CONFIGURATION_WRITE_PROBLEM);
 			}
 			if (fclose(stream) == EOF) {
@@ -213,7 +349,7 @@ problem_d init_config(void) {
 		return note(CONFIGURATION_STAT_PROBLEM);
 	}
 	config_init(&config);
-	if (config_read_file(&config, default_config_path) == 0) {
+	if (config_read_file(&config, def_config_path) == 0) {
 		return error(CONFIGURATION_PARSE_PROBLEM);
 	}
 
@@ -221,14 +357,14 @@ problem_d init_config(void) {
 	Finds the home directory.
 
 	The configuration file is first parsed,
-	the environment variable is then read,
-	a system call then is used and
-	the existence of the directory is finally checked.
+	 the environment variable is then read,
+	 a system call then is used and
+	 the existence of the directory is finally checked.
 	*/
 	const char * new_home_path;
 	struct passwd * pw;
 	if (config_lookup_string(&config, "home", &new_home_path) == CONFIG_FALSE) {
-		//warning(HOME_CONFIGURATION_PROBLEM);
+		//warning(HOME_CONFIG_PROBLEM);
 		new_home_path = getenv("HOME");
 		if (new_home_path == NULL) {
 			warning(HOME_GETENV_PROBLEM);
@@ -265,8 +401,8 @@ problem_d init_config(void) {
 	Finds the data directory path of the executable.
 
 	The configuration file is first searched,
-	the location of the directory is then guessed and
-	the existence of the directory is finally checked.
+	 the location of the directory is then guessed and
+	 the existence of the directory is finally checked.
 	*/
 	const char * new_exec_data_path;
 	if (config_lookup_string(&config, "data", &new_exec_data_path) == CONFIG_FALSE) {
@@ -306,7 +442,7 @@ problem_d init_config(void) {
 	Finds the temporary file directory path of the executable.
 
 	The location of the directory is first guessed and
-	the existence of the directory is then checked.
+	 the existence of the directory is then checked.
 	*/
 	if (exec_data_path == NULL) {
 		exec_temporary_path = NULL;
@@ -335,8 +471,8 @@ problem_d init_config(void) {
 	The executable uses the format <code>"%s%0*d_%d"</code>.
 
 	The location of the directory is first guessed,
-	the existence of the directory is then checked and
-	the file paths are finally guessed.
+	 the existence of the directory is then checked and
+	 the file paths are finally guessed.
 	*/
 	if (exec_temporary_path == NULL) {
 		exec_temporary_paths = NULL;
@@ -389,35 +525,35 @@ problem_d end_init_config(void) {
 	return NO_PROBLEM;
 }
 
-problem_d init_external_config(void) {
-	PROPAGATE(init_config());
+problem_d init_main_config(void) {
+	PROPAGATE(begin_init_config());
 
 	/*
 	Enables preloading libraries.
 
 	The configuration file is first searched,
-	the environment variable is then gotten,
-	the existence of the file is then checked and
-	the environment variable is finally set.
+	 the environment variable is then gotten,
+	 the existence of the file is then checked and
+	 the environment variable is finally set.
 	*/
 	const char * new_loader_path;
 	if (config_lookup_string(&config, "loader", &new_loader_path) == CONFIG_FALSE) {
 		//warning(LD_PRELOAD_CONFIG_PROBLEM);
 		new_loader_path = getenv("LD_PRELOAD");
-		if (loader_path == NULL) {
-			new_loader_path = default_loader_path;
+		if (lib_path == NULL) {
+			new_loader_path = def_lib_path;
 			warning(LD_PRELOAD_GETENV_PROBLEM);
 		}
 	}
 	if (new_loader_path == NULL) {
-		loader_path = NULL;
+		lib_path = NULL;
 	}
 	else {
-		loader_path = astrrep(new_loader_path, "~", home_path);
+		lib_path = astrrep(new_loader_path, "~", home_path);
 		struct stat loader_stat;
-		if (stat(loader_path, &loader_stat) == -1) {
-			free(loader_path);
-			loader_path = NULL;
+		if (stat(lib_path, &loader_stat) == -1) {
+			free(lib_path);
+			lib_path = NULL;
 			return error(LD_PRELOAD_STAT_PROBLEM);
 		}
 	}
@@ -426,15 +562,15 @@ problem_d init_external_config(void) {
 	Finds the executable and identifies it heuristically.
 
 	The configuration file is first searched,
-	the existence of the file is then checked,
-	the type of the file is then checked,
-	the special permissions of the file are then checked,
-	the size of the file is then verified and
-	the hash code of the file is finally verified.
+	 the existence of the file is then checked,
+	 the type of the file is then checked,
+	 the special permissions of the file are then checked,
+	 the size of the file is then verified and
+	 the hash code of the file is finally verified.
 	*/
 	const char * new_exec_path;
 	if (config_lookup_string(&config, "executable", &new_exec_path) == CONFIG_FALSE) {
-		new_exec_path = default_exec_path;
+		new_exec_path = def_exec_path;
 		//warning(EXEC_CONFIG_PROBLEM);
 	}
 	if (new_exec_path == NULL) {
@@ -494,7 +630,7 @@ problem_d init_external_config(void) {
 	Finds the config file path of the executable.
 
 	The location of the file is first guessed and
-	the existence of the file is then checked.
+	 the existence of the file is then checked.
 	*/
 	if (exec_data_path == NULL) {
 		exec_config_path = NULL;
@@ -521,7 +657,7 @@ problem_d init_external_config(void) {
 	Finds the process lock file path of the executable.
 
 	The location of the file is first guessed and
-	the existence of the file is then checked.
+	 the existence of the file is then checked.
 	*/
 	if (exec_data_path == NULL) {
 		exec_process_path = NULL;
@@ -548,7 +684,7 @@ problem_d init_external_config(void) {
 	Finds the keybind file path of the executable.
 
 	The location of the file is first guessed and
-	the existence of the file is then checked.
+	 the existence of the file is then checked.
 	*/
 	if (exec_data_path == NULL) {
 		exec_keybind_path = NULL;
@@ -575,7 +711,7 @@ problem_d init_external_config(void) {
 	Finds the version file path of the executable.
 
 	The location of the file is first guessed and
-	the existence of the file is then checked.
+	 the existence of the file is then checked.
 	*/
 	if (exec_data_path == NULL) {
 		exec_version_path = NULL;
@@ -602,7 +738,7 @@ problem_d init_external_config(void) {
 	Finds the error log file path of the executable.
 
 	The location of the file is first guessed and
-	the existence of the file is then checked.
+	 the existence of the file is then checked.
 	*/
 	if (exec_data_path == NULL) {
 		exec_error_path = NULL;
@@ -629,7 +765,7 @@ problem_d init_external_config(void) {
 	Finds the count file path of the executable.
 
 	The location of the file is first guessed and
-	the existence of the file is then checked.
+	 the existence of the file is then checked.
 	*/
 	if (exec_data_path == NULL) {
 		exec_count_path = NULL;
@@ -657,19 +793,19 @@ problem_d init_external_config(void) {
 	return NO_PROBLEM;
 }
 
-problem_d init_internal_config(void) {
-	PROPAGATE(init_config());
+problem_d init_lib_config(void) {
+	PROPAGATE(begin_init_config());
 
 	/*
 	Finds the libraries to load.
 
 	The configuration file is first parsed,
-	the environment variable is then read and
-	the existence of the file is then checked.
+	 the environment variable is then read and
+	 the existence of the file is then checked.
 	*/
 	const char * new_libc_path;
 	if (config_lookup_string(&config, "libc", &new_libc_path) == CONFIG_FALSE) {
-		new_libc_path = default_libc_path;
+		new_libc_path = def_libc_path;
 		warning(LIBC_CONFIG_PROBLEM);
 	}
 	libc_path = astrrep(new_libc_path, "~", home_path);
@@ -682,7 +818,7 @@ problem_d init_internal_config(void) {
 
 	const char * new_libncurses_path;
 	if (config_lookup_string(&config, "libncurses", &new_libncurses_path) == CONFIG_FALSE) {
-		new_libncurses_path = default_libncurses_path;
+		new_libncurses_path = def_libncurses_path;
 		warning(LIBNCURSES_CONFIG_PROBLEM);
 	}
 	libncurses_path = astrrep(new_libncurses_path, "~", home_path);
@@ -698,7 +834,7 @@ problem_d init_internal_config(void) {
 	**/
 	int new_enforce;
 	if (config_lookup_bool(&config, "enforce", &new_enforce) == CONFIG_FALSE) {
-		new_enforce = default_enforce;
+		new_enforce = def_enforce;
 		//warning(PRESERVE_CONFIG_PROBLEM);
 	}
 	enforce = new_enforce == CONFIG_TRUE;
@@ -707,12 +843,12 @@ problem_d init_internal_config(void) {
 	Finds the amount of save states.
 
 	The configuration file is first parsed,
-	the default amount is then assumed and
-	the bounds are finally checked.
+	 the default amount is then assumed and
+	 the bounds are finally checked.
 	*/
 	int new_states;
 	if (config_lookup_int(&config, "states", &new_states) == CONFIG_FALSE) {
-		new_states = default_states;
+		new_states = def_states;
 		//warning(STATE_CONFIG_PROBLEM);
 	}
 	if (new_states < 1) {
@@ -725,12 +861,12 @@ problem_d init_internal_config(void) {
 	Finds the height of the terminal.
 
 	The configuration file is first parsed,
-	the default height is then assumed and
-	the bounds are finally checked.
+	 the default height is then assumed and
+	 the bounds are finally checked.
 	*/
 	int new_rows;
 	if (config_lookup_int(&config, "rows", &new_rows) == CONFIG_FALSE) {
-		new_rows = default_rows;
+		new_rows = def_rows;
 		//warning(ROW_CONFIG_PROBLEM);
 	}
 	if (new_rows < exec_rows_min || new_rows > exec_rows_max) {
@@ -743,12 +879,12 @@ problem_d init_internal_config(void) {
 	Finds the width of the terminal.
 
 	The configuration file is first parsed,
-	the default width is then assumed and
-	the bounds are finally checked.
+	 the default width is then assumed and
+	 the bounds are finally checked.
 	*/
 	int new_cols;
 	if (config_lookup_int(&config, "cols", &new_cols) == CONFIG_FALSE) {
-		new_cols = default_cols;
+		new_cols = def_cols;
 		//warning(COL_CONFIG_PROBLEM);
 	}
 	if (new_cols < exec_cols_min || new_cols > exec_cols_max) {
@@ -761,11 +897,11 @@ problem_d init_internal_config(void) {
 	Finds the location of the shared memory segment.
 
 	The configuration file is first parsed and
-	the default location is then guessed.
+	 the default location is then guessed.
 	*/
 	const char * new_shm_path;
 	if (config_lookup_string(&config, "shm", &new_shm_path) == CONFIG_FALSE) {
-		new_shm_path = default_config_path;//default_shm_path;
+		new_shm_path = def_config_path;//def_shm_path;
 		//warning(SHM_CONFIG_PROBLEM);
 	}
 	shm_path = astrrep(new_shm_path, "~", home_path);
@@ -781,7 +917,7 @@ problem_d init_internal_config(void) {
 	**/
 	int new_timestamp;
 	if (config_lookup_int(&config, "timestamp", &new_timestamp) == CONFIG_FALSE) {
-		new_timestamp = default_timestamp;
+		new_timestamp = def_timestamp;
 		//warning(TIMESTAMP_CONFIG_PROBLEM);
 	}
 	timestamp = (time_t )new_timestamp;
@@ -791,7 +927,7 @@ problem_d init_internal_config(void) {
 	**/
 	int new_generations;
 	if (config_lookup_int(&config, "generations", &new_generations) == CONFIG_FALSE) {
-		new_generations = default_generations;
+		new_generations = def_generations;
 		//warning(GENERATIONS_CONFIG_PROBLEM);
 	}
 	generations = (unsigned int )new_generations;
@@ -801,7 +937,7 @@ problem_d init_internal_config(void) {
 	**/
 	int new_sql;
 	if (config_lookup_bool(&config, "sql", &new_sql) == CONFIG_FALSE) {
-		new_sql = default_sql;
+		new_sql = def_sql;
 		//warning(SQL_CONFIG_PROBLEM);
 	}
 	sql = new_sql == CONFIG_TRUE;
@@ -811,7 +947,7 @@ problem_d init_internal_config(void) {
 	**/
 	int new_preserve_states;
 	if (config_lookup_bool(&config, "preserve", &new_preserve_states) == CONFIG_FALSE) {
-		new_preserve_states = default_preserve;
+		new_preserve_states = def_preserve;
 		//warning(PRESERVE_CONFIG_PROBLEM);
 	}
 	preserve = new_preserve_states == CONFIG_TRUE;
@@ -821,7 +957,7 @@ problem_d init_internal_config(void) {
 	**/
 	int new_autoplay;
 	if (config_lookup_bool(&config, "autoplay", &new_autoplay) == CONFIG_FALSE) {
-		new_autoplay = default_autoplay;
+		new_autoplay = def_autoplay;
 		//warning(AUTOPLAY_CONFIG_PROBLEM);
 	}
 	autoplay = new_autoplay == CONFIG_TRUE;
@@ -831,7 +967,7 @@ problem_d init_internal_config(void) {
 	**/
 	int new_monochrome;
 	if (config_lookup_bool(&config, "monochrome", &new_monochrome) == CONFIG_FALSE) {
-		new_monochrome = default_monochrome;
+		new_monochrome = def_monochrome;
 		//warning(MONOCHROME_CONFIG_PROBLEM);
 	}
 	monochrome = new_monochrome == CONFIG_TRUE;
@@ -840,11 +976,11 @@ problem_d init_internal_config(void) {
 	Finds the iterator string.
 
 	The configuration file is first parsed and
-	the default string is then assumed.
+	 the default string is then assumed.
 	*/
 	const char * new_iterator;
 	if (config_lookup_string(&config, "iterator", &new_iterator) == CONFIG_FALSE) {
-		new_iterator = default_iterator;
+		new_iterator = def_iterator;
 		//warning(ITERATOR_CONFIG_PROBLEM);
 	}
 	iterator = malloc(strlen(new_iterator) + 1);
@@ -854,11 +990,11 @@ problem_d init_internal_config(void) {
 	Opens the input stream.
 
 	The configuration file is first parsed and
-	the existence of the input file is then checked.
+	 the existence of the input file is then checked.
 	*/
 	const char * new_input_path;
 	if (config_lookup_string(&config, "input", &new_input_path) == CONFIG_FALSE) {
-		new_input_path = default_input_path;
+		new_input_path = def_input_path;
 		warning(INPUT_CONFIG_PROBLEM);
 	}
 	input_path = astrrep(new_input_path, "~", home_path);
@@ -873,17 +1009,17 @@ problem_d init_internal_config(void) {
 	Opens the output streams.
 
 	The configuration file is first parsed,
-	the existence of the output file is then checked and
-	the index character is then located,
-	if the index character is not found
-		the file is only used for the active save state,
-	otherwise
-		the index character is first replaced with the corresponding save state number and
-		the file is then used for that save state.
+	 the existence of the output file is then checked and
+	 the index character is then located,
+	 if the index character is not found
+	  the file is only used for the active save state,
+	 otherwise
+	  the index character is first replaced with the corresponding save state number and
+	  the file is then used for that save state.
 	*/
 	const char * new_output_path;
 	if (config_lookup_string(&config, "output", &new_output_path) == CONFIG_FALSE) {
-		new_output_path = default_output_path;
+		new_output_path = def_output_path;
 		warning(OUTPUT_CONFIG_PROBLEM);
 	}
 	char * const output_path = astrrep(new_output_path, "~", home_path);
@@ -897,7 +1033,6 @@ problem_d init_internal_config(void) {
 			const size_t size = intlen(state) + 1;
 			char * const iterand = malloc(size);
 			if (iterand == NULL) {
-				output_paths = NULL;
 				return error(MALLOC_PROBLEM);
 			}
 			else {
@@ -919,13 +1054,14 @@ problem_d init_internal_config(void) {
 	Opens the log streams.
 
 	The configuration file is first parsed,
-	the existence of the log file is then checked,
-	the log file is then created and
-	the log stream is finally opened.
+	 the existence of the log file is then checked,
+	 the uniqueness is then checked,
+	 the log file is then created and
+	 the log stream is finally opened.
 	*/
 	const char * new_error_path;
 	if (config_lookup_string(&config, "error_log", &new_error_path) == CONFIG_FALSE) {
-		new_error_path = default_error_stream;
+		new_error_path = def_error_stream;
 		warning(ERROR_CONFIG_PROBLEM);
 	}
 	char * const error_path = astrrep(new_error_path, "~", home_path);
@@ -945,7 +1081,7 @@ problem_d init_internal_config(void) {
 
 	const char * new_warning_path;
 	if (config_lookup_string(&config, "warning_log", &new_warning_path) == CONFIG_FALSE) {
-		new_warning_path = default_warning_stream;
+		new_warning_path = def_warning_stream;
 		warning(ERROR_CONFIG_PROBLEM);
 	}
 	char * const warning_path = astrrep(new_warning_path, "~", home_path);
@@ -971,7 +1107,7 @@ problem_d init_internal_config(void) {
 
 	const char * new_note_path;
 	if (config_lookup_string(&config, "note_log", &new_note_path) == CONFIG_FALSE) {
-		new_note_path = default_note_stream;
+		new_note_path = def_note_stream;
 		warning(ERROR_CONFIG_PROBLEM);
 	}
 	char * const note_path = astrrep(new_note_path, "~", home_path);
@@ -1001,7 +1137,7 @@ problem_d init_internal_config(void) {
 
 	const char * new_call_path;
 	if (config_lookup_string(&config, "call_log", &new_call_path) == CONFIG_FALSE) {
-		new_call_path = default_call_stream;
+		new_call_path = def_call_stream;
 		warning(ERROR_CONFIG_PROBLEM);
 	}
 	char * const call_path = astrrep(new_call_path, "~", home_path);
@@ -1049,98 +1185,105 @@ problem_d init_internal_config(void) {
 	**/
 	int new_save_key;
 	if (config_lookup_int(&config, "save_key", &new_save_key) == CONFIG_FALSE) {
-		new_save_key = default_save_key;
+		new_save_key = def_save_key;
 		//warning(KEY_CONFIG_PROBLEM);
 	}
 	save_key = new_save_key;
 
 	int new_load_key;
 	if (config_lookup_int(&config, "load_key", &new_load_key) == CONFIG_FALSE) {
-		new_load_key = default_load_key;
+		new_load_key = def_load_key;
 		//warning(KEY_CONFIG_PROBLEM);
 	}
 	load_key = new_load_key;
 
 	int new_state_key;
 	if (config_lookup_int(&config, "state_key", &new_state_key) == CONFIG_FALSE) {
-		new_state_key = default_state_key;
+		new_state_key = def_state_key;
 		//warning(KEY_CONFIG_PROBLEM);
 	}
 	state_key = new_state_key;
 
 	int new_unstate_key;
 	if (config_lookup_int(&config, "unstate_key", &new_unstate_key) == CONFIG_FALSE) {
-		new_unstate_key = default_unstate_key;
+		new_unstate_key = def_unstate_key;
 		//warning(KEY_CONFIG_PROBLEM);
 	}
 	unstate_key = new_unstate_key;
 
 	int new_duration_key;
 	if (config_lookup_int(&config, "duration_key", &new_duration_key) == CONFIG_FALSE) {
-		new_duration_key = default_duration_key;
+		new_duration_key = def_duration_key;
 		//warning(KEY_CONFIG_PROBLEM);
 	}
 	duration_key = new_duration_key;
 
 	int new_unduration_key;
 	if (config_lookup_int(&config, "unduration_key", &new_unduration_key) == CONFIG_FALSE) {
-		new_unduration_key = default_unduration_key;
+		new_unduration_key = def_unduration_key;
 		//warning(KEY_CONFIG_PROBLEM);
 	}
 	unduration_key = new_unduration_key;
 
 	int new_time_key;
 	if (config_lookup_int(&config, "time_key", &new_time_key) == CONFIG_FALSE) {
-		new_time_key = default_time_key;
+		new_time_key = def_time_key;
 		//warning(KEY_CONFIG_PROBLEM);
 	}
 	time_key = new_time_key;
 
 	int new_untime_key;
 	if (config_lookup_int(&config, "untime_key", &new_untime_key) == CONFIG_FALSE) {
-		new_untime_key = default_untime_key;
+		new_untime_key = def_untime_key;
 		//warning(KEY_CONFIG_PROBLEM);
 	}
 	untime_key = new_untime_key;
 
 	int new_menu_key;
 	if (config_lookup_int(&config, "menu_key", &new_menu_key) == CONFIG_FALSE) {
-		new_menu_key = default_menu_key;
+		new_menu_key = def_menu_key;
 		//warning(KEY_CONFIG_PROBLEM);
 	}
 	menu_key = new_menu_key;
 
+	int new_info_key;
+	if (config_lookup_int(&config, "info_key", &new_info_key) == CONFIG_FALSE) {
+		new_info_key = def_info_key;
+		//warning(KEY_CONFIG_PROBLEM);
+	}
+	info_key = new_info_key;
+
 	int new_condense_key;
 	if (config_lookup_int(&config, "condense_key", &new_condense_key) == CONFIG_FALSE) {
-		new_condense_key = default_condense_key;
+		new_condense_key = def_condense_key;
 		//warning(KEY_CONFIG_PROBLEM);
 	}
 	condense_key = new_condense_key;
 
 	int new_hide_key;
 	if (config_lookup_int(&config, "hide_key", &new_hide_key) == CONFIG_FALSE) {
-		new_hide_key = default_hide_key;
+		new_hide_key = def_hide_key;
 		//warning(KEY_CONFIG_PROBLEM);
 	}
 	hide_key = new_hide_key;
 
 	int new_play_key;
 	if (config_lookup_int(&config, "play_key", &new_play_key) == CONFIG_FALSE) {
-		new_play_key = default_play_key;
+		new_play_key = def_play_key;
 		//warning(KEY_CONFIG_PROBLEM);
 	}
 	play_key = new_play_key;
 
 	int new_stop_key;
 	if (config_lookup_int(&config, "stop_key", &new_stop_key) == CONFIG_FALSE) {
-		new_stop_key = default_stop_key;
+		new_stop_key = def_stop_key;
 		//warning(KEY_CONFIG_PROBLEM);
 	}
 	stop_key = new_stop_key;
 
 	int new_quit_key;
 	if (config_lookup_int(&config, "quit_key", &new_quit_key) == CONFIG_FALSE) {
-		new_quit_key = default_quit_key;
+		new_quit_key = def_quit_key;
 		//warning(KEY_CONFIG_PROBLEM);
 	}
 	quit_key = new_quit_key;

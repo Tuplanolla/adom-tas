@@ -16,8 +16,9 @@ Launches the executable.
 #include "util.h"//intern
 #include "prob.h"//PROPAGATE*, *_PROBLEM
 #include "log.h"//error, warning, note
-#include "exec.h"//exec_*
+#include "def.h"//def_*
 #include "cfg.h"//*
+#include "exec.h"//exec_*
 
 /**
 Prepares and launches the executable.
@@ -32,7 +33,7 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	/*
 	Initializes the configuration variables.
 	*/
-	PROPAGATE(init_external_config());
+	PROPAGATE(init_main_config());
 
 	/*
 	Enforces the default configuration.
@@ -45,8 +46,8 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 			error(CONFIG_OPEN_PROBLEM);
 		}
 		else {
-			const size_t size = strlen(exec_config) + 1;
-			if (fwrite(exec_config, size, 1, stream) != 1) {
+			const size_t size = strlen(def_exec_config) + 1;
+			if (fwrite(def_exec_config, size, 1, stream) != 1) {
 				error(CONFIG_WRITE_PROBLEM);
 			}
 			if (fclose(stream) == EOF) {
@@ -78,8 +79,8 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 			error(KEYBIND_OPEN_PROBLEM);
 		}
 		else {
-			const size_t size = strlen(exec_keybind) + 1;
-			if (fwrite(exec_keybind, size, 1, stream) != 1) {
+			const size_t size = strlen(def_exec_keybind) + 1;
+			if (fwrite(def_exec_keybind, size, 1, stream) != 1) {
 				error(KEYBIND_WRITE_PROBLEM);
 			}
 			if (fclose(stream) == EOF) {
@@ -143,10 +144,10 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	/*
 	Enables preloading libraries.
 	*/
-	if (loader_path == NULL) {
+	if (lib_path == NULL) {
 		return error(NULL_PROBLEM);
 	}
-	else if (setenv("LD_PRELOAD", loader_path, TRUE) == -1) {
+	else if (setenv("LD_PRELOAD", lib_path, TRUE) == -1) {
 		return error(LD_PRELOAD_SETENV_PROBLEM);
 	}
 
@@ -172,9 +173,9 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	Never returns.
 
 	An <code>exec*</code> call either
-		replaces this process with the executable or
-		fails and returns the appropriate error code
-			so this statement is never reached.
+	 replaces this process with the executable or
+	 fails and returns the appropriate error code
+	  so this statement is never reached.
 	*/
 	return error(ASSERT_PROBLEM);
 }

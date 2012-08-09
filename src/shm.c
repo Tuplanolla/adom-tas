@@ -1,10 +1,10 @@
 /**
 Creates,
-	initializes,
-	attaches,
-	detaches and
-	removes
-		the shared memory segment.
+ initializes,
+ attaches,
+ detaches and
+ removes
+  the shared memory segment.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
@@ -125,6 +125,8 @@ problem_d uninit_shm(void) {
 Initializes the shared memory segment.
 
 The segment needs to be attached before use.
+The current implementation doesn't require it, but
+ future versions might.
 
 @return The error code.
 **/

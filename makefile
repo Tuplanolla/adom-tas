@@ -1,8 +1,9 @@
-RM = /bin/rm -f
-MKDIR = /bin/mkdir -p
-CP = /bin/cp -u
-SIZE = 32767
-CC = /usr/bin/gcc -std=gnu99 -O3\
+RM=rm -f
+MKDIR=mkdir -p
+CP=cp -u
+CC=gcc
+SIZE=32767
+CFLAGS=-std=gnu99 -O3\
 		-ldl -lrt -lconfig -lncurses\
 		-g -save-temps=obj -fverbose-asm\
 		-Wall -Wextra
@@ -13,15 +14,15 @@ CC = /usr/bin/gcc -std=gnu99 -O3\
 #-lncurses for curses.h
 #-lconfig for libconfig.h
 #-fverbose-asm for -save-temps=obj
-BIN = bin
-OBJ = obj
-SRC = src
-META = src/meta
-NAME = adom-tas
-MAIN = $(BIN)/$(NAME)
-LIB = $(BIN)/$(NAME).so
-MAIN_DEP = $(OBJ)/main.o $(OBJ)/cfg.o $(OBJ)/def.o $(OBJ)/exec.o $(OBJ)/log.o $(OBJ)/prob.o $(OBJ)/util.o
-LIB_DEP = $(OBJ)/asm.o $(OBJ)/exec.o $(OBJ)/gui.o $(OBJ)/put.o $(OBJ)/shm.o $(OBJ)/cfg.o $(OBJ)/lib.o $(OBJ)/meta.o $(OBJ)/rec.o $(OBJ)/def.o $(OBJ)/log.o $(OBJ)/prob.o $(OBJ)/util.o# $(OBJ)/play.o# $(OBJ)/roll.o
+BIN=bin
+OBJ=obj
+SRC=src
+META=src/meta
+NAME=adom-tas
+MAIN=$(BIN)/$(NAME)
+LIB=$(BIN)/$(NAME).so
+MAIN_DEP=$(OBJ)/main.o $(OBJ)/cfg.o $(OBJ)/def.o $(OBJ)/exec.o $(OBJ)/log.o $(OBJ)/prob.o $(OBJ)/util.o
+LIB_DEP=$(OBJ)/asm.o $(OBJ)/exec.o $(OBJ)/gui.o $(OBJ)/put.o $(OBJ)/shm.o $(OBJ)/cfg.o $(OBJ)/lib.o $(OBJ)/meta.o $(OBJ)/rec.o $(OBJ)/def.o $(OBJ)/log.o $(OBJ)/prob.o $(OBJ)/util.o# $(OBJ)/play.o# $(OBJ)/roll.o
 
 all: $(LIB) $(MAIN) sh
 
@@ -40,14 +41,18 @@ sh:
 	$(CP) $(SRC)/*.sh $(BIN)
 
 meta:
-	$(CC) $(SRC)/meta.c -o $(OBJ)/meta
+	$(CC) $(CFLAGS) $(SRC)/meta.c -o $(OBJ)/meta
 	$(OBJ)/meta key_code >$(META)/key_code.c
 
 $(OBJ)/%.o: $(SRC)/%.c
-	$(CC) -fpic -c -o $@ $<
+	$(CC) $(CFLAGS) -fpic -c -o $@ $<
+#	$(CC) $(CFLAGS) -MM -fpic -c $*.c > $*.d
+	
+#-include $(MAIN_DEP:.o=.d)
+#-include $(LIB_DEP:.o=.d)
 
 $(LIB): dirs meta $(LIB_DEP)
-	$(CC) -fpic -shared -o $(LIB) $(LIB_DEP)
+	$(CC) $(CFLAGS) -fpic -shared -o $(LIB) $(LIB_DEP)
 
 $(MAIN): dirs $(MAIN_DEP) $(LIB)
-	$(CC) -o $(MAIN) $(MAIN_DEP)
+	$(CC) $(CFLAGS) -o $(MAIN) $(MAIN_DEP)

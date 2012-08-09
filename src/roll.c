@@ -10,6 +10,11 @@ Rolls characters.
 
 #include "util.h"
 
+/**
+The type identifier used in catalog file headers.
+**/
+intern const char catalog_type[4] = "TAC";
+
 int rollstage = 0;
 bool rollasked[51];
 char answers[51];

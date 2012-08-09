@@ -27,20 +27,6 @@ TODO sort
 #include "exec.h"
 
 /**
-The amount of color pairs initialized (including erroneously initialized pairs).
-
-The value is set by <code>init_pair</code>.
-**/
-intern short int pairs = 0;
-
-/**
-The actual turn count without negative turns.
-
-The value is set by <code>wgetch</code>.
-**/
-intern long int turns = 0;
-
-/**
 The size of the executable.
 **/
 intern const size_t exec_size = 2452608;
@@ -583,83 +569,18 @@ intern const char * const exec_severe_strainedness_string = "Very Strained";
 intern const char * const exec_strainedness_string = "Strained";
 intern const char * const exec_burdenedness_string = "Burdened";//?
 
-intern const char * const exec_blindness_abbreviation = "Bi";
-intern const char * const exec_stunnedness_abbreviation = "Su";
-intern const char * const exec_confusion_abbreviation = "Cn";
-intern const char * const exec_slowedness_abbreviation = "Sw";
-intern const char * const exec_paralyzation_abbreviation = "Pa";
-intern const char * const exec_sickness_abbreviation = "Si";
-intern const char * const exec_deafness_abbreviation = "Da";
-intern const char * const exec_muteness_abbreviation = "Mu";
-intern const char * const exec_sleepiness_abbreviation = "Se";
-intern const char * const exec_blessedness_abbreviation = "Bs";
-intern const char * const exec_invisibility_abbreviation = "In";
-intern const char * const exec_drunkenness_abbreviation = "Dr";
-intern const char * const exec_severe_berserking_abbreviation = "EB";//naked
-intern const char * const exec_berserking_abbreviation = "Be";//= 0
-intern const char * const exec_severe_aggressiveness_abbreviation = "VA";
-intern const char * const exec_aggressiveness_abbreviation = "Ag";
-intern const char * const exec_defensiveness_abbreviation = "Df";
-intern const char * const exec_severe_defensiveness_abbreviation = "VD";
-intern const char * const exec_cowardice_abbreviation = "Cw";//= 6
-intern const char * const exec_severe_cowardice_abbreviation = "EC";//low hp
-intern const char * const exec_fatal_starvation_abbreviation = "Sd";//< 0
-intern const char * const exec_starvation_abbreviation = "Sn";//< 50
-intern const char * const exec_severe_hunger_abbreviation = "VH";//< 100
-intern const char * const exec_hunger_abbreviation = "Hu";//< 200
-intern const char * const exec_satiety_abbreviation = "Sa";//> 1500 && <= 2500
-intern const char * const exec_bloatedness_abbreviation = "Bo";//> 2500
-intern const char * const exec_fatal_bloatedness_abbreviation = "Of";
-intern const char * const exec_intrinsic_fire_resistance_abbreviation = "FR";
-intern const char * const exec_intrinsic_poison_resistance_abbreviation = "PR";
-intern const char * const exec_intrinsic_cold_resistance_abbreviation = "CR";
-intern const char * const exec_intrinsic_acid_resistance_abbreviation = "AR";
-intern const char * const exec_intrinsic_luck_abbreviation = "Lu";
-intern const char * const exec_intrinsic_fate_smile_abbreviation = "FS";
-intern const char * const exec_intrinsic_curse_abbreviation = "Cu";
-intern const char * const exec_intrinsic_sleep_resistance_abbreviation = "lR";
-intern const char * const exec_intrinsic_petrification_resistance_abbreviation = "eR";
-intern const char * const exec_intrinsic_doom_abbreviation = "Do";
-intern const char * const exec_intrinsic_teleportitis_abbreviation = "Te";
-intern const char * const exec_intrinsic_invisibility_abbreviation = "PE";
-intern const char * const exec_intrinsic_teleport_control_abbreviation = "TC";
-intern const char * const exec_intrinsic_stun_resistance_abbreviation = "tR";
-intern const char * const exec_intrinsic_death_ray_resistance_abbreviation = "DR";
-intern const char * const exec_intrinsic_paralyzation_resistance_abbreviation = "aR";
-intern const char * const exec_intrinsic_shock_resistance_abbreviation = "SR";
-intern const char * const exec_intrinsic_invisible_sight_abbreviation = "IS";
-intern const char * const exec_intrinsic_fire_immunity_abbreviation = "FI";
-intern const char * const exec_intrinsic_acid_immunity_abbreviation = "AI";
-intern const char * const exec_intrinsic_cold_immunity_abbreviation = "CI";
-intern const char * const exec_intrinsic_shock_immunity_abbreviation = "SI";
-intern const char * const exec_intrinsic_water_breathing_abbreviation = "WB";
-intern const char * const exec_intrinsic_holiness_abbreviation = "Ho";
-intern const char * const exec_intrinsic_confusion_resistance_abbreviation = "oR";
-intern const char * const exec_severe_chaoticness_abbreviation = "EC";//<= -5000
-intern const char * const exec_chaoticness_abbreviation = "Ch";//< -1250
-intern const char * const exec_chaotic_neutrality_abbreviation = "CN";//< -125
-intern const char * const exec_neutrality_abbreviation = "Ne";//>= 125 && <= -125
-intern const char * const exec_lawful_neutrality_abbreviation = "LN";//> 125
-intern const char * const exec_lawfulness_abbreviation = "La";//> 1250
-intern const char * const exec_severe_lawfulness_abbreviation = "EL";//>= 5000
-intern const char * const exec_no_corruption_abbreviation = "Un";//< 1000
-intern const char * const exec_corruption_abbreviation = "Co";//< 17000
-intern const char * const exec_severe_corruption_abbreviation = "VC";//>= 17000
-intern const char * const exec_strength_of_atlas_abbreviation = "WA";
-intern const char * const exec_farsight_abbreviation = "WF";
-intern const char * const exec_severe_fastness_abbreviation = "VF";//>= 150 plus starsign
-intern const char * const exec_fastness_abbreviation = "Fa";//>= 105
-intern const char * const exec_slowness_abbreviation = "Sl";//<= 95
-intern const char * const exec_severe_slowness_abbreviation = "Vl";//>= 65
+/**
+The amount of color pairs initialized (including erroneously initialized pairs).
 
-intern const char * const exec_poisonedness_abbreviation = "Po";//?
-intern const char * const exec_severe_bleeding_abbreviation = "SB";
-intern const char * const exec_bleeding_abbreviation = "Bl";//?
-intern const char * const exec_fatal_overburdenedness_abbreviation = "Cr";
-intern const char * const exec_overburdenedness_abbreviation = "Ob";
-intern const char * const exec_severe_strainedness_abbreviation = "VS";
-intern const char * const exec_strainedness_abbreviation = "St";
-intern const char * const exec_burdenedness_abbreviation = "Bu";//?
+The value is set by <code>init_pair</code>.
+**/
+intern short int pairs = 0;
+/**
+The actual turn count without negative turns.
+
+The value is set by <code>wgetch</code>.
+**/
+intern long int turns = 0;
 
 /**
 A pointer to the turn count.
