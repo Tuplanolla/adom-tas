@@ -1,11 +1,6 @@
 /**
 Does something unnecessary.
 
-Don't forget:
-<pre>
-napms(100);
-</pre>
-
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef LIB_C
@@ -41,7 +36,6 @@ napms(100);
 #include "rec.h"
 #include "put.h"
 #include "lib.h"
-#include "fork.h"
 #include "log.h"
 #include "cfg.h"
 #include "play.h"
@@ -84,6 +78,10 @@ intern bool initialized = FALSE;
 Whether a menu is open and inputs are blocked.
 **/
 intern bool inactive = FALSE;
+/**
+Which window is open.
+**/
+intern bool menuinfo = FALSE;
 /**
 Whether the interface is condensed.
 **/
@@ -349,7 +347,7 @@ problem_d init_fork(void) {
 			signal(SIGCHLD, SIG_IGN);
 
 			while (*shm.mode != HAD_ENOUGH) {
-				napms(TIMER_RATE / frame_rate);
+				napms(NAP_RESOLUTION / frame_rate);
 			}
 			/*do {
 				bool done_quitting = TRUE;
@@ -401,7 +399,7 @@ problem_d save(const int state) {
 					if (shm.pids[0] == pid) break;//someone activated this slot
 					if (shm.pids[state] != pid) partial_uninit(NO_PROBLEM);//someone took this slot
 					if (*shm.mode == HAD_ENOUGH) partial_uninit(NO_PROBLEM);//everyone is shutting down
-					napms(1000 / frame_rate);
+					napms(NAP_RESOLUTION / frame_rate);
 				}
 
 				/*

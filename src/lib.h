@@ -42,6 +42,7 @@ extern endwin_f um_endwin;
 
 extern bool in_game;
 extern bool inactive;
+extern bool menuinfo;
 extern bool condensed;
 extern bool hidden;
 extern bool playing;

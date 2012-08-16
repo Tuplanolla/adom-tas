@@ -1,12 +1,12 @@
 /**
 Provides information about
-		the files,
-		the memory and
-		the behavior and
-	emulates
-		the random number generator and
-		the key number interpreter
-			of the executable.
+  the files,
+  the memory and
+  the behavior and
+ emulates
+  the random number generator and
+  the key number interpreter
+   of the executable.
 
 TODO sort
 
@@ -610,20 +610,20 @@ intern unsigned char * const exec_arc4_j = (void * )0x082adb41;
 
 /**
 The amount of random number generator calls measured
-	from seeding the random number generator
-	to its first cyclic point.
+ from seeding the random number generator
+ to its first cyclic point.
 **/
 intern const unsigned int exec_arc4_calls = 1165;
 /**
 The amount of random number generator calls
-	from the splash screen or the main menu
-	to loading a game automatically.
+ from the splash screen or the main menu
+ to loading a game automatically.
 **/
 intern const unsigned int exec_arc4_calls_automatic_load = 205;
 /**
 The amount of random number generator calls measured
-	from the splash screen or the main menu
-	to loading a game manually (from a list of one game).
+ from the splash screen or the main menu
+ to loading a game manually (from a list of one game).
 **/
 intern const unsigned int exec_arc4_calls_manual_load = 409;
 
@@ -739,9 +739,9 @@ unsigned long int barc4(const unsigned long int s) {
 
 /**
 Generates and injects
-	the counter c,
-	the state S and
-	the iterators i and j.
+ the counter c,
+ the state S and
+ the iterators i and j.
 
 @param k The seed k to use.
 @param calls The amount of calls to do.

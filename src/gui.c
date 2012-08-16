@@ -29,10 +29,21 @@ The amount of colors.
 **/
 const size_t colors = sizeof interface_colors / sizeof *interface_colors;
 
+chtype attr;
+chtype eattr;
+chtype ch;
+chtype lrs;
+chtype tbs;
+chtype tblr;
+
 /**
 The status bar window.
 **/
 WINDOW * status_win = NULL;
+/**
+The information window.
+**/
+WINDOW * info_win = NULL;
 /**
 The save state menu window.
 **/
@@ -55,19 +66,22 @@ Uninitializes the interface.
 **/
 problem_d uninit_gui(void) {
 	if (delwin(status_win)) {
-		return error(DELWIN_PROBLEM);
+		error(DELWIN_PROBLEM);
+	}
+	if (delwin(info_win)) {
+		error(DELWIN_PROBLEM);
 	}
 	if (delwin(menu_win)) {
-		return error(DELWIN_PROBLEM);
+		error(DELWIN_PROBLEM);
 	}
 	if (delwin(menu_chs_win)) {
-		return error(DELWIN_PROBLEM);
+		error(DELWIN_PROBLEM);
 	}
 	if (delwin(menu_states_win)) {
-		return error(DELWIN_PROBLEM);
+		error(DELWIN_PROBLEM);
 	}
 	if (delwin(overlay_win)) {
-		return error(DELWIN_PROBLEM);
+		error(DELWIN_PROBLEM);
 	}
 
 	return NO_PROBLEM;
@@ -106,6 +120,10 @@ problem_d init_gui(void) {
 	if (status_win == NULL) {
 		return error(NEWWIN_PROBLEM);
 	}
+	info_win = newwin(rows, cols, 0, 0);
+	if (info_win == NULL) {
+		return error(NEWWIN_PROBLEM);
+	}
 	const int nlines = rows / 2;
 	const int ncols = cols / 2;
 	const int begin_y = rows / 4 - 1;
@@ -126,6 +144,16 @@ problem_d init_gui(void) {
 	if (overlay_win == NULL) {
 		return error(NEWWIN_PROBLEM);
 	}
+
+	/*
+	Initializes the line drawing characters.
+	*/
+	attr = COLOR_PAIR(pairs + colors);
+	eattr = COLOR_PAIR(pairs + colors + 1);
+	ch = attr | ' ';
+	lrs = eattr | '|';
+	tbs = eattr | '-';
+	tblr = eattr | '+';
 
 	return NO_PROBLEM;
 }
@@ -191,13 +219,6 @@ Draws the save state menu in the middle of a window.
 @return The error code.
 **/
 problem_d draw_menu(void) {
-	const chtype attr = COLOR_PAIR(pairs + colors);
-	const chtype eattr = COLOR_PAIR(pairs + colors + 1);//TODO improve
-	const chtype ch = attr | ' ';
-	const chtype lrs = eattr | '|';
-	const chtype tbs = eattr | '-';
-	const chtype tblr = eattr | '+';
-
 	/*
 	Draws the menu window.
 	*/
@@ -295,9 +316,7 @@ problem_d draw_menu(void) {
 			}
 			else {
 				snprintf(buf, size, "%s%u%s",
-						interface_left,
-						state,
-						interface_right);
+						interface_left, state, interface_right);
 				mvwaddstr(menu_states_win, row, col, buf);
 				free(buf);
 			}
@@ -330,6 +349,31 @@ problem_d draw_menu(void) {
 	wrefresh(menu_win);
 	wrefresh(menu_chs_win);
 	wrefresh(menu_states_win);
+
+	return NO_PROBLEM;
+}
+
+/**
+Draws the save state menu in the middle of a window.
+
+@return The error code.
+**/
+problem_d draw_info(void) {
+	/*
+	Draws the info window.
+	*/
+	wclear(info_win);
+	wbkgd(info_win, ch);
+	wborder(info_win, lrs, lrs, tbs, tbs, tblr, tblr, tblr, tblr);
+
+	int y, x;
+	getmaxyx(info_win, y, x);
+	mvwaddstr(info_win, y / 2, x / 2, "Yes!");
+
+	/*
+	Refreshes the info window.
+	*/
+	wrefresh(info_win);
 
 	return NO_PROBLEM;
 }
@@ -394,21 +438,22 @@ problem_d draw_overlay(WINDOW * const win) {
 		}
 	}
 	const exec_map_monster_d * monster = *exec_monsters;
-	if (monster == NULL) goto end;
-	while (monster->next != NULL) {
-		monster = monster->next;
-		if (monster->monster != NULL) {
-			const exec_monster_data_d m = exec_monster_data[monster->monster->type];
-			attr_t attr = COLOR_PAIR(m.color);
-			if (m.color >= 8) {
-				attr |= A_BOLD;
+	if (monster != NULL) {
+		while (monster->next != NULL) {
+			monster = monster->next;
+			if (monster->monster != NULL) {
+				const exec_monster_data_d m = exec_monster_data[monster->monster->type];
+				attr_t attr = COLOR_PAIR(m.color);
+				if (m.color >= 8) {
+					attr |= A_BOLD;
+				}
+				wattron(overlay_win, attr);
+				mvwaddch(overlay_win, monster->monster->y, monster->monster->x, (chtype )m.character);
+				wattroff(overlay_win, attr);
 			}
-			wattron(overlay_win, attr);
-			mvwaddch(overlay_win, monster->monster->y, monster->monster->x, (chtype )m.character);
-			wattroff(overlay_win, attr);
 		}
 	}
-	end: wrefresh(overlay_win);
+	wrefresh(overlay_win);
 
 	return NO_PROBLEM;
 }
@@ -420,7 +465,12 @@ problem_d draw_gui(WINDOW * const win) {
 		}
 		PROPAGATE(draw_status(win));
 		if (inactive) {
-			PROPAGATE(draw_menu());
+			if (menuinfo) {
+				PROPAGATE(draw_menu());
+			}
+			else {
+				PROPAGATE(draw_info());
+			}
 		}
 	}
 
