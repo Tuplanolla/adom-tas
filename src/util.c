@@ -3,9 +3,6 @@ Provides general-purpose functions.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef UTIL_C
-#define UTIL_C
-
 #include <stdlib.h>//*alloc, free, size_t, NULL
 #include <stdio.h>//*open, *close, *read, *write, *print*, std*, FILE
 #include <string.h>//str*
@@ -183,5 +180,3 @@ FILE * stdstr(const char * const str) {
 	if (strcmp(str, "stderr") == 0) return stderr;
 	return NULL;
 }
-
-#endif

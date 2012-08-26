@@ -1,16 +1,19 @@
 /**
 Handles errors.
 
-Errors are major problems.
-Warnings are minor problems.
-Notes are not problems.
+Errors are major problems,
+ warnings are minor problems and
+ notices are not problems.
+The categories are loosely based on RFC 5424.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef PROB_C
-#define PROB_C
-
 #include "prob.h"//problem_d, *_PROBLEM
+
+/**
+The previous error code.
+**/
+int probno;
 
 /**
 Converts an error code to an error message.
@@ -117,10 +120,10 @@ const char * problem_message(const problem_d code) {
 		case WARNING_STAT_PROBLEM: return "Accessing the warning log failed.";
 		case WARNING_OPEN_PROBLEM: return "Opening the warning log for writing failed.";
 		case WARNING_CLOSE_PROBLEM: return "Closing the warning log file failed.";
-		case NOTE_CONFIG_PROBLEM: return "Finding the location of the note log in the configuration file failed. The default value will be assumed.";
-		case NOTE_STAT_PROBLEM: return "Accessing the note log failed.";
-		case NOTE_OPEN_PROBLEM: return "Opening the note log for writing failed.";
-		case NOTE_CLOSE_PROBLEM: return "Closing the note log file failed.";
+		case NOTE_CONFIG_PROBLEM: return "Finding the location of the notice log in the configuration file failed. The default value will be assumed.";
+		case NOTE_STAT_PROBLEM: return "Accessing the notice log failed.";
+		case NOTE_OPEN_PROBLEM: return "Opening the notice log for writing failed.";
+		case NOTE_CLOSE_PROBLEM: return "Closing the notice log file failed.";
 		case CALL_CONFIG_PROBLEM: return "Finding the location of the call log in the configuration file failed. The default value will be assumed.";
 		case CALL_STAT_PROBLEM: return "Accessing the call log failed.";
 		case CALL_OPEN_PROBLEM: return "Opening the call log for writing failed.";
@@ -132,6 +135,7 @@ const char * problem_message(const problem_d code) {
 		*/
 		case SHM_MALLOC_PROBLEM: return "Allocating shared memory failed.";
 		case SHM_KEY_PROBLEM: return "Generating a shared memory key failed.";
+		case SHM_EXCL_PROBLEM: return "The shared memory segment already exists.";
 		case SHM_GET_PROBLEM: return "Finding the shared memory segment failed.";
 		case SHM_ATTACH_PROBLEM: return "Attaching the shared memory segment failed.";
 		case SHM_DETACH_PROBLEM: return "Detaching the shared memory segment failed.";
@@ -180,5 +184,3 @@ const char * problem_message(const problem_d code) {
 		default: return "Converting an error code to an error message failed.";
 	}
 }
-
-#endif

@@ -34,6 +34,15 @@ An annotation to use with an <code>extern</code> variable.
 #define intern
 
 /**
+Marks the beginning of a multi-statement macro.
+**/
+#define MACRO_BEGIN do {
+/**
+Marks the end of a multi-statement macro.
+**/
+#define MACRO_END } while (FALSE)
+
+/**
 Touches a variable.
 
 Used to suppress warnings relating to unused parameters.
@@ -171,12 +180,17 @@ Swaps two variables.
 @param y The second variable.
 @return An argument list of the bits.
 **/
-#define SWAP(x, y) do {\
-		unsigned char z[sizeof (x) == sizeof (y) ? sizeof (x) : 0];\
-		memcpy(z, &(y), sizeof (x));\
+#define SWAP(x, y) MACRO_BEGIN\
+		unsigned char SWAP_z[sizeof (x) == sizeof (y) ? sizeof (x) : 0];\
+		memcpy(SWAP_z, &(y), sizeof (x));\
 		memcpy(&(y), &(x), sizeof (x));\
-		memcpy(&(x), z, sizeof (x));\
-	} while (FALSE)
+		memcpy(&(x), SWAP_z, sizeof (x));\
+	MACRO_END
+
+/**
+The missing permission modifier for the System V's SHM library.
+**/
+#define SHM_RW 0
 
 /**
 The Shift modifier for the New Cursor Optimization library.

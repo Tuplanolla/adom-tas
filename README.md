@@ -16,7 +16,7 @@ This readme is incomplete.
 This project is in active development and
  the first version was finished by 2012-07-01,
  the first working binaries were built 2012-07-02 and
- the rest should be done by 2012-08-01.
+ the rest should be done by 2012-09-01.
 
 ## Motivation
 

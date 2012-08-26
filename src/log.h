@@ -11,13 +11,11 @@
 #include "gnu.h"//__*__
 #include "prob.h"//problem_d
 
-#define PRINTF printf
-
-int vfprintfl(FILE * stream, const char * fmt, va_list ap) __attribute__ ((format(PRINTF, 2, 0)));
-int fprintfl(FILE * stream, const char * fmt, ...) __attribute__ ((format(PRINTF, 2, 3)));
-problem_d error(problem_d code);
-problem_d warning(problem_d code);
-problem_d note(problem_d code);
-problem_d call(const char * fmt, ...) __attribute__ ((format(PRINTF, 1, 2)));
+int log_vfprintf(FILE * stream, const char * fmt, va_list ap) __attribute__ ((format(printf, 2, 0)));
+int log_fprintfl(FILE * stream, const char * fmt, ...) __attribute__ ((format(printf, 2, 3)));
+problem_d log_error(problem_d code);
+problem_d log_warning(problem_d code);
+problem_d log_notice(problem_d code);
+int log_call(const char * fmt, ...) __attribute__ ((format(printf, 1, 2)));
 
 #endif

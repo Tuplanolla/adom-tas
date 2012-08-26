@@ -5,9 +5,6 @@ TODO refactor
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef GUI_C
-#define GUI_C
-
 #include <stdlib.h>
 
 #include <curses.h>
@@ -27,7 +24,7 @@ TODO refactor
 /**
 The amount of colors.
 **/
-const size_t colors = sizeof interface_colors / sizeof *interface_colors;
+const size_t colors = sizeof def_interface_colors / sizeof *def_interface_colors;
 
 chtype attr;
 chtype eattr;
@@ -66,22 +63,22 @@ Uninitializes the interface.
 **/
 problem_d uninit_gui(void) {
 	if (delwin(status_win)) {
-		error(DELWIN_PROBLEM);
+		log_error(DELWIN_PROBLEM);
 	}
 	if (delwin(info_win)) {
-		error(DELWIN_PROBLEM);
+		log_error(DELWIN_PROBLEM);
 	}
 	if (delwin(menu_win)) {
-		error(DELWIN_PROBLEM);
+		log_error(DELWIN_PROBLEM);
 	}
 	if (delwin(menu_chs_win)) {
-		error(DELWIN_PROBLEM);
+		log_error(DELWIN_PROBLEM);
 	}
 	if (delwin(menu_states_win)) {
-		error(DELWIN_PROBLEM);
+		log_error(DELWIN_PROBLEM);
 	}
 	if (delwin(overlay_win)) {
-		error(DELWIN_PROBLEM);
+		log_error(DELWIN_PROBLEM);
 	}
 
 	return NO_PROBLEM;
@@ -95,54 +92,54 @@ problem_d init_gui(void) {
 	Initializes the custom color pairs.
 	*/
 	for (size_t color = 0; color < colors; color++) {
-		if (monochrome) {
-			if (um_init_pair(pairs + color, COLOR_BLACK, interface_colors[color]) == ERR) {
-				return error(INIT_PAIR_PROBLEM);
+		if (cfg_monochrome) {
+			if (um_init_pair(pairs + color, COLOR_BLACK, def_interface_colors[color]) == ERR) {
+				return log_error(INIT_PAIR_PROBLEM);
 			}
 		}
 		else {
 			if (um_init_pair(pairs + color, COLOR_WHITE, COLOR_BLACK) == ERR) {
-				return error(INIT_PAIR_PROBLEM);
+				return log_error(INIT_PAIR_PROBLEM);
 			}
 		}
 	}
 	if (um_init_pair(pairs + colors, COLOR_BLACK, COLOR_WHITE) == ERR) {
-		return error(INIT_PAIR_PROBLEM);
+		return log_error(INIT_PAIR_PROBLEM);
 	}
 	if (um_init_pair(pairs + colors + 1, COLOR_WHITE, COLOR_WHITE) == ERR) {
-		return error(INIT_PAIR_PROBLEM);
+		return log_error(INIT_PAIR_PROBLEM);
 	}
 
 	/*
 	Creates the windows.
 	*/
-	status_win = newwin(1, cols, rows - 1, 0);
+	status_win = newwin(1, cfg_cols, cfg_rows - 1, 0);
 	if (status_win == NULL) {
-		return error(NEWWIN_PROBLEM);
+		return log_error(NEWWIN_PROBLEM);
 	}
-	info_win = newwin(rows, cols, 0, 0);
+	info_win = newwin(cfg_rows, cfg_cols, 0, 0);
 	if (info_win == NULL) {
-		return error(NEWWIN_PROBLEM);
+		return log_error(NEWWIN_PROBLEM);
 	}
-	const int nlines = rows / 2;
-	const int ncols = cols / 2;
-	const int begin_y = rows / 4 - 1;
-	const int begin_x = cols / 4;
+	const int nlines = cfg_rows / 2;
+	const int ncols = cfg_cols / 2;
+	const int begin_y = cfg_rows / 4 - 1;
+	const int begin_x = cfg_cols / 4;
 	menu_win = newwin(1 + nlines + 1, 1 + ncols + 1, begin_y - 1, begin_x - 1);
 	if (menu_win == NULL) {
-		return error(NEWWIN_PROBLEM);
+		return log_error(NEWWIN_PROBLEM);
 	}
 	menu_states_win = newwin(3, 1 + ncols + 1, begin_y + nlines, begin_x - 1);
 	if (menu_states_win == NULL) {
-		return error(NEWWIN_PROBLEM);
+		return log_error(NEWWIN_PROBLEM);
 	}
 	menu_chs_win = newwin(nlines, ncols, begin_y, begin_x);
 	if (menu_chs_win == NULL) {
-		return error(NEWWIN_PROBLEM);
+		return log_error(NEWWIN_PROBLEM);
 	}
-	overlay_win = newwin(rows - 5, cols, 2, 0);
+	overlay_win = newwin(cfg_rows - 5, cfg_cols, 2, 0);
 	if (overlay_win == NULL) {
-		return error(NEWWIN_PROBLEM);
+		return log_error(NEWWIN_PROBLEM);
 	}
 
 	/*
@@ -165,23 +162,23 @@ Draws the status bar in the bottom of a window from right to left.
 **/
 problem_d draw_status(WINDOW * const win) {
 	wclear(status_win);
-	const size_t size = cols + 1;
+	const size_t size = cfg_cols + 1;
 	char * const str = malloc(size);
 	if (str == NULL) {
-		return error(MALLOC_PROBLEM);
+		return log_error(MALLOC_PROBLEM);
 	}
 	int left_pos = 0;
 	short int pair = 0;
-	#define draw_status_ADDSTR(format, __GVA_ARGS__...) do {\
+	#define draw_status_ADDSTR(format, __GVA_ARGS__...) MACRO_BEGIN\
 			snprintf(str, size, format, ##__GVA_ARGS__);\
 			wattrset(status_win, COLOR_PAIR(pairs + pair));\
 			pair = (pair + 1) % colors;\
 			mvwaddstr(status_win, 0, left_pos, str);\
 			left_pos += strlen(str) + 1;\
-			if (monochrome) {\
+			if (cfg_monochrome) {\
 				left_pos++;\
 			}\
-		} while (0)
+		MACRO_END
 	char buf[9];
 	winnstr(win, buf, 8);
 	draw_status_ADDSTR(buf);
@@ -203,9 +200,9 @@ problem_d draw_status(WINDOW * const win) {
 	else {
 		draw_status_ADDSTR("D: %u", current_duration / frame_rate);
 	}
-	draw_status_ADDSTR("E: %ld/%ld", (long int )(timestamp - record.timestamp), (long int )timestamp);
+	draw_status_ADDSTR("E: %ld/%ld", (long int )(cfg_timestamp - record.timestamp), (long int )cfg_timestamp);
 	draw_status_ADDSTR("R: 0x%08x", (unsigned int )hash(exec_arc4_s, 0x100));
-	draw_status_ADDSTR("S: %d/%d", current_state, states - 1);
+	draw_status_ADDSTR("S: %d/%d", current_state, cfg_states - 1);
 	free(str);
 
 	wrefresh(status_win);
@@ -239,8 +236,8 @@ problem_d draw_menu(void) {
 	int row = 1;
 	int left_edge = 0;
 	int right_edge = x - 1;
-	left_edge += strlen(interface_left_more) + 1;
-	right_edge -= strlen(interface_right_more) + 1;
+	left_edge += strlen(def_gui_left_more) + 1;
+	right_edge -= strlen(def_gui_right_more) + 1;
 	int left_pos;
 	int right_pos;
 	bool left_end = FALSE;
@@ -252,14 +249,14 @@ problem_d draw_menu(void) {
 	do {
 		const char * interface_left = "";
 		const char * interface_right = "";
-		if (state > 0 && state < states) {
+		if (state > 0 && state < cfg_states) {
 			if (shm.pids[state] == 0) {
-				interface_left = interface_left_unused;
-				interface_right = interface_right_unused;
+				interface_left = def_gui_left_unused;
+				interface_right = def_gui_right_unused;
 			}
 			else {
-				interface_left = interface_left_used;
-				interface_right = interface_right_used;
+				interface_left = def_gui_left_used;
+				interface_right = def_gui_right_used;
 			}
 		}
 		const size_t len = strlen(interface_left)
@@ -296,14 +293,14 @@ problem_d draw_menu(void) {
 				col = right_pos + 1;
 				right_pos += len;
 				if (right_pos >= right_edge) {
-					if (state < states) {
+					if (state < cfg_states) {
 						right_more = TRUE;
 					}
 					right_end = TRUE;
 					col = -1;
 				}
 			}
-			if (state >= states) {
+			if (state >= cfg_states) {
 				right_end = TRUE;
 				col = -1;
 			}
@@ -312,7 +309,7 @@ problem_d draw_menu(void) {
 			const size_t size = len + 1;
 			char * const buf = malloc(size);
 			if (buf == NULL) {
-				error(MALLOC_PROBLEM);
+				log_error(MALLOC_PROBLEM);
 			}
 			else {
 				snprintf(buf, size, "%s%u%s",
@@ -325,11 +322,11 @@ problem_d draw_menu(void) {
 		diff = - (diff + SGN(diff));
 	} while (!(left_end && right_end));
 	if (left_more) {
-		mvwaddstr(menu_states_win, row, 1, interface_left_more);
+		mvwaddstr(menu_states_win, row, 1, def_gui_left_more);
 	}
 	if (right_more) {
-		const size_t size = strlen(interface_right_more) + 1;
-		mvwaddstr(menu_states_win, row, x - size, interface_right_more);
+		const size_t size = strlen(def_gui_right_more) + 1;
+		mvwaddstr(menu_states_win, row, x - size, def_gui_right_more);
 	}
 
 	/*
@@ -337,8 +334,8 @@ problem_d draw_menu(void) {
 	*/
 	wclear(menu_chs_win);
 	getmaxyx(menu_chs_win, y, x);
-	for (int row = 0; row < rows; row++) {
-		for (int col = 0; col < cols; col++) {
+	for (int row = 0; row < cfg_rows; row++) {
+		for (int col = 0; col < cfg_cols; col++) {
 			mvwaddch(menu_chs_win, row / 2, col / 2, shm.chs[current_state][row][col]);
 		}
 	}
@@ -385,16 +382,16 @@ Draws the overlay.
 @return The error code.
 **/
 problem_d draw_overlay(WINDOW * const win) {
-	for (int row = 0; row < rows - 5; row++) {
-		for (int col = 0; col < cols; col++) {
+	for (int row = 0; row < cfg_rows - 5; row++) {
+		for (int col = 0; col < cfg_cols; col++) {
 			const chtype ch = mvwinch(win, row + 2, col);
 			const chtype sch = A_CHARTEXT & ch;
 			if (sch == ' ') {
 				const attr_t attr = COLOR_PAIR(8) | A_BOLD;
 				wattron(overlay_win, attr);
-				const unsigned char terrain = (*exec_terrain)[row * cols + col];
+				const unsigned char terrain = (*exec_terrain)[row * cfg_cols + col];
 				mvwaddch(overlay_win, row, col, exec_terrain_chars[terrain]);
-				const unsigned char object = (*exec_objects)[row * cols + col];
+				const unsigned char object = (*exec_objects)[row * cfg_cols + col];
 				if (object != 0) {
 					mvwaddch(overlay_win, row, col, exec_object_chars[object]);
 				}
@@ -405,10 +402,10 @@ problem_d draw_overlay(WINDOW * const win) {
 			}
 		}
 	}
-	for (int row = 0; row < rows - 5; row++) {
+	for (int row = 0; row < cfg_rows - 5; row++) {
 		if (*exec_items == NULL) break;
-		for (int col = 0; col < cols; col++) {
-			const exec_map_item_d * item = (*exec_items)[row * cols + col];
+		for (int col = 0; col < cfg_cols; col++) {
+			const exec_map_item_d * item = (*exec_items)[row * cfg_cols + col];
 			if (item != NULL) {
 				while (item->next != NULL) {
 					item = item->next;
@@ -476,5 +473,3 @@ problem_d draw_gui(WINDOW * const win) {
 
 	return NO_PROBLEM;
 }
-
-#endif

@@ -3,17 +3,14 @@ Injects assembly instructions.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef ASM_C
-#define ASM_C
-
 #include <stddef.h>//size_t, ptrdiff_t
 #include <string.h>//mem*
 #include <limits.h>//CHAR_BIT
 #include <sys/mman.h>//mprotect, PROT_*
 
 #include "util.h"//PAGE*
-#include "prob.h"//problem_d, *_PROBLEM
-#include "log.h"//error, warning, note
+#include "prob.h"//probno, *_PROBLEM
+#include "log.h"//log_*
 
 /**
 Replaces the save command with a custom function.
@@ -40,7 +37,7 @@ The injected instructions:
 @param function The custom function.
 @return The error code.
 **/
-problem_d inject_save(void (* const function)(void)) {
+int inject_save(void (* const function)(void)) {
 	const unsigned char original[10] = {
 		0x83, 0xc4, 0xf8,
 		0x6a, 0x00,
@@ -59,19 +56,20 @@ problem_d inject_save(void (* const function)(void)) {
 			injected[byte + 1] = (unsigned char )(pointer >> (byte * CHAR_BIT));
 		}
 	}
-	const int prot = PROT_READ | PROT_WRITE | PROT_EXEC;
-	if (mprotect(PAGE(location), PAGE_SIZE(original), prot) == -1) {
-		return error(ASM_MPROTECT_PROBLEM);
+	void * const addr = PAGE(location);
+	const size_t len = PAGE_SIZE(original);
+	if (mprotect(addr, len, PROT_READ | PROT_WRITE) == -1) {//for W^X
+		probno = log_error(ASM_MPROTECT_PROBLEM);
+		return -1;
 	}
-	else {
-		if (memcmp(location, original, sizeof original) != 0) {
-			return error(ASM_MEMCMP_PROBLEM);
-		}
-		else {
-			memcpy(location, injected, sizeof injected);
-		}
+	if (memcmp(location, original, sizeof original) != 0) {
+		probno = log_error(ASM_MEMCMP_PROBLEM);
+		return -1;
 	}
-	return NO_PROBLEM;
+	memcpy(location, injected, sizeof injected);
+	if (mprotect(addr, len, PROT_READ | PROT_EXEC) == -1) {
+		probno = log_error(ASM_MPROTECT_PROBLEM);
+		return -1;
+	}
+	return 0;
 }
-
-#endif

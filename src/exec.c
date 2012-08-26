@@ -12,9 +12,6 @@ TODO sort
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef EXEC_C
-#define EXEC_C
-
 #include <stdlib.h>//*random, size_t
 #include <stdio.h>//*print*
 #include <string.h>//str*, mem*
@@ -786,4 +783,3 @@ rm -f obj/meta
 */
 #include "meta/key_code.c"
 
-#endif

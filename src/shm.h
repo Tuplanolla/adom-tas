@@ -10,7 +10,6 @@
 #include <curses.h>//chtype
 
 #include "def.h"//mode_d
-#include "prob.h"//problem_d
 
 /**
 Contains pointers to the objects in the shared memory segment.
@@ -77,9 +76,9 @@ typedef struct shm_s shm_d;
 
 extern shm_d shm;
 
-problem_d uninit_shm(void);
-problem_d init_shm(void);
-problem_d detach_shm(void);
-problem_d attach_shm(void);
+int uninit_shm(void);
+int init_shm(void);
+int detach_shm(void);
+int attach_shm(void);
 
 #endif

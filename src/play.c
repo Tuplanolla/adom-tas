@@ -3,9 +3,6 @@ Plays records.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef PLAY_C
-#define PLAY_C
-
 #include <stddef.h>//NULL
 
 #include <curses.h>//*w*, WINDOW
@@ -23,22 +20,22 @@ int next_key(WINDOW * const win) {
 	}
 	int key;
 	if (record.current->duration == 0) {//seed frame
-		timestamp += record.current->value;
-		iarc4((unsigned long int )timestamp, exec_arc4_calls_automatic_load);
+		cfg_timestamp += record.current->value;
+		iarc4((unsigned long int )cfg_timestamp, exec_arc4_calls_automatic_load);
 		key = KEY_NAK;
 	}
 	else {//key frame
 		const int delay = record.current->duration * TIMER_RATE / frame_rate;
 		wtimeout(win, delay);
 		const int some_key = um_wgetch(win);
-		if (some_key == play_key) {
+		if (some_key == cfg_play_key) {
 			wtimeout(win, 0);
 			int some_other_key;
 			do {
 				some_other_key = um_wgetch(win);
-			} while (some_other_key != play_key);
+			} while (some_other_key != cfg_play_key);
 		}
-		else if (some_key == stop_key) {
+		else if (some_key == cfg_stop_key) {
 			record.current = NULL;
 		}
 		key = record.current->value;
@@ -46,5 +43,3 @@ int next_key(WINDOW * const win) {
 	record.current = record.current->next;
 	return key;
 }
-
-#endif

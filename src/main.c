@@ -3,9 +3,6 @@ Launches the executable.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef MAIN_C
-#define MAIN_C
-
 #include <stdlib.h>//*env, NULL, EXIT_*
 #include <stdio.h>//*open, *close, *read, *write, FILE
 #include <string.h>//str*, mem*
@@ -15,7 +12,7 @@ Launches the executable.
 #include "gnu.h"//__*__
 #include "util.h"//intern
 #include "prob.h"//PROPAGATE*, *_PROBLEM
-#include "log.h"//error, warning, note
+#include "log.h"//error, warning, notice
 #include "def.h"//def_*
 #include "cfg.h"//*
 #include "exec.h"//exec_*
@@ -33,25 +30,27 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	/*
 	Initializes the configuration variables.
 	*/
-	PROPAGATE(init_main_config());
+	if (init_main_config() == -1) {
+		return probno;
+	}
 
 	/*
 	Enforces the default configuration.
 
 	Similar to the command-line option -n.
 	*/
-	if (exec_config_path != NULL) {
-		FILE * const stream = fopen(exec_config_path, "w");
+	if (cfg_exec_config_path != NULL) {
+		FILE * const stream = fopen(cfg_exec_config_path, "w");
 		if (stream == NULL) {
-			error(CONFIG_OPEN_PROBLEM);
+			log_error(CONFIG_OPEN_PROBLEM);
 		}
 		else {
 			const size_t size = strlen(def_exec_config) + 1;
 			if (fwrite(def_exec_config, size, 1, stream) != 1) {
-				error(CONFIG_WRITE_PROBLEM);
+				log_error(CONFIG_WRITE_PROBLEM);
 			}
 			if (fclose(stream) == EOF) {
-				error(CONFIG_CLOSE_PROBLEM);
+				log_error(CONFIG_CLOSE_PROBLEM);
 			}
 		}
 	}
@@ -59,11 +58,11 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	/*
 	Removes the process lock.
 	*/
-	if (exec_process_path != NULL) {
+	if (cfg_exec_process_path != NULL) {
 		struct stat process_stat;
-		if (stat(exec_process_path, &process_stat) == 0) {
-			if (unlink(exec_process_path) != 0) {
-				return error(PROCESS_UNLINK_PROBLEM);
+		if (stat(cfg_exec_process_path, &process_stat) == 0) {
+			if (unlink(cfg_exec_process_path) != 0) {
+				return log_error(PROCESS_UNLINK_PROBLEM);
 			}
 		}
 	}
@@ -73,18 +72,18 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 
 	Similar to the command-line option -k.
 	*/
-	if (exec_keybind_path != NULL) {
-		FILE * const stream = fopen(exec_keybind_path, "w");
+	if (cfg_exec_keybind_path != NULL) {
+		FILE * const stream = fopen(cfg_exec_keybind_path, "w");
 		if (stream == NULL) {
-			error(KEYBIND_OPEN_PROBLEM);
+			log_error(KEYBIND_OPEN_PROBLEM);
 		}
 		else {
 			const size_t size = strlen(def_exec_keybind) + 1;
 			if (fwrite(def_exec_keybind, size, 1, stream) != 1) {
-				error(KEYBIND_WRITE_PROBLEM);
+				log_error(KEYBIND_WRITE_PROBLEM);
 			}
 			if (fclose(stream) == EOF) {
-				error(KEYBIND_CLOSE_PROBLEM);
+				log_error(KEYBIND_CLOSE_PROBLEM);
 			}
 		}
 	}
@@ -92,21 +91,21 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	/*
 	Verifies the version.
 	*/
-	if (exec_version_path != NULL) {
-		FILE * const stream = fopen(exec_version_path, "rb");
+	if (cfg_exec_version_path != NULL) {
+		FILE * const stream = fopen(cfg_exec_version_path, "rb");
 		if (stream == NULL) {
-			error(VERSION_OPEN_PROBLEM);
+			log_error(VERSION_OPEN_PROBLEM);
 		}
 		else {
 			unsigned char version[sizeof exec_version];
 			if (fread(version, sizeof version, 1, stream) != 1) {
-				error(VERSION_READ_PROBLEM);
+				log_error(VERSION_READ_PROBLEM);
 			}
 			if (fclose(stream) == EOF) {
-				error(VERSION_CLOSE_PROBLEM);
+				log_error(VERSION_CLOSE_PROBLEM);
 			}
 			if (memcmp(version, exec_version, sizeof version) != 0) {
-				error(VERSION_MISMATCH_PROBLEM);
+				log_error(VERSION_MISMATCH_PROBLEM);
 			}
 		}
 	}
@@ -114,11 +113,11 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	/*
 	Removes the error log.
 	*/
-	if (exec_error_path != NULL) {
+	if (cfg_exec_error_path != NULL) {
 		struct stat error_stat;
-		if (stat(exec_error_path, &error_stat) == 0) {
-			if (unlink(exec_error_path) != 0) {
-				return error(ERROR_UNLINK_PROBLEM);
+		if (stat(cfg_exec_error_path, &error_stat) == 0) {
+			if (unlink(cfg_exec_error_path) != 0) {
+				return log_error(ERROR_UNLINK_PROBLEM);
 			}
 		}
 	}
@@ -126,17 +125,17 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	/*
 	Sets the amount of generated characters.
 	*/
-	if (exec_count_path != NULL) {
-		FILE * const stream = fopen(exec_count_path, "wb");
+	if (cfg_exec_count_path != NULL) {
+		FILE * const stream = fopen(cfg_exec_count_path, "wb");
 		if (stream == NULL) {
-			error(COUNT_OPEN_PROBLEM);
+			log_error(COUNT_OPEN_PROBLEM);
 		}
 		else {
-			if (fwrite(&generations, sizeof generations, 1, stream) != 1) {
-				error(COUNT_WRITE_PROBLEM);
+			if (fwrite(&cfg_generations, sizeof cfg_generations, 1, stream) != 1) {
+				log_error(COUNT_WRITE_PROBLEM);
 			}
 			if (fclose(stream) == EOF) {
-				error(COUNT_CLOSE_PROBLEM);
+				log_error(COUNT_CLOSE_PROBLEM);
 			}
 		}
 	}
@@ -144,21 +143,21 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	/*
 	Enables preloading libraries.
 	*/
-	if (lib_path == NULL) {
-		return error(NULL_PROBLEM);
+	if (cfg_lib_path == NULL) {
+		return log_error(NULL_PROBLEM);
 	}
-	else if (setenv("LD_PRELOAD", lib_path, TRUE) == -1) {
-		return error(LD_PRELOAD_SETENV_PROBLEM);
+	else if (setenv("LD_PRELOAD", cfg_lib_path, TRUE) == -1) {
+		return log_error(LD_PRELOAD_SETENV_PROBLEM);
 	}
 
 	/*
 	Launches the executable.
 	*/
-	if (exec_path == NULL) {
-		return error(NULL_PROBLEM);
+	if (cfg_exec_path == NULL) {
+		return log_error(NULL_PROBLEM);
 	}
-	else if (execv(exec_path, argv) == -1) {
-		return error(EXEC_PROBLEM);
+	else if (execv(cfg_exec_path, argv) == -1) {
+		return log_error(EXEC_PROBLEM);
 	}
 
 	/*
@@ -167,7 +166,9 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	'exec_path' is never deallocated [-Wleak]
 	</pre>
 	*/
-	PROPAGATE(uninit_config());
+	if (uninit_config() == -1) {
+		return probno;
+	}
 
 	/*
 	Never returns.
@@ -177,7 +178,5 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	 fails and returns the appropriate error code
 	  so this statement is never reached.
 	*/
-	return error(ASSERT_PROBLEM);
+	return log_error(ASSERT_PROBLEM);
 }
-
-#endif

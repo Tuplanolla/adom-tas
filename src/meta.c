@@ -3,9 +3,6 @@ Generates code automatically.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef META_C
-#define META_C
-
 #include <stdlib.h>//EXIT_*
 #include <stdio.h>//*print*
 #include <string.h>//str*
@@ -86,5 +83,3 @@ int main(int argc, const char * const argv[]) {
 
 	return EXIT_SUCCESS;
 }
-
-#endif

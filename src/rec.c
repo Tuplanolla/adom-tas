@@ -5,9 +5,6 @@ Records are built around linked lists.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef REC_C
-#define REC_C
-
 #include <stdlib.h>//*alloc, free, NULL
 #include <time.h>//time_t
 
@@ -116,5 +113,3 @@ frame_d * add_seed_frame(const time_t timestamp) {
 	record.timestamp = timestamp;
 	return add_frame(0, (long int )difference);
 }
-
-#endif

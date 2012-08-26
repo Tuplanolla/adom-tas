@@ -3,9 +3,6 @@ Sets the default values of various variables.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef DEF_C
-#define DEF_C
-
 #include <stddef.h>//size_t
 
 #include <curses.h>//KEY_*
@@ -28,33 +25,33 @@ intern const char * const project_version = "1.0.0";
 /**
 The indicator used when a list extends left.
 **/
-intern const char * const interface_left_more = "<-";
+intern const char * const def_gui_left_more = "<-";
 /**
 The indicator used when a list extends right.
 **/
-intern const char * const interface_right_more = "->";
+intern const char * const def_gui_right_more = "->";
 /**
 The indicator used on the left side of a used field.
 **/
-intern const char * const interface_left_used = "[";
+intern const char * const def_gui_left_used = "[";
 /**
 The indicator used on the right side of a used field.
 **/
-intern const char * const interface_right_used = "]";
+intern const char * const def_gui_right_used = "]";
 /**
 The indicator used on the left side of an unused field.
 **/
-intern const char * const interface_left_unused = "";
+intern const char * const def_gui_left_unused = "";
 /**
 The indicator used on the right side of an unused field.
 **/
-intern const char * const interface_right_unused = "";
+intern const char * const def_gui_right_unused = "";
 /**
 The colors used.
 
 Ordered by hue (wavelength).
 **/
-intern const int interface_colors[6] = {
+intern const int def_interface_colors[6] = {
 	COLOR_RED,
 	COLOR_YELLOW,
 	COLOR_GREEN,
@@ -66,30 +63,30 @@ intern const int interface_colors[6] = {
 /**
 The separator between error message fields.
 **/
-intern const char * const log_separator = " - ";
+intern const char * const def_log_separator = " - ";
 /**
 The error string.
 **/
-intern const char * const log_error = "Error";
+intern const char * const def_log_error = "Error";
 /**
 The warning string.
 **/
-intern const char * const log_warning = "Warning";
+intern const char * const def_log_warning = "Warning";
 /**
-The note string.
+The notice string.
 **/
-intern const char * const log_note = "Note";
+intern const char * const def_log_notice = "Note";
 /**
 The library call string.
 **/
-intern const char * const log_call = "Call";
+intern const char * const def_log_call = "Call";
 
 /**
-The location of ADoM.
+The location of the executable.
 **/
 intern const char * const def_exec_path = "adom/adom";
 /**
-The location of ADoM TAS's library.
+The location of this library.
 **/
 intern const char * const def_lib_path = "bin/adom-tas.so";
 /**
@@ -170,9 +167,9 @@ The name of the warning stream.
 **/
 intern const char * const def_warning_stream = "stderr";
 /**
-The name of the note stream.
+The name of the notice stream.
 **/
-intern const char * const def_note_stream = "stderr";
+intern const char * const def_notice_stream = "stderr";
 /**
 The name of the call stream.
 **/
@@ -271,7 +268,7 @@ intern const char * const def_config = \
 		"#output         = \"output.#.tas\"\n"
 		"#error          = \"adom-tas.log\"\n"
 		"#warning        = \"adom-tas.log\"\n"
-		"#note           = \"adom-tas.log\"\n"
+		"#notice           = \"adom-tas.log\"\n"
 		"#call           = \"/dev/null\"\n"
 		"#save_key       = 266#F2\n"
 		"#load_key       = 267#F3\n"
@@ -556,4 +553,3 @@ intern const char * const def_exec_keybind = \
 		"ZAP:z\n"
 	;
 
-#endif

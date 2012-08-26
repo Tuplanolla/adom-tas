@@ -6,6 +6,31 @@
 #define PROB_H
 
 /**
+Propagates an error code.
+
+@param code The error code.
+@deprecated
+**/
+#define PROPAGATE(code) do {\
+const problem_d PROPAGATE_problem = code;\
+if (PROPAGATE_problem != NO_PROBLEM) {\
+return PROPAGATE_problem;\
+}\
+} while (0)
+#define PROPAGATEC(code, function) do {\
+const problem_d PROPAGATEC_problem = code;\
+if (PROPAGATEC_problem != NO_PROBLEM) {\
+function(PROPAGATEC_problem);\
+}\
+} while (0)
+#define PROPAGATEA(code, variable) do {\
+const problem_d PROPAGATEC_problem = code;\
+if (PROPAGATEC_problem != NO_PROBLEM) {\
+variable = PROPAGATEC_problem;\
+}\
+} while (0)
+
+/**
 Lists the error codes.
 **/
 enum problem_e {
@@ -132,6 +157,7 @@ enum problem_e {
 	*/
 	SHM_MALLOC_PROBLEM,
 	SHM_KEY_PROBLEM,
+	SHM_EXCL_PROBLEM,
 	SHM_GET_PROBLEM,
 	SHM_ATTACH_PROBLEM,
 	SHM_DETACH_PROBLEM,
@@ -168,68 +194,7 @@ enum problem_e {
 };
 typedef enum problem_e problem_d;
 
-/**
-Propagates an error code by returning.
-
-Returns the error code of an error if one occurs:
-<pre>
-problem_d method(void) {
-	PROPAGATE(another_method());
-	yet_another_method();
-	return NO_PROBLEM;
-}
-</pre>
-
-@param code The error code.
-**/
-#define PROPAGATE(code) do {\
-		const problem_d PROPAGATE_problem = code;\
-		if (PROPAGATE_problem != NO_PROBLEM) {\
-			return PROPAGATE_problem;\
-		}\
-	} while (0)
-
-/**
-Propagates an error code by calling a function.
-
-Calls a function with the error code of an error if one occurs:
-<pre>
-void method(void) {
-	PROPAGATEC(another_method(), exit);
-	yet_another_method();
-	return NO_PROBLEM;
-}
-</pre>
-
-@param code The error code.
-**/
-#define PROPAGATEC(code, function) do {\
-		const problem_d PROPAGATEC_problem = code;\
-		if (PROPAGATEC_problem != NO_PROBLEM) {\
-			function(PROPAGATEC_problem);\
-		}\
-	} while (0)
-
-/**
-Propagates an error code by assigning a variable.
-
-Calls a function with the error code of an error if one occurs:
-<pre>
-problem_d method(problem_d problem) {
-	PROPAGATEA(another_method(), problem);
-	yet_another_method();
-	return problem;
-}
-</pre>
-
-@param code The error code.
-**/
-#define PROPAGATEA(code, variable) do {\
-		const problem_d PROPAGATEC_problem = code;\
-		if (PROPAGATEC_problem != NO_PROBLEM) {\
-			variable = PROPAGATEC_problem;\
-		}\
-	} while (0)
+extern int probno;
 
 const char * problem_message(problem_d code);
 

@@ -3,9 +3,6 @@ Rolls characters.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef ROLL_C
-#define ROLL_C
-
 #include <stddef.h>//NULL
 
 #include "util.h"
@@ -64,7 +61,7 @@ int rollthing(void) {
 					|| attributes[0x01] < 20
 					|| attributes[0x07] < 20) exit(0);
 			char buf[32];
-			snprintf(buf, sizeof buf, "cat/%u.tac", (unsigned int )timestamp);
+			snprintf(buf, sizeof buf, "cat/%u.tac", (unsigned int )cfg_timestamp);
 			FILE * const f = fopen(buf, "wb");
 			if (f != NULL) {
 				const unsigned char header[4] = {'T', 'A', 'C', '\0'};
@@ -142,4 +139,3 @@ int rollthing(void) {
 	}
 */
 
-#endif

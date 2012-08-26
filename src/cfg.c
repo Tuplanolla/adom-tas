@@ -9,9 +9,6 @@ TODO check output_paths management
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#ifndef CFG_C
-#define CFG_C
-
 #include <stdlib.h>//*alloc, free, *env, size_t, NULL
 #include <stdio.h>//*open, *close, *read, *write, *print*, FILE, EOF
 #include <string.h>//str*
@@ -22,7 +19,7 @@ TODO check output_paths management
 
 #include "util.h"//intern, hash, stdstr, SUBNULL
 #include "prob.h"//problem_d, *_PROBLEM
-#include "log.h"//error, warning, note
+#include "log.h"//log_error, warning, notice
 #include "def.h"//def_*
 #include "exec.h"//exec_*
 
@@ -31,280 +28,285 @@ TODO check output_paths management
 /**
 The location of the home directory.
 **/
-intern char * home_path;
+char * cfg_home_path;
 /**
-The location of ADoM.
+The location of the executable.
 **/
-intern char * exec_path;
+char * cfg_exec_path;
 /**
-The location of ADoM's data directory.
+The location of the data directory of the executable.
 **/
-intern char * exec_data_path;
+char * cfg_exec_data_path;
 /**
-The location of ADoM's temporary file directory.
+The location of the temporary file directory of the executable.
 **/
-intern char * exec_temporary_path;
+char * cfg_exec_temporary_path;
 /**
-The locations of ADoM's temporary files.
+The locations of the temporary files of the executable.
 **/
-intern char ** exec_temporary_paths;
+char ** cfg_exec_temporary_paths;
 /**
-The location of ADoM's configuration file.
+The location of the configuration file of the executable.
 **/
-intern char * exec_config_path;
+char * cfg_exec_config_path;
 /**
-The location of ADoM's process lock file.
+The location of the process lock file of the executable.
 **/
-intern char * exec_process_path;
+char * cfg_exec_process_path;
 /**
-The location of ADoM's keybinding file.
+The location of the keybinding file of the executable.
 **/
-intern char * exec_keybind_path;
+char * cfg_exec_keybind_path;
 /**
-The location of ADoM's version file.
+The location of the version file of the executable.
 **/
-intern char * exec_version_path;
+char * cfg_exec_version_path;
 /**
-The location of ADoM's error report file.
+The location of the error report file of the executable.
 **/
-intern char * exec_error_path;
+char * cfg_exec_error_path;
 /**
-The location of ADoM's character count file.
+The location of the character count file of the executable.
 **/
-intern char * exec_count_path;
+char * cfg_exec_count_path;
 /**
-The location of ADoM TAS's library.
+The location of this library.
 **/
-intern char * lib_path;
+char * cfg_lib_path;
 /**
 The location of the C standard library.
 **/
-intern char * libc_path;
+char * cfg_libc_path;
 /**
 The location of the New Cursor Optimization library.
 **/
-intern char * libncurses_path;
+char * cfg_libncurses_path;
 /**
 Whether default configurations are enforced.
 **/
-intern bool enforce;
+bool cfg_enforce;
 /**
 The amount of save states.
 **/
-intern int states;
+int cfg_states;
 /**
 The height of the terminal.
 **/
-intern int rows;
+int cfg_rows;
 /**
 The width of the terminal.
 **/
-intern int cols;
+int cfg_cols;
 /**
 The location of the shared memory segment.
 **/
-intern char * shm_path;
+char * cfg_shm_path;
 /**
 The initial system time.
 **/
-intern time_t timestamp;
+time_t cfg_timestamp;
 /**
 The amount of generated characters.
 **/
-intern unsigned int generations;
+unsigned int cfg_generations;
 /**
 Whether save-quit-load emulation is enabled.
 **/
-intern bool sql;
+bool cfg_sql;
 /**
 Whether save states are preserved upon loading them.
 **/
-intern bool preserve;
+bool cfg_preserve;
 /**
 Whether the input file is played back automatically.
 **/
-intern bool autoplay;
+bool cfg_autoplay;
 /**
 Whether the graphical user interface is colorful.
 **/
-intern bool monochrome;
+bool cfg_monochrome;
 /**
 The string to replace with a number.
 **/
-intern char * iterator;
+char * cfg_iterator;
 /**
 The location of the input file.
 **/
-intern char * input_path;
+char * cfg_input_path;
 /**
 The locations of the output files.
 **/
-intern char ** output_paths;
+char ** cfg_output_paths;
 /**
 The error stream.
 **/
-intern FILE * error_stream;
+FILE * cfg_error_stream;
 /**
 The warning stream.
 **/
-intern FILE * warning_stream;
+FILE * cfg_warning_stream;
 /**
-The note stream.
+The notice stream.
 **/
-intern FILE * note_stream;
+FILE * cfg_notice_stream;
 /**
 The call stream.
 **/
-intern FILE * call_stream;
+FILE * cfg_call_stream;
 /**
 The key used to save the active state.
 **/
-intern int save_key;
+int cfg_save_key;
 /**
 The key used to load the active state.
 **/
-intern int load_key;
+int cfg_load_key;
 /**
 The key used to change the active state by incrementing.
 **/
-intern int state_key;
+int cfg_state_key;
 /**
 The key used to change the active state by decrementing.
 **/
-intern int unstate_key;
+int cfg_unstate_key;
 /**
 The key used to change the frame duration by incrementing.
 **/
-intern int duration_key;
+int cfg_duration_key;
 /**
 The key used to change the frame duration by decrementing.
 **/
-intern int unduration_key;
+int cfg_unduration_key;
 /**
 The key used to change the system time by incrementing.
 **/
-intern int time_key;
+int cfg_time_key;
 /**
 The key used to change the system time by decrementing.
 **/
-intern int untime_key;
+int cfg_untime_key;
 /**
 The key used to open or close the save state menu.
 **/
-intern int menu_key;
+int cfg_menu_key;
 /**
 The key used to open or close the information screen.
 **/
-intern int info_key;
+int info_key;
 /**
 The key used to condense or expand the graphical user interface.
 **/
-intern int condense_key;
+int cfg_condense_key;
 /**
 The key used to hide or show the graphical user interface.
 **/
-intern int hide_key;
+int cfg_hide_key;
 /**
 The key used to play back a record.
 **/
-intern int play_key;
+int cfg_play_key;
 /**
 The key used to stop a record to create a branch.
 **/
-intern int stop_key;
+int cfg_stop_key;
 /**
 The key used to terminate all processes.
 **/
-intern int quit_key;
+int cfg_quit_key;
 
 /**
 The configuration.
 **/
-config_t config;
+static config_t config;
 
 /**
 Uninitializes the configuration variables.
 
 @return The error code.
 **/
-problem_d uninit_config(void) {
-	free(home_path);
-	free(exec_path);
-	free(exec_data_path);
-	free(exec_temporary_path);
-	if (exec_temporary_paths != NULL) {
+int uninit_config(void) {
+	int result = 0;
+	free(cfg_home_path);
+	free(cfg_exec_path);
+	free(cfg_exec_data_path);
+	free(cfg_exec_temporary_path);
+	if (cfg_exec_temporary_paths != NULL) {
 		for (unsigned int level = 0; level < exec_temporary_levels; level++) {
 			const unsigned int offset = level * exec_temporary_parts;
 			for (unsigned int part = 0; part < exec_temporary_parts; part++) {
 				const unsigned int path = offset + part;
-				free(exec_temporary_paths[path]);
+				free(cfg_exec_temporary_paths[path]);
 			}
 		}
-		free(exec_temporary_paths);
+		free(cfg_exec_temporary_paths);
 	}
-	free(exec_config_path);
-	free(exec_process_path);
-	free(exec_keybind_path);
-	free(exec_version_path);
-	free(exec_error_path);
-	free(exec_count_path);
-	free(lib_path);
-	free(libc_path);
-	free(libncurses_path);
-	free(shm_path);
-	free(iterator);
-	free(input_path);
-	if (output_paths != NULL) {
-		for (int state = 0; state < states; state++) {
-			free(output_paths[state]);
+	free(cfg_exec_config_path);
+	free(cfg_exec_process_path);
+	free(cfg_exec_keybind_path);
+	free(cfg_exec_version_path);
+	free(cfg_exec_error_path);
+	free(cfg_exec_count_path);
+	free(cfg_lib_path);
+	free(cfg_libc_path);
+	free(cfg_libncurses_path);
+	free(cfg_shm_path);
+	free(cfg_iterator);
+	free(cfg_input_path);
+	if (cfg_output_paths != NULL) {
+		for (int state = 0; state < cfg_states; state++) {
+			free(cfg_output_paths[state]);
 		}
-		free(output_paths);
+		free(cfg_output_paths);
 	}
-	if (error_stream != NULL) {
-		if (fclose(error_stream) == EOF) {
-			error(ERROR_CLOSE_PROBLEM);
+	if (cfg_error_stream != NULL) {
+		if (fclose(cfg_error_stream) == EOF) {
+			probno = log_error(ERROR_CLOSE_PROBLEM);
+			result = -1;
 		}
 		else {
-			if (warning_stream == error_stream) {
-				warning_stream = NULL;
+			if (cfg_warning_stream == cfg_error_stream) {
+				cfg_warning_stream = NULL;
 			}
-			if (note_stream == error_stream) {
-				note_stream = NULL;
+			if (cfg_notice_stream == cfg_error_stream) {
+				cfg_notice_stream = NULL;
 			}
-			if (call_stream == error_stream) {
-				call_stream = NULL;
+			if (cfg_call_stream == cfg_error_stream) {
+				cfg_call_stream = NULL;
 			}
 		}
 	}
-	if (warning_stream != NULL) {
-		if (fclose(warning_stream) == EOF) {
-			error(WARNING_CLOSE_PROBLEM);
+	if (cfg_warning_stream != NULL) {
+		if (fclose(cfg_warning_stream) == EOF) {
+			probno = log_error(WARNING_CLOSE_PROBLEM);
+			result = -1;
 		}
 		else {
-			if (note_stream == warning_stream) {
-				note_stream = NULL;
+			if (cfg_notice_stream == cfg_warning_stream) {
+				cfg_notice_stream = NULL;
 			}
-			if (call_stream == warning_stream) {
-				call_stream = NULL;
+			if (cfg_call_stream == cfg_warning_stream) {
+				cfg_call_stream = NULL;
 			}
 		}
 	}
-	if (note_stream != NULL) {
-		if (fclose(note_stream) == EOF) {
-			error(NOTE_CLOSE_PROBLEM);
+	if (cfg_notice_stream != NULL) {
+		if (fclose(cfg_notice_stream) == EOF) {
+			probno = log_error(NOTE_CLOSE_PROBLEM);
+			result = -1;
 		}
 		else {
-			if (call_stream == note_stream) {
-				call_stream = NULL;
+			if (cfg_call_stream == cfg_notice_stream) {
+				cfg_call_stream = NULL;
 			}
 		}
 	}
-	if (call_stream != NULL) {
-		if (fclose(call_stream) == EOF) {
-			error(CALL_CLOSE_PROBLEM);
+	if (cfg_call_stream != NULL) {
+		if (fclose(cfg_call_stream) == EOF) {
+			probno = log_error(CALL_CLOSE_PROBLEM);
+			result = -1;
 		}
 	}
-	return NO_PROBLEM;
+	return result;
 }
 
 /**
@@ -312,14 +314,14 @@ Initializes the common configuration variables.
 
 @return The error code.
 **/
-problem_d begin_init_config(void) {
+static int begin_init_config(void) {
 	/*
 	Sets the streams to their default values.
 	*/
-	error_stream = stdstr(def_error_stream);
-	warning_stream = stdstr(def_warning_stream);
-	note_stream = stdstr(def_note_stream);
-	call_stream = stdstr(def_call_stream);
+	cfg_error_stream = stdstr(def_error_stream);
+	cfg_warning_stream = stdstr(def_warning_stream);
+	cfg_notice_stream = stdstr(def_notice_stream);
+	cfg_call_stream = stdstr(def_call_stream);
 
 	/*
 	Prepares the configuration file.
@@ -335,22 +337,25 @@ problem_d begin_init_config(void) {
 	if (stat(def_config_path, &config_stat) == -1) {
 		FILE * stream = fopen(def_config_path, "w");
 		if (stream == NULL) {
-			return error(CONFIGURATION_OPEN_PROBLEM);
+			probno = log_error(CONFIGURATION_OPEN_PROBLEM);
+			return -1;
 		}
 		else {
 			const size_t size = strlen(def_config) + 1;
 			if (fwrite(def_config, size, 1, stream) != 1) {
-				error(CONFIGURATION_WRITE_PROBLEM);
+				probno = log_error(CONFIGURATION_WRITE_PROBLEM);
 			}
 			if (fclose(stream) == EOF) {
-				error(CONFIGURATION_CLOSE_PROBLEM);
+				probno = log_error(CONFIGURATION_CLOSE_PROBLEM);
 			}
 		}
-		return note(CONFIGURATION_STAT_PROBLEM);
+		probno = log_notice(CONFIGURATION_STAT_PROBLEM);
+		return -1;
 	}
 	config_init(&config);
 	if (config_read_file(&config, def_config_path) == 0) {
-		return error(CONFIGURATION_PARSE_PROBLEM);
+		probno = log_error(CONFIGURATION_PARSE_PROBLEM);
+		return -1;
 	}
 
 	/*
@@ -364,14 +369,14 @@ problem_d begin_init_config(void) {
 	const char * new_home_path;
 	struct passwd * pw;
 	if (config_lookup_string(&config, "home", &new_home_path) == CONFIG_FALSE) {
-		//warning(HOME_CONFIG_PROBLEM);
+		//log_warning(HOME_CONFIG_PROBLEM);
 		new_home_path = getenv("HOME");
 		if (new_home_path == NULL) {
-			warning(HOME_GETENV_PROBLEM);
+			probno = log_warning(HOME_GETENV_PROBLEM);
 			pw = getpwuid(getuid());
 			if (pw == NULL) {
 				new_home_path = NULL;
-				warning(HOME_GETPWUID_PROBLEM);
+				probno = log_warning(HOME_GETPWUID_PROBLEM);
 			}
 			else {
 				new_home_path = pw->pw_dir;
@@ -379,20 +384,21 @@ problem_d begin_init_config(void) {
 		}
 	}
 	if (new_home_path == NULL) {
-		home_path = NULL;
+		cfg_home_path = NULL;
 	}
 	else {
-		home_path = malloc(strlen(new_home_path) + 1);
-		if (home_path == NULL) {
-			return error(MALLOC_PROBLEM);
+		cfg_home_path = malloc(strlen(new_home_path) + 1);
+		if (cfg_home_path == NULL) {
+			probno = log_error(MALLOC_PROBLEM);
+			return -1;
 		}
 		else {
-			strcpy(home_path, new_home_path);
+			strcpy(cfg_home_path, new_home_path);
 			struct stat home_stat;
-			if (stat(home_path, &home_stat) == -1) {
-				free(home_path);
-				home_path = NULL;
-				warning(HOME_STAT_PROBLEM);
+			if (stat(cfg_home_path, &home_stat) == -1) {
+				free(cfg_home_path);
+				cfg_home_path = NULL;
+				probno = log_warning(HOME_STAT_PROBLEM);
 			}
 		}
 	}
@@ -407,34 +413,36 @@ problem_d begin_init_config(void) {
 	const char * new_exec_data_path;
 	if (config_lookup_string(&config, "data", &new_exec_data_path) == CONFIG_FALSE) {
 		new_exec_data_path = NULL;
-		//warning(EXEC_DATA_CONFIG_PROBLEM);
-		if (home_path == NULL) {
-			exec_data_path = NULL;
+		//log_warning(EXEC_DATA_CONFIG_PROBLEM);
+		if (cfg_home_path == NULL) {
+			cfg_exec_data_path = NULL;
 		}
 		else {
-			const size_t size = strlen(home_path) + 1
+			const size_t size = strlen(cfg_home_path) + 1
 					+ strlen(exec_data_directory) + 1;
-			exec_data_path = malloc(size);
-			if (exec_data_path == NULL) {
-				return error(MALLOC_PROBLEM);
+			cfg_exec_data_path = malloc(size);
+			if (cfg_exec_data_path == NULL) {
+				probno = log_error(MALLOC_PROBLEM);
+				return -1;
 			}
 			else {
-				snprintf(exec_data_path, size, "%s/%s",
-						home_path,
+				snprintf(cfg_exec_data_path, size, "%s/%s",
+						cfg_home_path,
 						exec_data_directory);
 			}
 		}
 	}
 	else {
-		exec_data_path = astrrep(new_exec_data_path, "~", home_path);
+		cfg_exec_data_path = astrrep(new_exec_data_path, "~", cfg_home_path);
 	}
-	if (exec_data_path == NULL) {
-		return error(NULL_PROBLEM);
+	if (cfg_exec_data_path == NULL) {
+		probno = log_error(NULL_PROBLEM);
+		return -1;
 	}
 	else {
 		struct stat exec_data_stat;
-		if (stat(exec_data_path, &exec_data_stat) == -1) {
-			warning(EXEC_DATA_STAT_PROBLEM);
+		if (stat(cfg_exec_data_path, &exec_data_stat) == -1) {
+			probno = log_warning(EXEC_DATA_STAT_PROBLEM);
 		}
 	}
 
@@ -444,23 +452,24 @@ problem_d begin_init_config(void) {
 	The location of the directory is first guessed and
 	 the existence of the directory is then checked.
 	*/
-	if (exec_data_path == NULL) {
-		exec_temporary_path = NULL;
+	if (cfg_exec_data_path == NULL) {
+		cfg_exec_temporary_path = NULL;
 	}
 	else {
-		const size_t size = strlen(exec_data_path) + 1
+		const size_t size = strlen(cfg_exec_data_path) + 1
 				+ strlen(exec_temporary_directory) + 1;
-		exec_temporary_path = malloc(size);
-		if (exec_temporary_path == NULL) {
-			return error(MALLOC_PROBLEM);
+		cfg_exec_temporary_path = malloc(size);
+		if (cfg_exec_temporary_path == NULL) {
+			probno = log_error(MALLOC_PROBLEM);
+			return -1;
 		}
 		else {
-			snprintf(exec_temporary_path, size, "%s/%s",
-					exec_data_path,
+			snprintf(cfg_exec_temporary_path, size, "%s/%s",
+					cfg_exec_data_path,
 					exec_temporary_directory);
 			struct stat exec_temporary_stat;
-			if (stat(exec_temporary_path, &exec_temporary_stat) == -1) {
-				warning(EXEC_TEMPORARY_STAT_PROBLEM);
+			if (stat(cfg_exec_temporary_path, &exec_temporary_stat) == -1) {
+				probno = log_warning(EXEC_TEMPORARY_STAT_PROBLEM);
 			}
 		}
 	}
@@ -474,13 +483,14 @@ problem_d begin_init_config(void) {
 	 the existence of the directory is then checked and
 	 the file paths are finally guessed.
 	*/
-	if (exec_temporary_path == NULL) {
-		exec_temporary_paths = NULL;
+	if (cfg_exec_temporary_path == NULL) {
+		cfg_exec_temporary_paths = NULL;
 	}
 	else {
-		exec_temporary_paths = malloc(exec_temporary_levels * exec_temporary_parts * sizeof *exec_temporary_paths);
-		if (exec_temporary_paths == NULL) {
-			return error(MALLOC_PROBLEM);
+		cfg_exec_temporary_paths = malloc(exec_temporary_levels * exec_temporary_parts * sizeof *cfg_exec_temporary_paths);
+		if (cfg_exec_temporary_paths == NULL) {
+			probno = log_error(MALLOC_PROBLEM);
+			return -1;
 		}
 		else {
 			const int level_width = uintlen(exec_temporary_levels);
@@ -489,16 +499,17 @@ problem_d begin_init_config(void) {
 				const unsigned int offset = level * exec_temporary_parts;
 				for (unsigned int part = 0; part < exec_temporary_parts; part++) {
 					const unsigned int path = offset + part;
-					const size_t size = strlen(exec_temporary_path) + 1
+					const size_t size = strlen(cfg_exec_temporary_path) + 1
 							+ strlen(exec_temporary_file)
 							+ 4 + 1;
-					exec_temporary_paths[path] = malloc(size);
-					if (exec_temporary_paths[path] == NULL) {
-						return error(MALLOC_PROBLEM);
+					cfg_exec_temporary_paths[path] = malloc(size);
+					if (cfg_exec_temporary_paths[path] == NULL) {
+						probno = log_error(MALLOC_PROBLEM);
+						return -1;
 					}
 					else {
-						snprintf(exec_temporary_paths[path], size, "%s/%s%0*u_%0*u",
-								exec_temporary_path,
+						snprintf(cfg_exec_temporary_paths[path], size, "%s/%s%0*u_%0*u",
+								cfg_exec_temporary_path,
 								exec_temporary_file, level_width, level, part_width, part);
 					}
 				}
@@ -506,7 +517,7 @@ problem_d begin_init_config(void) {
 		}
 	}
 
-	return NO_PROBLEM;
+	return 0;
 }
 
 /**
@@ -514,7 +525,7 @@ Finishes initializing the configuration.
 
 @return The error code.
 **/
-problem_d end_init_config(void) {
+static int end_init_config(void) {
 	/*
 	Closes the configuration file.
 
@@ -522,11 +533,13 @@ problem_d end_init_config(void) {
 	*/
 	config_destroy(&config);
 
-	return NO_PROBLEM;
+	return 0;
 }
 
-problem_d init_main_config(void) {
-	PROPAGATE(begin_init_config());
+int init_main_config(void) {
+	if (begin_init_config() == -1) {
+		return -1;
+	}
 
 	/*
 	Enables preloading libraries.
@@ -538,23 +551,24 @@ problem_d init_main_config(void) {
 	*/
 	const char * new_loader_path;
 	if (config_lookup_string(&config, "loader", &new_loader_path) == CONFIG_FALSE) {
-		//warning(LD_PRELOAD_CONFIG_PROBLEM);
+		//log_warning(LD_PRELOAD_CONFIG_PROBLEM);
 		new_loader_path = getenv("LD_PRELOAD");
-		if (lib_path == NULL) {
+		if (cfg_lib_path == NULL) {
 			new_loader_path = def_lib_path;
-			warning(LD_PRELOAD_GETENV_PROBLEM);
+			probno = log_warning(LD_PRELOAD_GETENV_PROBLEM);
 		}
 	}
 	if (new_loader_path == NULL) {
-		lib_path = NULL;
+		cfg_lib_path = NULL;
 	}
 	else {
-		lib_path = astrrep(new_loader_path, "~", home_path);
+		cfg_lib_path = astrrep(new_loader_path, "~", cfg_home_path);
 		struct stat loader_stat;
-		if (stat(lib_path, &loader_stat) == -1) {
-			free(lib_path);
-			lib_path = NULL;
-			return error(LD_PRELOAD_STAT_PROBLEM);
+		if (stat(cfg_lib_path, &loader_stat) == -1) {
+			free(cfg_lib_path);
+			cfg_lib_path = NULL;
+			probno = log_error(LD_PRELOAD_STAT_PROBLEM);
+			return -1;
 		}
 	}
 
@@ -571,54 +585,58 @@ problem_d init_main_config(void) {
 	const char * new_exec_path;
 	if (config_lookup_string(&config, "executable", &new_exec_path) == CONFIG_FALSE) {
 		new_exec_path = def_exec_path;
-		//warning(EXEC_CONFIG_PROBLEM);
+		//log_warning(EXEC_CONFIG_PROBLEM);
 	}
 	if (new_exec_path == NULL) {
-		exec_path = NULL;
+		cfg_exec_path = NULL;
 	}
 	else {
-		exec_path = astrrep(new_exec_path, "~", home_path);
+		cfg_exec_path = astrrep(new_exec_path, "~", cfg_home_path);
 		struct stat exec_stat;
-		if (stat(exec_path, &exec_stat) == -1) {
-			free(exec_path);
-			exec_path = NULL;
-			return error(EXEC_STAT_PROBLEM);
+		if (stat(cfg_exec_path, &exec_stat) == -1) {
+			free(cfg_exec_path);
+			cfg_exec_path = NULL;
+			probno = log_error(EXEC_STAT_PROBLEM);
+			return -1;
 		}
 		else if (S_ISDIR(exec_stat.st_mode)) {
-			free(exec_path);
-			exec_path = NULL;
-			return error(EXEC_TYPE_PROBLEM);
+			free(cfg_exec_path);
+			cfg_exec_path = NULL;
+			probno = log_error(EXEC_TYPE_PROBLEM);
+			return -1;
 		}
 		else if ((exec_stat.st_mode & (S_ISUID | S_ISGID)) != 0) {
-			free(exec_path);
-			exec_path = NULL;
-			return error(EXEC_PERMISSION_PROBLEM);
+			free(cfg_exec_path);
+			cfg_exec_path = NULL;
+			probno = log_error(EXEC_PERMISSION_PROBLEM);
+			return -1;
 		}
 		else {
 			const size_t size = (size_t )exec_stat.st_size;
 			if (size != exec_size) {
-				warning(EXEC_SIZE_PROBLEM);
+				probno = log_warning(EXEC_SIZE_PROBLEM);
 			}
 			else {
-				FILE * stream = fopen(exec_path, "rb");
+				FILE * stream = fopen(cfg_exec_path, "rb");
 				if (stream == NULL) {
-					error(EXEC_OPEN_PROBLEM);
+					probno = log_error(EXEC_OPEN_PROBLEM);
 				}
 				else {
 					unsigned char * ptr = malloc(size);
 					if (ptr == NULL) {
-						return error(MALLOC_PROBLEM);
+						probno = log_error(MALLOC_PROBLEM);
+						return -1;
 					}
 					else {
 						if (fread(ptr, 1, size, stream) != exec_size) {
-							error(EXEC_READ_PROBLEM);
+							probno = log_error(EXEC_READ_PROBLEM);
 						}
 						else if (hash(ptr, exec_size) != exec_hash) {
-							warning(EXEC_HASH_PROBLEM);
+							probno = log_warning(EXEC_HASH_PROBLEM);
 						}
 						free(ptr);
 						if (fclose(stream) == EOF) {
-							error(EXEC_CLOSE_PROBLEM);
+							probno = log_error(EXEC_CLOSE_PROBLEM);
 						}
 					}
 				}
@@ -632,23 +650,24 @@ problem_d init_main_config(void) {
 	The location of the file is first guessed and
 	 the existence of the file is then checked.
 	*/
-	if (exec_data_path == NULL) {
-		exec_config_path = NULL;
+	if (cfg_exec_data_path == NULL) {
+		cfg_exec_config_path = NULL;
 	}
 	else {
-		const size_t size = strlen(exec_data_path) + 1
+		const size_t size = strlen(cfg_exec_data_path) + 1
 				+ strlen(exec_config_file) + 1;
-		exec_config_path = malloc(size);
-		if (exec_config_path == NULL) {
-			return error(MALLOC_PROBLEM);
+		cfg_exec_config_path = malloc(size);
+		if (cfg_exec_config_path == NULL) {
+			probno = log_error(MALLOC_PROBLEM);
+			return -1;
 		}
 		else {
-			snprintf(exec_config_path, size, "%s/%s",
-					exec_data_path,
+			snprintf(cfg_exec_config_path, size, "%s/%s",
+					cfg_exec_data_path,
 					exec_config_file);
 			struct stat exec_config_stat;
-			if (stat(exec_config_path, &exec_config_stat) == -1) {
-				warning(EXEC_CONFIG_STAT_PROBLEM);
+			if (stat(cfg_exec_config_path, &exec_config_stat) == -1) {
+				probno = log_warning(EXEC_CONFIG_STAT_PROBLEM);
 			}
 		}
 	}
@@ -659,23 +678,24 @@ problem_d init_main_config(void) {
 	The location of the file is first guessed and
 	 the existence of the file is then checked.
 	*/
-	if (exec_data_path == NULL) {
-		exec_process_path = NULL;
+	if (cfg_exec_data_path == NULL) {
+		cfg_exec_process_path = NULL;
 	}
 	else {
-		const size_t size = strlen(exec_data_path) + 1
+		const size_t size = strlen(cfg_exec_data_path) + 1
 				+ strlen(exec_process_file) + 1;
-		exec_process_path = malloc(size);
-		if (exec_process_path == NULL) {
-			return error(MALLOC_PROBLEM);
+		cfg_exec_process_path = malloc(size);
+		if (cfg_exec_process_path == NULL) {
+			probno = log_error(MALLOC_PROBLEM);
+			return -1;
 		}
 		else {
-			snprintf(exec_process_path, size, "%s/%s",
-					exec_data_path,
+			snprintf(cfg_exec_process_path, size, "%s/%s",
+					cfg_exec_data_path,
 					exec_process_file);
 			struct stat exec_process_stat;
-			if (stat(exec_process_path, &exec_process_stat) == -1) {
-				//note(EXEC_PROCESS_STAT_PROBLEM);
+			if (stat(cfg_exec_process_path, &exec_process_stat) == -1) {
+				//log_notice(EXEC_PROCESS_STAT_PROBLEM);
 			}
 		}
 	}
@@ -686,23 +706,24 @@ problem_d init_main_config(void) {
 	The location of the file is first guessed and
 	 the existence of the file is then checked.
 	*/
-	if (exec_data_path == NULL) {
-		exec_keybind_path = NULL;
+	if (cfg_exec_data_path == NULL) {
+		cfg_exec_keybind_path = NULL;
 	}
 	else {
-		const size_t size = strlen(exec_data_path) + 1
+		const size_t size = strlen(cfg_exec_data_path) + 1
 				+ strlen(exec_keybind_file) + 1;
-		exec_keybind_path = malloc(size);
-		if (exec_keybind_path == NULL) {
-			return error(MALLOC_PROBLEM);
+		cfg_exec_keybind_path = malloc(size);
+		if (cfg_exec_keybind_path == NULL) {
+			probno = log_error(MALLOC_PROBLEM);
+			return -1;
 		}
 		else {
-			snprintf(exec_keybind_path, size, "%s/%s",
-					exec_data_path,
+			snprintf(cfg_exec_keybind_path, size, "%s/%s",
+					cfg_exec_data_path,
 					exec_keybind_file);
 			struct stat exec_keybind_stat;
-			if (stat(exec_keybind_path, &exec_keybind_stat) == -1) {
-				warning(EXEC_KEYBIND_STAT_PROBLEM);
+			if (stat(cfg_exec_keybind_path, &exec_keybind_stat) == -1) {
+				probno = log_warning(EXEC_KEYBIND_STAT_PROBLEM);
 			}
 		}
 	}
@@ -713,23 +734,24 @@ problem_d init_main_config(void) {
 	The location of the file is first guessed and
 	 the existence of the file is then checked.
 	*/
-	if (exec_data_path == NULL) {
-		exec_version_path = NULL;
+	if (cfg_exec_data_path == NULL) {
+		cfg_exec_version_path = NULL;
 	}
 	else {
-		const size_t size = strlen(exec_data_path) + 1
+		const size_t size = strlen(cfg_exec_data_path) + 1
 				+ strlen(exec_version_file) + 1;
-		exec_version_path = malloc(size);
-		if (exec_version_path == NULL) {
-			return error(MALLOC_PROBLEM);
+		cfg_exec_version_path = malloc(size);
+		if (cfg_exec_version_path == NULL) {
+			probno = log_error(MALLOC_PROBLEM);
+			return -1;
 		}
 		else {
-			snprintf(exec_version_path, size, "%s/%s",
-					exec_data_path,
+			snprintf(cfg_exec_version_path, size, "%s/%s",
+					cfg_exec_data_path,
 					exec_version_file);
 			struct stat exec_version_stat;
-			if (stat(exec_version_path, &exec_version_stat) == -1) {
-				warning(EXEC_VERSION_STAT_PROBLEM);
+			if (stat(cfg_exec_version_path, &exec_version_stat) == -1) {
+				probno = log_warning(EXEC_VERSION_STAT_PROBLEM);
 			}
 		}
 	}
@@ -740,23 +762,24 @@ problem_d init_main_config(void) {
 	The location of the file is first guessed and
 	 the existence of the file is then checked.
 	*/
-	if (exec_data_path == NULL) {
-		exec_error_path = NULL;
+	if (cfg_exec_data_path == NULL) {
+		cfg_exec_error_path = NULL;
 	}
 	else {
-		const size_t size = strlen(exec_data_path) + 1
+		const size_t size = strlen(cfg_exec_data_path) + 1
 				+ strlen(exec_error_file) + 1;
-		exec_error_path = malloc(size);
-		if (exec_error_path == NULL) {
-			return error(MALLOC_PROBLEM);
+		cfg_exec_error_path = malloc(size);
+		if (cfg_exec_error_path == NULL) {
+			probno = log_error(MALLOC_PROBLEM);
+			return -1;
 		}
 		else {
-			snprintf(exec_error_path, size, "%s/%s",
-					exec_data_path,
+			snprintf(cfg_exec_error_path, size, "%s/%s",
+					cfg_exec_data_path,
 					exec_error_file);
 			struct stat exec_error_stat;
-			if (stat(exec_error_path, &exec_error_stat) == -1) {
-				//note(EXEC_ERROR_STAT_PROBLEM);
+			if (stat(cfg_exec_error_path, &exec_error_stat) == -1) {
+				//log_notice(EXEC_ERROR_STAT_PROBLEM);
 			}
 		}
 	}
@@ -767,34 +790,39 @@ problem_d init_main_config(void) {
 	The location of the file is first guessed and
 	 the existence of the file is then checked.
 	*/
-	if (exec_data_path == NULL) {
-		exec_count_path = NULL;
+	if (cfg_exec_data_path == NULL) {
+		cfg_exec_count_path = NULL;
 	}
 	else {
-		const size_t size = strlen(exec_data_path) + 1
+		const size_t size = strlen(cfg_exec_data_path) + 1
 				+ strlen(exec_count_file) + 1;
-		exec_count_path = malloc(size);
-		if (exec_count_path == NULL) {
-			return error(MALLOC_PROBLEM);
+		cfg_exec_count_path = malloc(size);
+		if (cfg_exec_count_path == NULL) {
+			probno = log_error(MALLOC_PROBLEM);
+			return -1;
 		}
 		else {
-			snprintf(exec_count_path, size, "%s/%s",
-					exec_data_path,
+			snprintf(cfg_exec_count_path, size, "%s/%s",
+					cfg_exec_data_path,
 					exec_count_file);
 			struct stat exec_count_stat;
-			if (stat(exec_count_path, &exec_count_stat) == -1) {
-				warning(EXEC_COUNT_STAT_PROBLEM);
+			if (stat(cfg_exec_count_path, &exec_count_stat) == -1) {
+				probno = log_warning(EXEC_COUNT_STAT_PROBLEM);
 			}
 		}
 	}
 
-	PROPAGATE(end_init_config());
+	if (end_init_config() == -1) {
+		return -1;
+	}
 
-	return NO_PROBLEM;
+	return 0;
 }
 
-problem_d init_lib_config(void) {
-	PROPAGATE(begin_init_config());
+int init_lib_config(void) {
+	if (begin_init_config() == -1) {
+		return -1;
+	}
 
 	/*
 	Finds the libraries to load.
@@ -806,27 +834,29 @@ problem_d init_lib_config(void) {
 	const char * new_libc_path;
 	if (config_lookup_string(&config, "libc", &new_libc_path) == CONFIG_FALSE) {
 		new_libc_path = def_libc_path;
-		warning(LIBC_CONFIG_PROBLEM);
+		probno = log_warning(LIBC_CONFIG_PROBLEM);
 	}
-	libc_path = astrrep(new_libc_path, "~", home_path);
+	cfg_libc_path = astrrep(new_libc_path, "~", cfg_home_path);
 	struct stat libc_stat;
-	if (stat(libc_path, &libc_stat) == -1) {
-		free(libc_path);
-		libc_path = NULL;
-		return error(LIBC_STAT_PROBLEM);
+	if (stat(cfg_libc_path, &libc_stat) == -1) {
+		free(cfg_libc_path);
+		cfg_libc_path = NULL;
+		probno = log_error(LIBC_STAT_PROBLEM);
+		return -1;
 	}
 
 	const char * new_libncurses_path;
 	if (config_lookup_string(&config, "libncurses", &new_libncurses_path) == CONFIG_FALSE) {
 		new_libncurses_path = def_libncurses_path;
-		warning(LIBNCURSES_CONFIG_PROBLEM);
+		probno = log_warning(LIBNCURSES_CONFIG_PROBLEM);
 	}
-	libncurses_path = astrrep(new_libncurses_path, "~", home_path);
+	cfg_libncurses_path = astrrep(new_libncurses_path, "~", cfg_home_path);
 	struct stat libncurses_stat;
-	if (stat(libncurses_path, &libncurses_stat) != 0) {
-		free(libncurses_path);
-		libncurses_path = NULL;
-		return error(LIBNCURSES_STAT_PROBLEM);
+	if (stat(cfg_libncurses_path, &libncurses_stat) != 0) {
+		free(cfg_libncurses_path);
+		cfg_libncurses_path = NULL;
+		probno = log_error(LIBNCURSES_STAT_PROBLEM);
+		return -1;
 	}
 
 	/**
@@ -835,9 +865,9 @@ problem_d init_lib_config(void) {
 	int new_enforce;
 	if (config_lookup_bool(&config, "enforce", &new_enforce) == CONFIG_FALSE) {
 		new_enforce = def_enforce;
-		//warning(PRESERVE_CONFIG_PROBLEM);
+		//log_warning(PRESERVE_CONFIG_PROBLEM);
 	}
-	enforce = new_enforce == CONFIG_TRUE;
+	cfg_enforce = new_enforce == CONFIG_TRUE;
 
 	/*
 	Finds the amount of save states.
@@ -849,13 +879,13 @@ problem_d init_lib_config(void) {
 	int new_states;
 	if (config_lookup_int(&config, "states", &new_states) == CONFIG_FALSE) {
 		new_states = def_states;
-		//warning(STATE_CONFIG_PROBLEM);
+		//log_warning(STATE_CONFIG_PROBLEM);
 	}
 	if (new_states < 1) {
 		new_states = 1;
-		warning(STATE_AMOUNT_PROBLEM);
+		probno = log_warning(STATE_AMOUNT_PROBLEM);
 	}
-	states = new_states + 1;//reserves space for the active state
+	cfg_states = new_states + 1;//reserves space for the active state
 
 	/*
 	Finds the height of the terminal.
@@ -867,13 +897,13 @@ problem_d init_lib_config(void) {
 	int new_rows;
 	if (config_lookup_int(&config, "rows", &new_rows) == CONFIG_FALSE) {
 		new_rows = def_rows;
-		//warning(ROW_CONFIG_PROBLEM);
+		//log_warning(ROW_CONFIG_PROBLEM);
 	}
 	if (new_rows < exec_rows_min || new_rows > exec_rows_max) {
 		new_rows = MIN(MAX(exec_rows_min, new_rows), exec_rows_max);
-		warning(ROW_AMOUNT_PROBLEM);
+		probno = log_warning(ROW_AMOUNT_PROBLEM);
 	}
-	rows = new_rows;
+	cfg_rows = new_rows;
 
 	/*
 	Finds the width of the terminal.
@@ -885,13 +915,13 @@ problem_d init_lib_config(void) {
 	int new_cols;
 	if (config_lookup_int(&config, "cols", &new_cols) == CONFIG_FALSE) {
 		new_cols = def_cols;
-		//warning(COL_CONFIG_PROBLEM);
+		//log_warning(COL_CONFIG_PROBLEM);
 	}
 	if (new_cols < exec_cols_min || new_cols > exec_cols_max) {
 		new_cols = MIN(MAX(exec_cols_min, new_cols), exec_cols_max);
-		warning(COL_AMOUNT_PROBLEM);
+		probno = log_warning(COL_AMOUNT_PROBLEM);
 	}
-	cols = new_cols;
+	cfg_cols = new_cols;
 
 	/*
 	Finds the location of the shared memory segment.
@@ -902,14 +932,15 @@ problem_d init_lib_config(void) {
 	const char * new_shm_path;
 	if (config_lookup_string(&config, "shm", &new_shm_path) == CONFIG_FALSE) {
 		new_shm_path = def_config_path;//def_shm_path;
-		//warning(SHM_CONFIG_PROBLEM);
+		//log_warning(SHM_CONFIG_PROBLEM);
 	}
-	shm_path = astrrep(new_shm_path, "~", home_path);
+	cfg_shm_path = astrrep(new_shm_path, "~", cfg_home_path);
 	struct stat shm_stat;
-	if (stat(shm_path, &shm_stat) == -1) {
-		free(shm_path);
-		shm_path = NULL;
-		return error(SHM_STAT_PROBLEM);
+	if (stat(cfg_shm_path, &shm_stat) == -1) {
+		free(cfg_shm_path);
+		cfg_shm_path = NULL;
+		probno = log_error(SHM_STAT_PROBLEM);
+		return -1;
 	}
 
 	/**
@@ -918,9 +949,9 @@ problem_d init_lib_config(void) {
 	int new_timestamp;
 	if (config_lookup_int(&config, "timestamp", &new_timestamp) == CONFIG_FALSE) {
 		new_timestamp = def_timestamp;
-		//warning(TIMESTAMP_CONFIG_PROBLEM);
+		//log_warning(TIMESTAMP_CONFIG_PROBLEM);
 	}
-	timestamp = (time_t )new_timestamp;
+	cfg_timestamp = (time_t )new_timestamp;
 
 	/**
 	Sets the amount of generated characters.
@@ -928,9 +959,9 @@ problem_d init_lib_config(void) {
 	int new_generations;
 	if (config_lookup_int(&config, "generations", &new_generations) == CONFIG_FALSE) {
 		new_generations = def_generations;
-		//warning(GENERATIONS_CONFIG_PROBLEM);
+		//log_warning(GENERATIONS_CONFIG_PROBLEM);
 	}
-	generations = (unsigned int )new_generations;
+	cfg_generations = (unsigned int )new_generations;
 
 	/**
 	Sets the save-quit-load emulation.
@@ -938,9 +969,9 @@ problem_d init_lib_config(void) {
 	int new_sql;
 	if (config_lookup_bool(&config, "sql", &new_sql) == CONFIG_FALSE) {
 		new_sql = def_sql;
-		//warning(SQL_CONFIG_PROBLEM);
+		//log_warning(SQL_CONFIG_PROBLEM);
 	}
-	sql = new_sql == CONFIG_TRUE;
+	cfg_sql = new_sql == CONFIG_TRUE;
 
 	/**
 	Sets the save state perseverance.
@@ -948,9 +979,9 @@ problem_d init_lib_config(void) {
 	int new_preserve_states;
 	if (config_lookup_bool(&config, "preserve", &new_preserve_states) == CONFIG_FALSE) {
 		new_preserve_states = def_preserve;
-		//warning(PRESERVE_CONFIG_PROBLEM);
+		//log_warning(PRESERVE_CONFIG_PROBLEM);
 	}
-	preserve = new_preserve_states == CONFIG_TRUE;
+	cfg_preserve = new_preserve_states == CONFIG_TRUE;
 
 	/**
 	Sets the playback mode.
@@ -958,9 +989,9 @@ problem_d init_lib_config(void) {
 	int new_autoplay;
 	if (config_lookup_bool(&config, "autoplay", &new_autoplay) == CONFIG_FALSE) {
 		new_autoplay = def_autoplay;
-		//warning(AUTOPLAY_CONFIG_PROBLEM);
+		//log_warning(AUTOPLAY_CONFIG_PROBLEM);
 	}
-	autoplay = new_autoplay == CONFIG_TRUE;
+	cfg_autoplay = new_autoplay == CONFIG_TRUE;
 
 	/**
 	Sets the color mode.
@@ -968,9 +999,9 @@ problem_d init_lib_config(void) {
 	int new_monochrome;
 	if (config_lookup_bool(&config, "monochrome", &new_monochrome) == CONFIG_FALSE) {
 		new_monochrome = def_monochrome;
-		//warning(MONOCHROME_CONFIG_PROBLEM);
+		//log_warning(MONOCHROME_CONFIG_PROBLEM);
 	}
-	monochrome = new_monochrome == CONFIG_TRUE;
+	cfg_monochrome = new_monochrome == CONFIG_TRUE;
 
 	/*
 	Finds the iterator string.
@@ -981,10 +1012,10 @@ problem_d init_lib_config(void) {
 	const char * new_iterator;
 	if (config_lookup_string(&config, "iterator", &new_iterator) == CONFIG_FALSE) {
 		new_iterator = def_iterator;
-		//warning(ITERATOR_CONFIG_PROBLEM);
+		//log_warning(ITERATOR_CONFIG_PROBLEM);
 	}
-	iterator = malloc(strlen(new_iterator) + 1);
-	strcpy(iterator, new_iterator);
+	cfg_iterator = malloc(strlen(new_iterator) + 1);
+	strcpy(cfg_iterator, new_iterator);
 
 	/*
 	Opens the input stream.
@@ -995,14 +1026,14 @@ problem_d init_lib_config(void) {
 	const char * new_input_path;
 	if (config_lookup_string(&config, "input", &new_input_path) == CONFIG_FALSE) {
 		new_input_path = def_input_path;
-		warning(INPUT_CONFIG_PROBLEM);
+		probno = log_warning(INPUT_CONFIG_PROBLEM);
 	}
-	input_path = astrrep(new_input_path, "~", home_path);
+	cfg_input_path = astrrep(new_input_path, "~", cfg_home_path);
 	struct stat input_stat;
-	if (stat(input_path, &input_stat) == -1) {
-		free(input_path);
-		input_path = NULL;
-		warning(INPUT_STAT_PROBLEM);
+	if (stat(cfg_input_path, &input_stat) == -1) {
+		free(cfg_input_path);
+		cfg_input_path = NULL;
+		probno = log_warning(INPUT_STAT_PROBLEM);
 	}
 
 	/*
@@ -1020,33 +1051,35 @@ problem_d init_lib_config(void) {
 	const char * new_output_path;
 	if (config_lookup_string(&config, "output", &new_output_path) == CONFIG_FALSE) {
 		new_output_path = def_output_path;
-		warning(OUTPUT_CONFIG_PROBLEM);
+		probno = log_warning(OUTPUT_CONFIG_PROBLEM);
 	}
-	char * const output_path = astrrep(new_output_path, "~", home_path);
-	output_paths = malloc((size_t )states * sizeof *output_paths);
-	if (output_paths == NULL) {
-		return error(MALLOC_PROBLEM);
+	char * const output_path = astrrep(new_output_path, "~", cfg_home_path);
+	cfg_output_paths = malloc((size_t )cfg_states * sizeof *cfg_output_paths);
+	if (cfg_output_paths == NULL) {
+		probno = log_error(MALLOC_PROBLEM);
+		return -1;
 	}
 	else {
 		bool exists = FALSE;
-		for (int state = 1; state < states; state++) {
+		for (int state = 1; state < cfg_states; state++) {
 			const size_t size = intlen(state) + 1;
 			char * const iterand = malloc(size);
 			if (iterand == NULL) {
-				return error(MALLOC_PROBLEM);
+				probno = log_error(MALLOC_PROBLEM);
+				return -1;
 			}
 			else {
 				snprintf(iterand, size, "%d", state);
-				output_paths[state] = astrrep(output_path, iterator, iterand);
+				cfg_output_paths[state] = astrrep(output_path, cfg_iterator, iterand);
 				free(iterand);
 				struct stat output_stat;
-				if (stat(output_paths[state], &output_stat) == 0) {
+				if (stat(cfg_output_paths[state], &output_stat) == 0) {
 					exists = TRUE;
 				}
 			}
 		}
 		if (exists) {
-			warning(OUTPUT_STAT_PROBLEM);
+			probno = log_warning(OUTPUT_STAT_PROBLEM);
 		}
 	}
 
@@ -1062,19 +1095,19 @@ problem_d init_lib_config(void) {
 	const char * new_error_path;
 	if (config_lookup_string(&config, "error_log", &new_error_path) == CONFIG_FALSE) {
 		new_error_path = def_error_stream;
-		warning(ERROR_CONFIG_PROBLEM);
+		probno = log_warning(ERROR_CONFIG_PROBLEM);
 	}
-	char * const error_path = astrrep(new_error_path, "~", home_path);
+	char * const error_path = astrrep(new_error_path, "~", cfg_home_path);
 	FILE * new_error_stream = stdstr(error_path);
 	struct stat error_stat;
 	if (new_error_stream == NULL) {
 		if (stat(error_path, &error_stat) == 0) {
-			//note(ERROR_STAT_PROBLEM);
+			//log_notice(ERROR_STAT_PROBLEM);
 		}
 		new_error_stream = fopen(error_path, "w");
 		if (new_error_stream == NULL) {
 			new_error_stream = NULL;
-			error(ERROR_OPEN_PROBLEM);
+			probno = log_error(ERROR_OPEN_PROBLEM);
 		}
 	}
 	free(error_path);
@@ -1082,14 +1115,14 @@ problem_d init_lib_config(void) {
 	const char * new_warning_path;
 	if (config_lookup_string(&config, "warning_log", &new_warning_path) == CONFIG_FALSE) {
 		new_warning_path = def_warning_stream;
-		warning(ERROR_CONFIG_PROBLEM);
+		probno = log_warning(ERROR_CONFIG_PROBLEM);
 	}
-	char * const warning_path = astrrep(new_warning_path, "~", home_path);
+	char * const warning_path = astrrep(new_warning_path, "~", cfg_home_path);
 	FILE * new_warning_stream = stdstr(warning_path);
 	struct stat warning_stat;
 	if (new_warning_stream == NULL) {
 		if (stat(warning_path, &warning_stat) == 0) {
-			//note(WARNING_STAT_PROBLEM);
+			//log_notice(WARNING_STAT_PROBLEM);
 		}
 		if (warning_stat.st_dev == error_stat.st_dev
 				&& warning_stat.st_ino == error_stat.st_ino) {
@@ -1099,53 +1132,53 @@ problem_d init_lib_config(void) {
 			new_warning_stream = fopen(warning_path, "w");
 			if (new_warning_stream == NULL) {
 				new_warning_stream = NULL;
-				error(WARNING_OPEN_PROBLEM);
+				probno = log_error(WARNING_OPEN_PROBLEM);
 			}
 		}
 	}
 	free(warning_path);
 
-	const char * new_note_path;
-	if (config_lookup_string(&config, "note_log", &new_note_path) == CONFIG_FALSE) {
-		new_note_path = def_note_stream;
-		warning(ERROR_CONFIG_PROBLEM);
+	const char * new_notice_path;
+	if (config_lookup_string(&config, "notice_log", &new_notice_path) == CONFIG_FALSE) {
+		new_notice_path = def_notice_stream;
+		probno = log_warning(ERROR_CONFIG_PROBLEM);
 	}
-	char * const note_path = astrrep(new_note_path, "~", home_path);
-	FILE * new_note_stream = stdstr(note_path);
-	struct stat note_stat;
-	if (new_note_stream == NULL) {
-		if (stat(note_path, &note_stat) == 0) {
-			//note(NOTE_STAT_PROBLEM);
+	char * const notice_path = astrrep(new_notice_path, "~", cfg_home_path);
+	FILE * new_notice_stream = stdstr(notice_path);
+	struct stat notice_stat;
+	if (new_notice_stream == NULL) {
+		if (stat(notice_path, &notice_stat) == 0) {
+			//log_notice(NOTE_STAT_PROBLEM);
 		}
-		if (note_stat.st_dev == error_stat.st_dev
-				&& note_stat.st_ino == error_stat.st_ino) {
-			new_note_stream = new_error_stream;
+		if (notice_stat.st_dev == error_stat.st_dev
+				&& notice_stat.st_ino == error_stat.st_ino) {
+			new_notice_stream = new_error_stream;
 		}
-		else if (note_stat.st_dev == warning_stat.st_dev
-				&& note_stat.st_ino == warning_stat.st_ino) {
-			new_note_stream = new_warning_stream;
+		else if (notice_stat.st_dev == warning_stat.st_dev
+				&& notice_stat.st_ino == warning_stat.st_ino) {
+			new_notice_stream = new_warning_stream;
 		}
 		else {
-			new_note_stream = fopen(note_path, "w");
-			if (new_note_stream == NULL) {
-				new_note_stream = NULL;
-				error(NOTE_OPEN_PROBLEM);
+			new_notice_stream = fopen(notice_path, "w");
+			if (new_notice_stream == NULL) {
+				new_notice_stream = NULL;
+				probno = log_error(NOTE_OPEN_PROBLEM);
 			}
 		}
 	}
-	free(note_path);
+	free(notice_path);
 
 	const char * new_call_path;
 	if (config_lookup_string(&config, "call_log", &new_call_path) == CONFIG_FALSE) {
 		new_call_path = def_call_stream;
-		warning(ERROR_CONFIG_PROBLEM);
+		probno = log_warning(ERROR_CONFIG_PROBLEM);
 	}
-	char * const call_path = astrrep(new_call_path, "~", home_path);
+	char * const call_path = astrrep(new_call_path, "~", cfg_home_path);
 	FILE * new_call_stream = stdstr(call_path);
 	struct stat call_stat;
 	if (new_call_stream == NULL) {
 		if (stat(call_path, &call_stat) == 0) {
-			//note(CALL_STAT_PROBLEM);
+			//log_notice(CALL_STAT_PROBLEM);
 		}
 		if (call_stat.st_dev == error_stat.st_dev
 				&& call_stat.st_ino == error_stat.st_ino) {
@@ -1155,29 +1188,29 @@ problem_d init_lib_config(void) {
 				&& call_stat.st_ino == warning_stat.st_ino) {
 			new_call_stream = new_warning_stream;
 		}
-		else if (call_stat.st_dev == note_stat.st_dev
-				&& call_stat.st_ino == note_stat.st_ino) {
-			new_call_stream = new_note_stream;
+		else if (call_stat.st_dev == notice_stat.st_dev
+				&& call_stat.st_ino == notice_stat.st_ino) {
+			new_call_stream = new_notice_stream;
 		}
 		else {
 			new_call_stream = fopen(call_path, "w");
 			if (new_call_stream == NULL) {
 				new_call_stream = NULL;
-				error(CALL_OPEN_PROBLEM);
+				probno = log_error(CALL_OPEN_PROBLEM);
 			}
 		}
 	}
 	free(call_path);
 
-	if (new_error_stream != error_stream
-			|| new_warning_stream != warning_stream
-			|| new_note_stream != note_stream
-			|| new_call_stream != call_stream) {
-		note(LOG_CHANGE_PROBLEM);
-		error_stream = new_error_stream;
-		warning_stream = new_warning_stream;
-		note_stream = new_note_stream;
-		call_stream = new_call_stream;
+	if (new_error_stream != cfg_error_stream
+			|| new_warning_stream != cfg_warning_stream
+			|| new_notice_stream != cfg_notice_stream
+			|| new_call_stream != cfg_call_stream) {
+		probno = log_notice(LOG_CHANGE_PROBLEM);
+		cfg_error_stream = new_error_stream;
+		cfg_warning_stream = new_warning_stream;
+		cfg_notice_stream = new_notice_stream;
+		cfg_call_stream = new_call_stream;
 	}
 
 	/**
@@ -1186,111 +1219,111 @@ problem_d init_lib_config(void) {
 	int new_save_key;
 	if (config_lookup_int(&config, "save_key", &new_save_key) == CONFIG_FALSE) {
 		new_save_key = def_save_key;
-		//warning(KEY_CONFIG_PROBLEM);
+		//log_warning(KEY_CONFIG_PROBLEM);
 	}
-	save_key = new_save_key;
+	cfg_save_key = new_save_key;
 
 	int new_load_key;
 	if (config_lookup_int(&config, "load_key", &new_load_key) == CONFIG_FALSE) {
 		new_load_key = def_load_key;
-		//warning(KEY_CONFIG_PROBLEM);
+		//log_warning(KEY_CONFIG_PROBLEM);
 	}
-	load_key = new_load_key;
+	cfg_load_key = new_load_key;
 
 	int new_state_key;
 	if (config_lookup_int(&config, "state_key", &new_state_key) == CONFIG_FALSE) {
 		new_state_key = def_state_key;
-		//warning(KEY_CONFIG_PROBLEM);
+		//log_warning(KEY_CONFIG_PROBLEM);
 	}
-	state_key = new_state_key;
+	cfg_state_key = new_state_key;
 
 	int new_unstate_key;
 	if (config_lookup_int(&config, "unstate_key", &new_unstate_key) == CONFIG_FALSE) {
 		new_unstate_key = def_unstate_key;
-		//warning(KEY_CONFIG_PROBLEM);
+		//log_warning(KEY_CONFIG_PROBLEM);
 	}
-	unstate_key = new_unstate_key;
+	cfg_unstate_key = new_unstate_key;
 
 	int new_duration_key;
 	if (config_lookup_int(&config, "duration_key", &new_duration_key) == CONFIG_FALSE) {
 		new_duration_key = def_duration_key;
-		//warning(KEY_CONFIG_PROBLEM);
+		//log_warning(KEY_CONFIG_PROBLEM);
 	}
-	duration_key = new_duration_key;
+	cfg_duration_key = new_duration_key;
 
 	int new_unduration_key;
 	if (config_lookup_int(&config, "unduration_key", &new_unduration_key) == CONFIG_FALSE) {
 		new_unduration_key = def_unduration_key;
-		//warning(KEY_CONFIG_PROBLEM);
+		//log_warning(KEY_CONFIG_PROBLEM);
 	}
-	unduration_key = new_unduration_key;
+	cfg_unduration_key = new_unduration_key;
 
 	int new_time_key;
 	if (config_lookup_int(&config, "time_key", &new_time_key) == CONFIG_FALSE) {
 		new_time_key = def_time_key;
-		//warning(KEY_CONFIG_PROBLEM);
+		//log_warning(KEY_CONFIG_PROBLEM);
 	}
-	time_key = new_time_key;
+	cfg_time_key = new_time_key;
 
 	int new_untime_key;
 	if (config_lookup_int(&config, "untime_key", &new_untime_key) == CONFIG_FALSE) {
 		new_untime_key = def_untime_key;
-		//warning(KEY_CONFIG_PROBLEM);
+		//log_warning(KEY_CONFIG_PROBLEM);
 	}
-	untime_key = new_untime_key;
+	cfg_untime_key = new_untime_key;
 
 	int new_menu_key;
 	if (config_lookup_int(&config, "menu_key", &new_menu_key) == CONFIG_FALSE) {
 		new_menu_key = def_menu_key;
-		//warning(KEY_CONFIG_PROBLEM);
+		//log_warning(KEY_CONFIG_PROBLEM);
 	}
-	menu_key = new_menu_key;
+	cfg_menu_key = new_menu_key;
 
 	int new_info_key;
 	if (config_lookup_int(&config, "info_key", &new_info_key) == CONFIG_FALSE) {
 		new_info_key = def_info_key;
-		//warning(KEY_CONFIG_PROBLEM);
+		//log_warning(KEY_CONFIG_PROBLEM);
 	}
 	info_key = new_info_key;
 
 	int new_condense_key;
 	if (config_lookup_int(&config, "condense_key", &new_condense_key) == CONFIG_FALSE) {
 		new_condense_key = def_condense_key;
-		//warning(KEY_CONFIG_PROBLEM);
+		//log_warning(KEY_CONFIG_PROBLEM);
 	}
-	condense_key = new_condense_key;
+	cfg_condense_key = new_condense_key;
 
 	int new_hide_key;
 	if (config_lookup_int(&config, "hide_key", &new_hide_key) == CONFIG_FALSE) {
 		new_hide_key = def_hide_key;
-		//warning(KEY_CONFIG_PROBLEM);
+		//log_warning(KEY_CONFIG_PROBLEM);
 	}
-	hide_key = new_hide_key;
+	cfg_hide_key = new_hide_key;
 
 	int new_play_key;
 	if (config_lookup_int(&config, "play_key", &new_play_key) == CONFIG_FALSE) {
 		new_play_key = def_play_key;
-		//warning(KEY_CONFIG_PROBLEM);
+		//log_warning(KEY_CONFIG_PROBLEM);
 	}
-	play_key = new_play_key;
+	cfg_play_key = new_play_key;
 
 	int new_stop_key;
 	if (config_lookup_int(&config, "stop_key", &new_stop_key) == CONFIG_FALSE) {
 		new_stop_key = def_stop_key;
-		//warning(KEY_CONFIG_PROBLEM);
+		//log_warning(KEY_CONFIG_PROBLEM);
 	}
-	stop_key = new_stop_key;
+	cfg_stop_key = new_stop_key;
 
 	int new_quit_key;
 	if (config_lookup_int(&config, "quit_key", &new_quit_key) == CONFIG_FALSE) {
 		new_quit_key = def_quit_key;
-		//warning(KEY_CONFIG_PROBLEM);
+		//log_warning(KEY_CONFIG_PROBLEM);
 	}
-	quit_key = new_quit_key;
+	cfg_quit_key = new_quit_key;
 
-	PROPAGATE(end_init_config());
+	if (end_init_config() == -1) {
+		return -1;
+	}
 
 	return NO_PROBLEM;
 }
-
-#endif

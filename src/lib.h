@@ -58,9 +58,9 @@ extern int previous_inputs[4];
 /**
 Ensures overloaded functions aren't used outside this module.
 **/
-#ifndef LIB_C
+#ifndef UM_ALIAS
 
-#define printf um_printf
+//#define printf um_printf
 #define unlink um_unlink
 #define ioctl um_ioctl
 #define time um_time
