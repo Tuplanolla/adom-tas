@@ -7,9 +7,7 @@
 
 #include <stddef.h>//size_t
 
-#include "rec.h"//record_d
-
-size_t freadp(const char * path);
-size_t fwritep(const char * path);
+size_t put_fread(const char * path);
+size_t put_fwrite(const char * path);
 
 #endif

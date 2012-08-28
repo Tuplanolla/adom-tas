@@ -1,27 +1,11 @@
 /**
 @see def.c
 @author Sampsa "Tuplanolla" Kiiskinen
-
-TODO fix execution modes
 **/
 #ifndef DEF_H
 #define DEF_H
 
 #include <stddef.h>//size_t
-
-/**
-The execution modes.
-**/
-enum mode_e {
-	GETTING_STARTED,
-	ALMOST_READY,
-	RUNNING,
-	HAD_ENOUGH
-};
-typedef enum mode_e mode_d;
-
-extern const char * const project_name;
-extern const char * const project_version;
 
 extern const char * const def_gui_left_more;
 extern const char * const def_gui_right_more;

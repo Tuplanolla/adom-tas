@@ -12,17 +12,6 @@ Sets the default values of various variables.
 #include "def.h"
 
 /**
-The name of this project.
-
-Used in unique identifier generation.
-**/
-intern const char * const project_name = "adom-tas";
-/**
-The release version of this project.
-**/
-intern const char * const project_version = "1.0.0";
-
-/**
 The indicator used when a list extends left.
 **/
 intern const char * const def_gui_left_more = "<-";

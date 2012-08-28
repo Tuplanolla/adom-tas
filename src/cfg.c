@@ -22,6 +22,7 @@ TODO check output_paths management
 #include "log.h"//log_error, warning, notice
 #include "def.h"//def_*
 #include "exec.h"//exec_*
+#include "rec.h"//record
 
 #include "cfg.h"
 
@@ -88,7 +89,7 @@ bool cfg_enforce;
 /**
 The amount of save states.
 **/
-int cfg_states;
+int cfg_saves;
 /**
 The height of the terminal.
 **/
@@ -253,7 +254,7 @@ int uninit_config(void) {
 	free(cfg_iterator);
 	free(cfg_input_path);
 	if (cfg_output_paths != NULL) {
-		for (int state = 0; state < cfg_states; state++) {
+		for (int state = 0; state < cfg_saves; state++) {
 			free(cfg_output_paths[state]);
 		}
 		free(cfg_output_paths);
@@ -885,7 +886,7 @@ int init_lib_config(void) {
 		new_states = 1;
 		probno = log_warning(STATE_AMOUNT_PROBLEM);
 	}
-	cfg_states = new_states + 1;//reserves space for the active state
+	cfg_saves = new_states + 1;//reserves space for the active state
 
 	/*
 	Finds the height of the terminal.
@@ -1054,14 +1055,14 @@ int init_lib_config(void) {
 		probno = log_warning(OUTPUT_CONFIG_PROBLEM);
 	}
 	char * const output_path = astrrep(new_output_path, "~", cfg_home_path);
-	cfg_output_paths = malloc((size_t )cfg_states * sizeof *cfg_output_paths);
+	cfg_output_paths = malloc((size_t )cfg_saves * sizeof *cfg_output_paths);
 	if (cfg_output_paths == NULL) {
 		probno = log_error(MALLOC_PROBLEM);
 		return -1;
 	}
 	else {
 		bool exists = FALSE;
-		for (int state = 1; state < cfg_states; state++) {
+		for (int state = 1; state < cfg_saves; state++) {
 			const size_t size = intlen(state) + 1;
 			char * const iterand = malloc(size);
 			if (iterand == NULL) {

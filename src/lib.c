@@ -23,6 +23,7 @@ Does something unnecessary.
 #include "log.h"//error, warning, notice
 #include "cfg.h"//*
 #include "asm.h"//inject_*
+#include "type.h"//mode_d
 #include "shm.h"//*_shm, shm
 #include "rec.h"//record
 
@@ -44,7 +45,7 @@ Does something unnecessary.
 /**
 The most important variable ever defined.
 **/
-intern unsigned char current_duration = 15;
+unsigned short int current_duration = 15;
 long int negative_turns = 0;
 long int previous_turns = 0;
 /**
@@ -55,55 +56,13 @@ intern unsigned int previous_frames = 0;
 /**
 The active save state.
 **/
-intern int current_state = 1;
+int current_save = 1;
 /**
 The four last inputs.
 **/
 intern int previous_inputs[4] = {0, 0, 0, 0};
-/**
-Whether time passed.
-**/
-intern bool in_game = FALSE;
-/**
-Whether initialization has started.
-**/
-intern bool initializing = FALSE;
-/**
-Whether initialization has ended.
-**/
-intern bool initialized = FALSE;
-/**
-Whether a menu is open and inputs are blocked.
-**/
-intern bool inactive = FALSE;
-/**
-Which window is open.
-**/
-intern bool menuinfo = FALSE;
-/**
-Whether the interface is condensed.
-**/
-intern bool condensed = FALSE;
-/**
-Whether the interface is hidden entirely.
-**/
-intern bool hidden = FALSE;
-/**
-Whether a record is being played back.
-**/
-intern bool playing = FALSE;
-/**
-Whether a record is paused.
-**/
-intern bool paused = FALSE;
-/**
-Whether this module is exiting.
-**/
-intern bool quitting = FALSE;
-/**
-Whether characters are being rolled.
-**/
-intern bool rolling = FALSE;
+
+imode_d imode;
 
 /**
 Some dlfcn stuff.
@@ -155,25 +114,25 @@ void save_quit_load(void) {
 /**
 Closes the dynamically linked libraries.
 
-@return The error code.
+@return 0 if successful and -1 otherwise.
 **/
-problem_d uninit_lib(void) {
+int uninit_lib(void) {
 	if (dlclose(libc_handle) != 0) {
-		log_error(LIBC_DLCLOSE_PROBLEM);
+		probno = log_error(LIBC_DLCLOSE_PROBLEM);
 	}
 	if (dlclose(libncurses_handle) != 0) {
-		log_error(LIBNCURSES_DLCLOSE_PROBLEM);
+		probno = log_error(LIBNCURSES_DLCLOSE_PROBLEM);
 	}
 
-	return NO_PROBLEM;
+	return 0;
 }
 
 /**
 Opens the dynamically linked libraries.
 
-@return The error code.
+@return 0 if successful and -1 otherwise.
 **/
-problem_d init_lib(void) {
+int init_lib(void) {
 	/*
 	<code>RTLD_LAZY</code> is faster than <code>RTLD_NOW</code>.
 	*/
@@ -181,7 +140,8 @@ problem_d init_lib(void) {
 
 	libc_handle = dlopen(cfg_libc_path, mode);
 	if (libc_handle == NULL) {
-		return log_error(LIBC_DLOPEN_PROBLEM);
+		probno = log_error(LIBC_DLOPEN_PROBLEM);
+		return -1;
 	}
 	um_printf = (printf_f )dlsym(libc_handle, "printf");
 	um_unlink = (unlink_f )dlsym(libc_handle, "unlink");
@@ -197,12 +157,14 @@ problem_d init_lib(void) {
 			|| um_srandom == NULL
 			|| um_random == NULL
 			|| um_ioctl == NULL) {
-		return log_error(LIBC_DLSYM_PROBLEM);
+		probno = log_error(LIBC_DLSYM_PROBLEM);
+		return -1;
 	}
 
 	libncurses_handle = dlopen(cfg_libncurses_path, mode);
 	if (libncurses_handle == NULL) {
-		return log_error(LIBNCURSES_DLOPEN_PROBLEM);
+		probno = log_error(LIBNCURSES_DLOPEN_PROBLEM);
+		return -1;
 	}
 	um_wrefresh = (wrefresh_f )dlsym(libncurses_handle, "wrefresh");
 	um_init_pair = (init_pair_f )dlsym(libncurses_handle, "init_pair");
@@ -213,17 +175,18 @@ problem_d init_lib(void) {
 			|| um_wrefresh == NULL
 			|| um_wgetch == NULL
 			|| um_endwin == NULL) {
-		return log_error(LIBNCURSES_DLSYM_PROBLEM);
+		probno = log_error(LIBNCURSES_DLSYM_PROBLEM);
+		return -1;
 	}
 
 	/*
 	Prevents reloading libraries for child processes.
 	*/
 	if (unsetenv("LD_PRELOAD") == -1) {
-		log_warning(LD_PRELOAD_UNSETENV_PROBLEM);
+		probno = log_warning(LD_PRELOAD_UNSETENV_PROBLEM);
 	}
 
-	return NO_PROBLEM;
+	return 0;
 }
 
 void uninit_curses(void) {
@@ -231,7 +194,7 @@ void uninit_curses(void) {
 	const int y = nocbreak();
 	const int z = echo();
 	const int c = um_endwin();
-	log_fprintfl(cfg_error_stream, "Exiting %d, %d, %d and %d.", x, y, z, c);
+	probno = log_fprintf(cfg_error_stream, "Exiting %d, %d, %d and %d.", x, y, z, c);
 }
 
 void partial_uninit(const problem_d problem) {
@@ -261,7 +224,8 @@ problem_d copy_temporary(const int state, const bool save) {
 					+ uintlen(state) + 1;
 			char * const state_path = malloc(size);
 			if (state_path == NULL) {
-				return log_error(MALLOC_PROBLEM);
+				probno = log_error(MALLOC_PROBLEM);
+				return -1;
 			}
 			else {
 				snprintf(state_path, size, "%s_%u",
@@ -321,7 +285,8 @@ problem_d init_fork(void) {
 	*/
 	const pid_t child_pid = fork();
 	if (child_pid == -1) {
-		return log_error(FORK_PROBLEM);
+		probno = log_error(FORK_PROBLEM);
+		return -1;
 	}
 	else {
 		pid = getpid();
@@ -367,11 +332,12 @@ problem_d init_fork(void) {
 /**
 Saves the game to memory.
 **/
-problem_d save(const int state) {
+int save(const int state) {
 	do {
 		const pid_t child_pid = fork();
 		if (child_pid == -1) {
-			return log_error(FORK_PROBLEM);
+			probno = log_error(FORK_PROBLEM);
+			return -1;
 		}
 		else {
 			pid = getpid();
@@ -429,13 +395,13 @@ problem_d save(const int state) {
 		}
 	} while (cfg_preserve);
 
-	return NO_PROBLEM;
+	return 0;
 }
 
 /**
 Loads the game from memory.
 **/
-problem_d load(const int state) {
+int load(const int state) {
 	if (shm.pids[state] != 0) {
 		/*
 		Loads the temporary files.
@@ -451,7 +417,7 @@ problem_d load(const int state) {
 		partial_uninit(NO_PROBLEM);
 	}
 
-	return NO_PROBLEM;
+	return 0;
 }
 
 /**
@@ -485,7 +451,7 @@ Removes a file.
 Intercepts removing the debug file if it exists.
 
 @param path The path of the file to remove.
-@return 0 if no errors occurred and -1 otherwise.
+@return 0 if successful and -1 otherwise.
 **/
 int unlink(const char * const path) {
 	log_call("unlink(\"%s\").", path);
@@ -509,14 +475,15 @@ Resizing the terminal causes spurious calls and prints garbage on the screen.
 @param d An open file descriptor.
 @param request A request conforming to <code>ioctl_list</code>.
 @param ... A single pointer.
-@return 0 if no errors occurred and -1 otherwise.
+@return 0 if successful and -1 otherwise.
 **/
 int ioctl(const int d, const unsigned long request, ...) {
 	va_list	argp;
 	va_start(argp, request);
 	void * arg = va_arg(argp, void *);
 
-	log_call("ioctl(0x%08x, 0x%08x, 0x%08x).", (unsigned int )d, (unsigned int )request, (unsigned int )arg);
+	log_call("ioctl(" PTRF ", " PTRF ", " PTRF ").",
+			PTRS(d), PTRS(request), PTRS(arg));
 
 	const int result = um_ioctl(d, request, arg);
 	if (request == TIOCGWINSZ) {
@@ -537,9 +504,11 @@ Replaces the system time with a fixed time.
 @return The fixed time.
 **/
 time_t time(time_t * const t) {
-	log_call("time(0x%08x).", (unsigned int )t);
+	log_call("time(" PTRF ").", PTRS(t));
 
-	if (t != NULL) *t = cfg_timestamp;
+	if (t != NULL) {
+		*t = cfg_timestamp;
+	}
 	return cfg_timestamp;//reduces entropy
 }
 
@@ -552,7 +521,7 @@ Replaces <code>localtime</code> with <code>gmtime</code> to disregard timezones.
 @return The <code>struct tm</code>.
 **/
 struct tm * localtime(const time_t * const timep) {
-	log_call("localtime(0x%08x).", (unsigned int )timep);
+	log_call("localtime(" PTRF ").", PTRS(timep));
 
 	return gmtime(timep);//reduces entropy
 }
@@ -587,11 +556,11 @@ Redraws the window.
 Draws the custom interface.
 
 @param win The window to redraw.
-@return 0 if no errors occurred and -1 otherwise.
+@return 0 if successful and -1 otherwise.
 **/
 int wrefresh(WINDOW * const win) {
 	if (skipwr) return 0;
-	log_call("wrefresh(0x%08x).", (unsigned int )win);
+	log_call("wrefresh(" PTRF ").", PTRS(win));
 
 	/*
 	Stores the state of the window,
@@ -623,7 +592,7 @@ Initializes a new color pair.
 @param pair The index of the pair.
 @param f The foreground color.
 @param b The background color.
-@return 0 if no errors occurred and -1 otherwise.
+@return 0 if successful and -1 otherwise.
 **/
 int init_pair(const short int pair, const short int f, const short int b) {
 	log_call("init_pair(%d, %d, %d).", pair, f, b);
@@ -640,10 +609,10 @@ Draws the custom interface.
 @param win The window to print to.
 @param str The string to print.
 @param n The length of the string.
-@return 0 if no errors occurred and -1 otherwise.
+@return 0 if successful and -1 otherwise.
 **/
 int waddnstr(WINDOW * const win, const char * const str, const int n) {
-	log_call("waddnstr(0x%08x, %s, %d).", (unsigned int )win, str, n);
+	log_call("waddnstr(" PTRF ", %s, %d).", PTRS(win), str, n);
 
 	if (initializing && !initialized) {
 		initializing = FALSE;
@@ -662,7 +631,7 @@ Reads a key code from a window.
 @return The key code.
 **/
 int wgetch(WINDOW * const win) {
-	log_call("wgetch(0x%08x).", (unsigned int )win);
+	log_call("wgetch(" PTRF ").", PTRS(win));
 
 	if (playing) {
 		playing = next_key(win) != KEY_EOF;
@@ -690,24 +659,24 @@ int wgetch(WINDOW * const win) {
 	if (key == cfg_play_key) {
 		if (record.frames == 0) {
 			playing = TRUE;
-			freadp(cfg_input_path);
+			put_fread(cfg_input_path);
 			record.current = record.first;
 		}
 
 		else condensed = !condensed;
 	}
 	else if (key == cfg_save_key) {
-		fwritep(cfg_output_paths[current_state]);
-		save(current_state);
+		put_fwrite(cfg_output_paths[current_save]);
+		save(current_save);
 	}
 	else if (key == cfg_load_key) {
-		load(current_state);//redundant
+		load(current_save);//redundant
 	}
 	else if (key == cfg_state_key) {
-		INC(current_state, 1, cfg_states);
+		INC(current_save, 1, cfg_saves);
 	}
 	else if (key == cfg_unstate_key) {
-		DEC(current_state, 1, cfg_states);
+		DEC(current_save, 1, cfg_saves);
 	}
 	else if (key == cfg_duration_key) {
 		if (current_duration < UCHAR_MAX) {
@@ -748,7 +717,7 @@ int wgetch(WINDOW * const win) {
 	else if (key == cfg_quit_key) {
 		quitting = TRUE;
 		*shm.mode = HAD_ENOUGH;
-		shm.pids[current_state] = 0;
+		shm.pids[current_save] = 0;
 		partial_uninit(NO_PROBLEM);
 	}
 	else if (!inactive) {

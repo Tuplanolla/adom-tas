@@ -1,5 +1,5 @@
 /**
-@see lib.h
+@see lib.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef LIB_H
@@ -13,6 +13,25 @@
 #include "gnu.h"//__*__
 #include "util.h"//bool
 #include "prob.h"//problem_d
+
+/**
+The execution modes.
+**/
+enum imode_e {
+	IN_GAME      = 0x0001,
+	INITIALIZING = 0x0002,
+	INITIALIZED  = 0x0004,
+	INACTIVE     = 0x0008,
+	MENUINFO     = 0x0010,
+	CONDENSED    = 0x0020,
+	HIDDEN       = 0x0040,
+	PLAYING      = 0x0080,
+	PAUSED       = 0x0100,
+	QUITTING     = 0x0200,
+	ROLLING      = 0x0400,
+	AHH          = 0x0800
+};
+typedef enum imode_e imode_d;
 
 typedef int (* printf_f)(const char * format, ...);
 typedef int (* unlink_f)(const char * path);
@@ -40,19 +59,11 @@ extern waddnstr_f um_waddnstr;
 extern wgetch_f um_wgetch;
 extern endwin_f um_endwin;
 
-extern bool in_game;
-extern bool inactive;
-extern bool menuinfo;
-extern bool condensed;
-extern bool hidden;
-extern bool playing;
-extern bool paused;
-extern bool quitting;
-extern bool rolling;
+extern imode_d imode;
 
 extern unsigned int previous_frames;
-extern int current_state;
-extern unsigned char current_duration;
+extern int current_save;
+extern unsigned short int current_duration;
 extern int previous_inputs[4];
 
 /**

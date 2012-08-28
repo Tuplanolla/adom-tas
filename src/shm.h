@@ -9,7 +9,7 @@
 
 #include <curses.h>//chtype
 
-#include "def.h"//mode_d
+#include "type.h"//mode_d
 
 /**
 Contains pointers to the objects in the shared memory segment.

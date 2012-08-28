@@ -18,7 +18,8 @@ Creates,
 
 #include "util.h"//hash, SUBNULL, SHM_RW
 #include "prob.h"//probno, *_PROBLEM
-#include "def.h"//mode_d, project_name
+#include "type.h"//mode_d
+#include "proj.h"//project_name
 #include "cfg.h"//cfg_*
 #include "log.h"//log_*
 
@@ -54,7 +55,8 @@ static void * shmaddr = NULL;
 /**
 Manages the shared memory segment.
 
-@return The error code.
+@param create Whether the segment should be created.
+@return 0 if successful and -1 otherwise.
 **/
 static int get_shm(const bool create) {
 	/*
@@ -90,20 +92,20 @@ static int get_shm(const bool create) {
 	shm.ppid = (pid_t * )position;
 	position += (ptrdiff_t )sizeof *shm.ppid;
 	shm.pids = (pid_t * )position;
-	position += (ptrdiff_t )((size_t )cfg_states * sizeof *shm.pids);
-	shm.chs = malloc((size_t )cfg_states * sizeof *shm.chs);
+	position += (ptrdiff_t )((size_t )cfg_saves * sizeof *shm.pids);
+	shm.chs = malloc((size_t )cfg_saves * sizeof *shm.chs);
 	if (shm.chs == NULL) {
 		probno = log_error(SHM_MALLOC_PROBLEM);
 		return -1;
 	}
-	for (int state = 0; state < cfg_states; state++) {
-		shm.chs[state] = malloc((size_t )cfg_rows * sizeof **shm.chs);
-		if (shm.chs[state] == NULL) {
+	for (int save = 0; save < cfg_saves; save++) {
+		shm.chs[save] = malloc((size_t )cfg_rows * sizeof **shm.chs);
+		if (shm.chs[save] == NULL) {
 			probno = log_error(SHM_MALLOC_PROBLEM);
 			return -1;
 		}
 		for (int row = 0; row < cfg_rows; row++) {
-			shm.chs[state][row] = (chtype * )position;
+			shm.chs[save][row] = (chtype * )position;
 			position += (ptrdiff_t )((size_t )cfg_cols * sizeof ***shm.chs);
 		}
 	}
@@ -116,7 +118,7 @@ Removes the shared memory segment.
 
 The segment needs to be detached before removal.
 
-@return The error code.
+@return 0 if successful and -1 otherwise.
 **/
 int uninit_shm(void) {
 	/*
@@ -139,7 +141,7 @@ The segment needs to be attached before use.
 The current implementation doesn't require it, but
  future versions might.
 
-@return The error code.
+@return 0 if successful and -1 otherwise.
 **/
 int init_shm(void) {
 	/*
@@ -157,8 +159,8 @@ int init_shm(void) {
 	*/
 	size = sizeof *shm.mode
 			+ sizeof *shm.ppid
-			+ (size_t )cfg_states * sizeof *shm.pids
-			+ (size_t )(cfg_states * cfg_rows * cfg_cols) * sizeof ***shm.chs;
+			+ (size_t )cfg_saves * sizeof *shm.pids
+			+ (size_t )(cfg_saves * cfg_rows * cfg_cols) * sizeof ***shm.chs;
 
 	/*
 	Creates the shared memory segment.
@@ -172,13 +174,13 @@ int init_shm(void) {
 	*/
 	*shm.mode = (mode_d )0;
 	*shm.ppid = (pid_t )0;
-	for (int state = 0; state < cfg_states; state++) {
-		shm.pids[state] = (pid_t )0;
+	for (int save = 0; save < cfg_saves; save++) {
+		shm.pids[save] = (pid_t )0;
 	}
-	for (int state = 0; state < cfg_states; state++) {
+	for (int save = 0; save < cfg_saves; save++) {
 		for (int row = 0; row < cfg_rows; row++) {
 			for (int col = 0; col < cfg_cols; col++) {
-				shm.chs[state][row][col] = (chtype )' ';
+				shm.chs[save][row][col] = (chtype )' ';
 			}
 		}
 	}
@@ -189,7 +191,7 @@ int init_shm(void) {
 /**
 Detaches the shared memory segment.
 
-@return The error code.
+@return 0 if successful and -1 otherwise.
 **/
 int detach_shm(void) {
 	/*
@@ -199,10 +201,10 @@ int detach_shm(void) {
 	shm.ppid = NULL;
 	shm.pids = NULL;
 	if (shm.chs != NULL) {
-		for (int state = 0; state < cfg_states; state++) {
-			if (shm.chs[state] != NULL) {
-				free(shm.chs[state]);
-				shm.chs[state] = NULL;
+		for (int save = 0; save < cfg_saves; save++) {
+			if (shm.chs[save] != NULL) {
+				free(shm.chs[save]);
+				shm.chs[save] = NULL;
 			}
 		}
 		free(shm.chs);
@@ -224,7 +226,7 @@ int detach_shm(void) {
 /**
 Attaches the shared memory segment.
 
-@return The error code.
+@return 0 if successful and -1 otherwise.
 **/
 int attach_shm(void) {
 	/*

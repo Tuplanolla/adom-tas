@@ -25,7 +25,7 @@ extern char * cfg_lib_path;
 extern char * cfg_libc_path;
 extern char * cfg_libncurses_path;
 extern bool cfg_enforce;
-extern int cfg_states;
+extern int cfg_saves;
 extern int cfg_rows;
 extern int cfg_cols;
 extern char * cfg_shm_path;

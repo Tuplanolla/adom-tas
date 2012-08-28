@@ -8,19 +8,20 @@ Records are built around linked lists.
 #include <stdlib.h>//*alloc, free, NULL
 #include <time.h>//time_t
 
-#include "util.h"//intern
+#include "prob.h"//probno, *_PROBLEM
+#include "log.h"//log_*
 
 #include "rec.h"
 
 /**
 The type identifier used in record file headers.
 **/
-intern const char record_type[4] = "TAS";
+const char record_type[4] = "TAS";
 
 /**
 The record.
 **/
-intern record_d record = {
+record_d record = {
 	.first = NULL,
 	.current = NULL,
 	.last = NULL,
@@ -40,7 +41,7 @@ The frame rate.
 Choosing <code>sqrt(1 << CHAR_BIT)</code> as the frame rate creates a balanced time distribution.
 For a byte the minimum frame time is 0.0625 seconds and the maximum 16 seconds.
 **/
-intern unsigned short int frame_rate = 16;
+unsigned short int frame_rate = 16;
 
 /**
 Removes all frames from a record.
@@ -75,6 +76,7 @@ Adds a frame to a record.
 frame_d * add_frame(const unsigned short int duration, const long int value) {
 	frame_d * frame = malloc(sizeof *frame);
 	if (frame == NULL) {
+		probno = log_error(MALLOC_PROBLEM);
 		return NULL;
 	}
 	frame->duration = duration;

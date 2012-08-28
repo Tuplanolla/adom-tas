@@ -169,7 +169,7 @@ problem_d draw_status(WINDOW * const win) {
 	}
 	int left_pos = 0;
 	short int pair = 0;
-	#define draw_status_ADDSTR(format, __GVA_ARGS__...) MACRO_BEGIN\
+	#define draw_status_ADDSTR(format, __GVA_ARGS__...) BEGIN\
 			snprintf(str, size, format, ##__GVA_ARGS__);\
 			wattrset(status_win, COLOR_PAIR(pairs + pair));\
 			pair = (pair + 1) % colors;\
@@ -178,7 +178,7 @@ problem_d draw_status(WINDOW * const win) {
 			if (cfg_monochrome) {\
 				left_pos++;\
 			}\
-		MACRO_END
+		END
 	char buf[9];
 	winnstr(win, buf, 8);
 	draw_status_ADDSTR(buf);
@@ -202,7 +202,7 @@ problem_d draw_status(WINDOW * const win) {
 	}
 	draw_status_ADDSTR("E: %ld/%ld", (long int )(cfg_timestamp - record.timestamp), (long int )cfg_timestamp);
 	draw_status_ADDSTR("R: 0x%08x", (unsigned int )hash(exec_arc4_s, 0x100));
-	draw_status_ADDSTR("S: %d/%d", current_state, cfg_states - 1);
+	draw_status_ADDSTR("S: %d/%d", current_save, cfg_saves - 1);
 	free(str);
 
 	wrefresh(status_win);
@@ -245,11 +245,11 @@ problem_d draw_menu(void) {
 	bool left_more = FALSE;
 	bool right_more = FALSE;
 	int diff = 0;
-	int state = current_state;
+	int state = current_save;
 	do {
 		const char * interface_left = "";
 		const char * interface_right = "";
-		if (state > 0 && state < cfg_states) {
+		if (state > 0 && state < cfg_saves) {
 			if (shm.pids[state] == 0) {
 				interface_left = def_gui_left_unused;
 				interface_right = def_gui_right_unused;
@@ -293,14 +293,14 @@ problem_d draw_menu(void) {
 				col = right_pos + 1;
 				right_pos += len;
 				if (right_pos >= right_edge) {
-					if (state < cfg_states) {
+					if (state < cfg_saves) {
 						right_more = TRUE;
 					}
 					right_end = TRUE;
 					col = -1;
 				}
 			}
-			if (state >= cfg_states) {
+			if (state >= cfg_saves) {
 				right_end = TRUE;
 				col = -1;
 			}
@@ -336,7 +336,7 @@ problem_d draw_menu(void) {
 	getmaxyx(menu_chs_win, y, x);
 	for (int row = 0; row < cfg_rows; row++) {
 		for (int col = 0; col < cfg_cols; col++) {
-			mvwaddch(menu_chs_win, row / 2, col / 2, shm.chs[current_state][row][col]);
+			mvwaddch(menu_chs_win, row / 2, col / 2, shm.chs[current_save][row][col]);
 		}
 	}
 

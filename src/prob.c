@@ -147,6 +147,7 @@ const char * problem_message(const problem_d code) {
 		case INPUT_OPEN_PROBLEM: return "Opening the input file for reading failed.";
 		case INPUT_READ_PROBLEM: return "Reading the input file failed.";
 		case INPUT_FORMAT_PROBLEM: return "Parsing the input file failed.";
+		case INPUT_FRAME_PROBLEM: return "Adding a frame failed.";
 		case INPUT_CLOSE_PROBLEM: return "Closing the input file failed.";
 		case OUTPUT_OPEN_PROBLEM: return "Opening the output file for writing failed.";
 		case OUTPUT_WRITE_PROBLEM: return "Writing the output file failed.";
@@ -181,6 +182,9 @@ const char * problem_message(const problem_d code) {
 		case ASM_MPROTECT_PROBLEM: return "Unprotecting the instructions to overwrite failed.";
 		case ASM_MEMCMP_PROBLEM: return "Finding the instructions to overwrite failed.";
 
+		/*
+		prob.c
+		*/
 		default: return "Converting an error code to an error message failed.";
 	}
 }

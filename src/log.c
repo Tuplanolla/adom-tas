@@ -7,13 +7,12 @@ Logs messages.
 #include <stdlib.h>//*alloc, free, NULL
 #include <stdio.h>//*print*, *flush, FILE
 #include <string.h>//str*
-#include <time.h>//struct tm, localtime_r, time_t
 #include <sys/time.h>//gettimeofday, struct timeval
 #include <unistd.h>//getpid
 
-#include "prob.h"//problem_message, problem_d, *_PROBLEM
+#include "prob.h"//problem_message, probno, *_PROBLEM
 #include "def.h"//log_*
-#include "cfg.h"//*_stream
+#include "cfg.h"//cfg_*
 
 #include "log.h"
 
@@ -56,7 +55,7 @@ Formats and logs a message.
 @param ... The parameters to format.
 @return The amount of characters written.
 **/
-int log_fprintfl(FILE * const stream, const char * const fmt, ...) {
+int log_fprintf(FILE * const stream, const char * const fmt, ...) {
 	va_list ap;
 	va_start(ap, fmt);
 	const int result = log_vfprintf(stream, fmt, ap);
@@ -72,7 +71,7 @@ Logs an error message and returns its error code.
 **/
 problem_d log_error(const problem_d code) {
 	if (cfg_error_stream != NULL) {
-		log_fprintfl(cfg_error_stream, "%s%s%s",
+		log_fprintf(cfg_error_stream, "%s%s%s",
 				def_log_error, def_log_separator, problem_message(code));
 	}
 	return code;
@@ -85,7 +84,7 @@ Logs a warning message and returns its error code.
 **/
 problem_d log_warning(const problem_d code) {
 	if (cfg_warning_stream != NULL) {
-		log_fprintfl(cfg_warning_stream, "%s%s%s",
+		log_fprintf(cfg_warning_stream, "%s%s%s",
 				def_log_warning, def_log_separator, problem_message(code));
 	}
 	return code;
@@ -98,7 +97,7 @@ Logs a notice message and returns its error code.
 **/
 problem_d log_notice(const problem_d code) {
 	if (cfg_notice_stream != NULL) {
-		log_fprintfl(cfg_notice_stream, "%s%s%s",
+		log_fprintf(cfg_notice_stream, "%s%s%s",
 				def_log_notice, def_log_separator, problem_message(code));
 	}
 	return code;

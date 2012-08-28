@@ -10,6 +10,9 @@ Provides general-purpose macros.
 #include <stddef.h>//size_t, ptrdiff_t
 #include <stdio.h>//FILE
 #include <string.h>//mem*
+#include <stdint.h>//uintptr_t
+#include <inttypes.h>//PRIxPTR
+#include <limits.h>//CHAR_BIT
 #include <unistd.h>//*page*
 
 #include <curses.h>//KEY_*
@@ -36,11 +39,11 @@ An annotation to use with an <code>extern</code> variable.
 /**
 Marks the beginning of a multi-statement macro.
 **/
-#define MACRO_BEGIN do {
+#define BEGIN do {
 /**
 Marks the end of a multi-statement macro.
 **/
-#define MACRO_END } while (FALSE)
+#define END } while (FALSE)
 
 /**
 Touches a variable.
@@ -63,29 +66,49 @@ if (shm == SUBNULL) {
 #define SUBNULL ((void * )-1)
 
 /**
-The print format of a byte.
+The print format of a fixed-width byte.
 
 Works in conjuction with the <code>BITS</code> macro:
 <pre>
-printf("0x%x = 0b"BITSF, 42, BITS(42));
+printf("0x%x = 0b" BITSF, 42, BITS(42));
 </pre>
 **/
 #define BITSF "%d%d%d%d%d%d%d%d"
 /**
-The print parameters of a byte.
+The print parameters of a fixed-width byte.
 
 @param byte The byte.
-@return An argument list of the bits.
+@return The argument list for the bits.
 **/
 #define BITS(byte) \
-	byte & 0b10000000 ? 1 : 0,\
-	byte & 0b01000000 ? 1 : 0,\
-	byte & 0b00100000 ? 1 : 0,\
-	byte & 0b00010000 ? 1 : 0,\
-	byte & 0b00001000 ? 1 : 0,\
-	byte & 0b00000100 ? 1 : 0,\
-	byte & 0b00000010 ? 1 : 0,\
-	byte & 0b00000001 ? 1 : 0
+	(byte) & 0x80 ? 1 : 0,\
+	(byte) & 0x40 ? 1 : 0,\
+	(byte) & 0x20 ? 1 : 0,\
+	(byte) & 0x10 ? 1 : 0,\
+	(byte) & 0x08 ? 1 : 0,\
+	(byte) & 0x04 ? 1 : 0,\
+	(byte) & 0x02 ? 1 : 0,\
+	(byte) & 0x01 ? 1 : 0
+
+/**
+The print format of a fixed-width pointer.
+
+Works in conjuction with the <code>PTRS</code> macro:
+<pre>
+volatile int x;
+printf("&x = " PTRF, PTRS(&x));
+</pre>
+**/
+#define PTRF "0x%0*" PRIxPTR
+/**
+The print parameters of a fixed-width pointer.
+
+@param ptr The pointer.
+@return The argument list for the pointer.
+**/
+#define PTRS(ptr) \
+		(int )((sizeof (void *) * CHAR_BIT - 1) / 4 + 1),\
+		(uintptr_t )(ptr)
 
 /**
 Returns the smaller of two numbers.
@@ -180,12 +203,41 @@ Swaps two variables.
 @param y The second variable.
 @return An argument list of the bits.
 **/
-#define SWAP(x, y) MACRO_BEGIN\
+#define SWAP(x, y) BEGIN\
 		unsigned char SWAP_z[sizeof (x) == sizeof (y) ? sizeof (x) : 0];\
 		memcpy(SWAP_z, &(y), sizeof (x));\
 		memcpy(&(y), &(x), sizeof (x));\
 		memcpy(&(x), SWAP_z, sizeof (x));\
-	MACRO_END
+	END
+
+/**
+Packs a variable for storage.
+
+@param dest The packed array of bytes.
+@param src The variable to pack.
+**/
+#define PACK(dest, src) BEGIN\
+		size_t PACK_byte = 0;\
+		while (PACK_byte < sizeof src) {\
+			dest[PACK_byte] = (unsigned char )(src >> (PACK_byte * CHAR_BIT));\
+			PACK_byte++;\
+		}\
+	END
+/**
+Unpacks a variable for use.
+
+@param dest The unpacked variable.
+@param src The array of bytes to unpack.
+**/
+#define UNPACK(dest, src) BEGIN\
+		dest = 0;\
+		size_t UNPACK_byte = sizeof src;\
+		while (UNPACK_byte > 0) {\
+			UNPACK_byte--;\
+			dest |= (unsigned char )src[UNPACK_byte];\
+			dest <<= CHAR_BIT;\
+		}\
+	END
 
 /**
 The missing permission modifier for the System V's SHM library.

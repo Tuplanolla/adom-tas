@@ -10,11 +10,10 @@ Launches the executable.
 #include <sys/stat.h>//stat
 
 #include "gnu.h"//__*__
-#include "util.h"//intern
-#include "prob.h"//PROPAGATE*, *_PROBLEM
-#include "log.h"//error, warning, notice
+#include "prob.h"//probno, *_PROBLEM
 #include "def.h"//def_*
-#include "cfg.h"//*
+#include "cfg.h"//cfg_*
+#include "log.h"//log_*
 #include "exec.h"//exec_*
 
 /**
@@ -161,22 +160,20 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	}
 
 	/*
-	Suppresses warnings:
+	Suppresses warnings.
+
+	An <code>exec*</code> call either
+	 replaces this process with the executable or
+	 fails and returns the appropriate error code
+	  so this statement is never reached and
+	  only serves to hide warnings:
 	<pre>
-	'exec_path' is never deallocated [-Wleak]
+	'cfg_exec_path' is never deallocated [-Wleak]
 	</pre>
 	*/
 	if (uninit_config() == -1) {
 		return probno;
 	}
 
-	/*
-	Never returns.
-
-	An <code>exec*</code> call either
-	 replaces this process with the executable or
-	 fails and returns the appropriate error code
-	  so this statement is never reached.
-	*/
-	return log_error(ASSERT_PROBLEM);
+	return NO_PROBLEM;
 }

@@ -1,131 +1,169 @@
 /**
 Manages saving and loading records.
-**/
 
+@author Sampsa "Tuplanolla" Kiiskinen
+**/
 #include <stddef.h>//size_t, NULL
 #include <stdio.h>//*open, *close, *read, *write, FILE
-#include <limits.h>//CHAR_BIT
+#include <string.h>//str*
 
-#include "util.h"//FALSE, TRUE
-#include "prob.h"//*_PROBLEM
-#include "log.h"//error, warning, notice
+#include "util.h"//*PACK, FALSE, TRUE
+#include "prob.h"//probno, *_PROBLEM
+#include "log.h"//log_*
 #include "rec.h"//*_frame, record
 
 #include "put.h"
 
 /**
-The header record files start with.
-**/
-unsigned char header[1024];
-
-/**
 Saves a record.
 
 @param path The record location.
-@return The error code.
+@return The number of objects written.
 **/
-problem_d fwritep(const char * const path) {
+size_t put_fwrite(const char * const path) {
+	/*
+	Opens the file.
+	*/
 	FILE * const stream = fopen(path, "wb");
 	if (stream == NULL) {
-		return log_error(OUTPUT_OPEN_PROBLEM);
+		probno = log_error(OUTPUT_OPEN_PROBLEM);
+		return 0;
 	}
 
-	memset(header, 0, sizeof header);
+	/*
+	Writes the header.
+	*/
+	unsigned char header[1024] = {0};
 
-	char * position = header;
-#define fwritep_MEMCPY(src) MACRO_BEGIN\
-		for (size_t byte = 0; byte < sizeof src; byte++) {\
-			memcpy(position + byte, (unsigned char )((size_t )src >> (byte * CHAR_BIT)), 1);\
-		}\
-		position += (ptrdiff_t )sizeof src;\
-	MACRO_END
-	fwritep_MEMCPY(record_type);
-	fwritep_MEMCPY(record.author);
-	fwritep_MEMCPY(record.executable);
-	fwritep_MEMCPY(record.comments);
-	fwritep_MEMCPY(record.category);
-	fwritep_MEMCPY(record.frames);
-	fwritep_MEMCPY(record.time);
-	fwritep_MEMCPY(record.turns);
+	unsigned char * position = &header[0];
+	strcpy((char * )position, &record_type[0]);
+	position += (ptrdiff_t )sizeof record_type;
+	strcpy((char * )position, &record.author[0]);
+	position += (ptrdiff_t )sizeof record.author;
+	strcpy((char * )position, &record.executable[0]);
+	position += (ptrdiff_t )sizeof record.executable;
+	strcpy((char * )position, &record.comments[0]);
+	position += (ptrdiff_t )sizeof record.comments;
+	PACK(position, record.category);
+	PACK(position, record.frames);
+	PACK(position, record.time);
+	PACK(position, record.turns);
 
+	size_t result = 0;
 	if (fwrite(header, sizeof header, 1, stream) != 1) {
-		log_error(OUTPUT_WRITE_PROBLEM);
+		probno = log_error(OUTPUT_WRITE_PROBLEM);
+		goto hell;
 	}
+	result++;
 
+	/*
+	Writes the chunks.
+	*/
 	const frame_d * frame = record.first;
+	unsigned char chunk[sizeof frame->duration + sizeof frame->value];
 	while (frame != NULL) {
-		size_t result = fwrite(&frame->duration, sizeof frame->duration, 1, stream);
-		result += fwrite(&frame->value, sizeof frame->value, 1, stream);
-		if (result != 2) {
-			log_error(OUTPUT_WRITE_PROBLEM);
-			break;
+		position = &chunk[0];
+		PACK(chunk, frame->duration);
+		position += (ptrdiff_t )sizeof frame->duration;
+		PACK(chunk, frame->value);
+		position += (ptrdiff_t )sizeof frame->value;
+		if (fwrite(&chunk[0], sizeof chunk, 1, stream) != 1) {
+			probno = log_error(OUTPUT_WRITE_PROBLEM);
+			goto hell;
+		}
+		else {
+			result++;
 		}
 		frame = frame->next;
 	}
 
-	if (fclose(stream) == EOF) {
-		return log_error(OUTPUT_CLOSE_PROBLEM);
+	/*
+	Closes the file.
+	*/
+	hell: if (fclose(stream) == EOF) {
+		probno = log_error(OUTPUT_CLOSE_PROBLEM);
 	}
 
-	return NO_PROBLEM;
+	return result;
 }
 
 /**
 Loads a record.
 
 @param path The record location.
-@return The error code.
+@return The number of objects read.
 **/
-problem_d freadp(const char * const path) {
+size_t put_fread(const char * const path) {
+	/*
+	Opens the file.
+	*/
 	FILE * const stream = fopen(path, "rb");
 	if (stream == NULL) {
-		return log_error(INPUT_OPEN_PROBLEM);
+		probno = log_error(INPUT_OPEN_PROBLEM);
+		return 0;
 	}
 
-	char * position = 0;
-#define freadp_MEMCPY(dest) MACRO_BEGIN\
-		for (size_t byte = 0; byte < sizeof dest; byte++) {\
-			memcpy((void * )(unsigned char )((size_t )dest >> (byte * CHAR_BIT)), position + byte, 1);\
-		}\
-		position += (ptrdiff_t )sizeof dest;\
-	MACRO_END
-	char type[sizeof record_type];
-	freadp_MEMCPY(type);
-	if (memcmp(type, record_type, sizeof type) != 0) {
-		log_error(INPUT_FORMAT_PROBLEM);
-	}
-	freadp_MEMCPY(record.author);
-	freadp_MEMCPY(record.executable);
-	freadp_MEMCPY(record.comments);
-	freadp_MEMCPY(record.category);
-	freadp_MEMCPY(record.frames);
-	freadp_MEMCPY(record.time);
-	freadp_MEMCPY(record.turns);
-
-	if (fseek(stream, sizeof header, SEEK_SET) == -1) {
-		log_error(INPUT_READ_PROBLEM);
+	/*
+	Reads the header.
+	*/
+	unsigned char header[1024];
+	size_t result = 0;
+	if (fread(header, sizeof header, 1, stream) != 1) {
+		probno = log_error(INPUT_READ_PROBLEM);
 	}
 
+	unsigned char * position = &header[0];
+	if (strcmp((char * )position, &record_type[0]) != 0) {
+		probno = log_error(INPUT_FORMAT_PROBLEM);
+		goto hell;
+	}
+	position += (ptrdiff_t )sizeof record_type;
+	strcpy(record.author, (char * )position);
+	position += (ptrdiff_t )sizeof record.author;
+	strcpy(record.executable, (char * )position);
+	position += (ptrdiff_t )sizeof record.executable;
+	strcpy(record.comments, (char * )position);
+	position += (ptrdiff_t )sizeof record.comments;
+	UNPACK(record.category, position);
+	position += (ptrdiff_t )sizeof record.category;
+	UNPACK(record.frames, position);
+	position += (ptrdiff_t )sizeof record.frames;
+	UNPACK(record.time, position);
+	position += (ptrdiff_t )sizeof record.time;
+	UNPACK(record.turns, position);
+	position += (ptrdiff_t )sizeof record.turns;
+	result++;
+
+	/*
+	Reads the chunks.
+	*/
+	frame_d frame;
+	unsigned char chunk[sizeof frame.duration + sizeof frame.value];
 	do {
-		unsigned char duration;
-		int value;
-		size_t result = fread(&duration, sizeof duration, 1, stream);
-		result += fread(&value, sizeof value, 1, stream);
-		if (result != 2) {
-			break;
+		if (fread(&chunk[0], sizeof chunk, 1, stream) != 1) {
+			if (feof(stream) == 0) {
+				probno = log_error(INPUT_READ_PROBLEM);
+				goto hell;
+			}
+			else {
+				break;
+			}
 		}
-		if (add_frame(duration, value) == NULL) {
-			log_error(MALLOC_PROBLEM);
-			break;
+		else if (add_frame(frame.duration, frame.value) == NULL) {
+			probno = log_error(INPUT_FRAME_PROBLEM);
+			goto hell;
+		}
+		else {
+			result++;
 		}
 	} while (TRUE);
-	if (feof(stream) == 0) {
-		log_error(INPUT_READ_PROBLEM);
+
+	/*
+	Closes the file.
+	*/
+	hell: if (fclose(stream) == EOF) {
+		probno = log_error(INPUT_CLOSE_PROBLEM);
 	}
 
-	if (fclose(stream) == EOF) {
-		return log_error(INPUT_CLOSE_PROBLEM);
-	}
-
-	return NO_PROBLEM;
+	return result;
 }
