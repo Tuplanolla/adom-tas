@@ -9,7 +9,16 @@
 
 #include <curses.h>//chtype
 
-#include "type.h"//mode_d
+/**
+Lists the shared states.
+**/
+enum state_e {
+	GETTING_STARTED,
+	ALMOST_READY,
+	RUNNING,
+	HAD_ENOUGH
+};
+typedef enum state_e state_d;
 
 /**
 Contains pointers to the objects in the shared memory segment.
@@ -18,7 +27,7 @@ Pointers are not shared:
 <pre>
 ============== stack
 
- ,------------ * mode
+ ,------------ * state
  |
  | ,---------- * ppid
  | |
@@ -42,7 +51,7 @@ Pointers are not shared:
  | | | | | |
 ============== shm
  | | | | | |
- `-+-+-+-+-+-> mode
+ `-+-+-+-+-+-> state
    | | | | |
    `-+-+-+-+-> ppid
      | | | |
@@ -67,18 +76,18 @@ Pointers are not shared:
 @var chs A pointer to the screens of the child processes.
 **/
 struct shm_s {
-	mode_d * mode;
+	state_d * state;
 	pid_t * ppid;
 	pid_t * pids;
 	chtype *** chs;
 };
-typedef struct shm_s shm_d;
+typedef struct shm_s shared_d;
 
-extern shm_d shm;
+extern shared_d shared;
 
-int uninit_shm(void);
-int init_shm(void);
-int detach_shm(void);
-int attach_shm(void);
+int shm_uninit(void);
+int shm_init(void);
+int shm_detach(void);
+int shm_attach(void);
 
 #endif

@@ -6,6 +6,7 @@ Records are built around linked lists.
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include <stdlib.h>//*alloc, free, NULL
+#include <string.h>//mem*
 #include <time.h>//time_t
 
 #include "prob.h"//probno, *_PROBLEM
@@ -46,7 +47,7 @@ unsigned short int frame_rate = 16;
 /**
 Removes all frames from a record.
 **/
-void clear_record(void) {
+void rec_clear(void) {
 	frame_d * frame = record.first;
 	record.first = NULL;
 	record.current = NULL;
@@ -73,7 +74,7 @@ Adds a frame to a record.
 @param value The key or the time difference of the frame.
 @return The new frame if successful and <code>NULL</code> otherwise.
 **/
-frame_d * add_frame(const unsigned short int duration, const long int value) {
+frame_d * rec_add_frame(const unsigned short int duration, const long int value) {
 	frame_d * frame = malloc(sizeof *frame);
 	if (frame == NULL) {
 		probno = log_error(MALLOC_PROBLEM);
@@ -100,8 +101,8 @@ Adds a <code>KEY_INPUT</code> frame to a record.
 @param key The key of the frame.
 @return The new frame.
 **/
-frame_d * add_key_frame(const unsigned short int duration, const int key) {
-	return add_frame(duration, key);
+frame_d * rec_add_key_frame(const unsigned short int duration, const int key) {
+	return rec_add_frame(duration, key);
 }
 
 /**
@@ -110,8 +111,8 @@ Adds a <code>TIME_INPUT</code> and <code>SEED_INPUT</code> frame to a record.
 @param timestamp The time of the frame.
 @return The new frame.
 **/
-frame_d * add_seed_frame(const time_t timestamp) {
+frame_d * rec_add_seed_frame(const time_t timestamp) {
 	const time_t difference = timestamp - record.timestamp;
 	record.timestamp = timestamp;
-	return add_frame(0, (long int )difference);
+	return rec_add_frame(0, (long int )difference);
 }

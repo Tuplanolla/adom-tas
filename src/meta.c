@@ -21,7 +21,7 @@ void meta_key_code(void) {
 	int key = 0;
 	do {
 		char code[7];
-		#define SNPRINTF(...) snprintf(code, sizeof code, __VA_ARGS__)
+#define SNPRINTF(...) snprintf(code, sizeof code, __VA_ARGS__)
 		if (key == '\\') SNPRINTF("\\\\");//backslash
 		else if (key == ' ') SNPRINTF("\\S");//Space
 		else if (key == 0x1b) SNPRINTF("\\M");//Meta (Alt or Esc)

@@ -99,9 +99,9 @@ extern record_d record;
 
 extern unsigned short int frame_rate;
 
-void clear_record(void);
-frame_d * add_frame(unsigned short int duration, long int value) __attribute__ ((malloc));
-frame_d * add_key_frame(unsigned short int duration, int key);
-frame_d * add_seed_frame(time_t timestamp);
+void rec_clear(void);
+frame_d * rec_add_frame(unsigned short int duration, long int value) __attribute__ ((malloc));
+frame_d * rec_add_key_frame(unsigned short int duration, int key);
+frame_d * rec_add_seed_frame(time_t timestamp);
 
 #endif

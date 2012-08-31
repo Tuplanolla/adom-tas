@@ -7,11 +7,10 @@
 
 #include <curses.h>//WINDOW
 
-#include "prob.h"//problem_d
+int gui_uninit(void);
+int gui_init(void);
+int gui_draw(WINDOW * win);
 
-problem_d uninit_gui(void);
-problem_d init_gui(void);
-problem_d draw_gui(WINDOW * win);
-problem_d draw_overlay(WINDOW * win);
+int gui_draw_overlay(WINDOW * win);//TODO remove
 
 #endif

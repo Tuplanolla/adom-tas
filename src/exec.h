@@ -63,6 +63,7 @@ struct exec_map_monster_s {
 };
 typedef struct exec_map_monster_s exec_map_monster_d;
 
+extern const char * const exec_name;
 extern const size_t exec_size;
 extern const int exec_hash;
 extern const unsigned char exec_version[4];
@@ -105,16 +106,6 @@ extern long int turns;
 extern long int * const exec_turns;
 extern long int * const exec_saves;
 
-extern unsigned char * const exec_arc4_c;
-extern unsigned char * const exec_arc4_s;
-extern unsigned char * const exec_arc4_i;
-extern unsigned char * const exec_arc4_j;
-
-extern const unsigned int exec_arc4_calls;
-extern const unsigned int exec_arc4_calls_automatic_load;
-extern const unsigned int exec_arc4_calls_manual_load;
-
-void iarc4(unsigned long int seed, unsigned int calls);
 const char * key_code(int key);
 
 #endif

@@ -37,7 +37,7 @@ The injected instructions:
 @param function The custom function.
 @return The error code.
 **/
-int inject_save(void (* const function)(void)) {
+int asm_inject(void (* const function)(void)) {
 	const unsigned char original[10] = {
 		0x83, 0xc4, 0xf8,
 		0x6a, 0x00,

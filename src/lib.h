@@ -15,23 +15,34 @@
 #include "prob.h"//problem_d
 
 /**
-The execution modes.
+Uh.
 **/
-enum imode_e {
-	IN_GAME      = 0x0001,
-	INITIALIZING = 0x0002,
-	INITIALIZED  = 0x0004,
-	INACTIVE     = 0x0008,
-	MENUINFO     = 0x0010,
-	CONDENSED    = 0x0020,
-	HIDDEN       = 0x0040,
-	PLAYING      = 0x0080,
-	PAUSED       = 0x0100,
-	QUITTING     = 0x0200,
-	ROLLING      = 0x0400,
-	AHH          = 0x0800
+enum progress_e {
+	MAIN,
+	PRINTF,
+	WADDNSTR,
+	EXIT
 };
-typedef enum imode_e imode_d;
+typedef enum progress_e progress_d;
+
+/**
+Uhh.
+**/
+struct options_s {
+	bool key_active;
+	bool progress_active;
+	progress_d progress;
+	bool record_active;
+	bool record_paused;
+	bool gui_active;
+	bool gui_menu_active;
+	bool gui_info_active;
+	bool gui_overlay_active;
+	bool gui_condensed;
+	bool gui_hidden;
+	bool roll_active;
+};
+typedef struct options_s options_d;
 
 typedef int (* printf_f)(const char * format, ...);
 typedef int (* unlink_f)(const char * path);
@@ -59,7 +70,7 @@ extern waddnstr_f um_waddnstr;
 extern wgetch_f um_wgetch;
 extern endwin_f um_endwin;
 
-extern imode_d imode;
+extern options_d options;
 
 extern unsigned int previous_frames;
 extern int current_save;
@@ -71,7 +82,7 @@ Ensures overloaded functions aren't used outside this module.
 **/
 #ifndef UM_ALIAS
 
-//#define printf um_printf
+//#define printf um_printf//TODO fix conflict with GNU stuff
 #define unlink um_unlink
 #define ioctl um_ioctl
 #define time um_time

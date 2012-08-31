@@ -5,6 +5,6 @@
 #ifndef ASM_H
 #define ASM_H
 
-int inject_save(void (* function)(void));
+int asm_inject(void (* function)(void));
 
 #endif

@@ -3,7 +3,7 @@ Launches the executable.
 
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
-#include <stdlib.h>//*env, NULL, EXIT_*
+#include <stdlib.h>//*env, NULL
 #include <stdio.h>//*open, *close, *read, *write, FILE
 #include <string.h>//str*, mem*
 #include <unistd.h>//exec*, unlink
@@ -29,7 +29,7 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	/*
 	Initializes the configuration variables.
 	*/
-	if (init_main_config() == -1) {
+	if (cfg_init_main() == -1) {
 		return probno;
 	}
 
@@ -171,9 +171,9 @@ int main(const int argc __attribute__ ((unused)), char * const argv[]) {
 	'cfg_exec_path' is never deallocated [-Wleak]
 	</pre>
 	*/
-	if (uninit_config() == -1) {
+	if (cfg_uninit() == -1) {
 		return probno;
 	}
 
-	return NO_PROBLEM;
+	return ASSERT_PROBLEM;
 }

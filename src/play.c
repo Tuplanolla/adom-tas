@@ -1,6 +1,8 @@
 /**
 Plays records.
 
+TODO rewrite
+
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include <stddef.h>//NULL
@@ -21,7 +23,7 @@ int next_key(WINDOW * const win) {
 	int key;
 	if (record.current->duration == 0) {//seed frame
 		cfg_timestamp += record.current->value;
-		iarc4((unsigned long int )cfg_timestamp, exec_arc4_calls_automatic_load);
+		arc4_inject((unsigned long int )cfg_timestamp, exec_arc4_calls_automatic_load);
 		key = KEY_NAK;
 	}
 	else {//key frame

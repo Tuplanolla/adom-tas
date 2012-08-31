@@ -136,16 +136,18 @@ int copy(const char * const dest, const char * const src) {
 	if (in == NULL) {
 		return -1;
 	}
+	int result = 0;
 	FILE * const out = fopen(dest, "wb");
 	if (out == NULL) {
-		return -1;
+		result = -1;
+		goto sleep;
 	}
 	const size_t size = (size_t )getpagesize();
 	unsigned char * const buf = malloc(size);
 	if (buf == NULL) {
-		return -1;
+		result = -1;
+		goto hell;
 	}
-	int result;
 	while (TRUE) {
 		const size_t bytes = fread(buf, 1, size, in);
 		if (fwrite(buf, bytes, 1, out) != 1) {
@@ -159,10 +161,10 @@ int copy(const char * const dest, const char * const src) {
 		}
 	}
 	free(buf);
-	if (fclose(in) == EOF) {
+	hell: if (fclose(out) == EOF) {
 		result = -1;
 	}
-	if (fclose(out) == EOF) {
+	sleep: if (fclose(in) == EOF) {
 		result = -1;
 	}
 	return result;
@@ -175,6 +177,9 @@ Converts a string to a standard stream.
 @return The standard stream if the string is valid and <code>NULL</code> otherwise.
 **/
 FILE * stdstr(const char * const str) {
+	if (str == NULL) {
+		return NULL;
+	}
 	if (strcmp(str, "stdin") == 0) return stdin;
 	if (strcmp(str, "stdout") == 0) return stdout;
 	if (strcmp(str, "stderr") == 0) return stderr;

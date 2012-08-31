@@ -20,11 +20,11 @@ Logs messages.
 Formats and logs a message.
 
 @param stream The destination stream.
-@param fmt The message format.
+@param format The message format.
 @param ap The parameters to format.
 @return The amount of characters written.
 **/
-int log_vfprintf(FILE * const stream, const char * const fmt, va_list ap) {
+int log_vfprintf(FILE * const stream, const char * const format, va_list ap) {
 	/*
 	Creativity is required since
 	 <code>time</code>,
@@ -41,7 +41,7 @@ int log_vfprintf(FILE * const stream, const char * const fmt, va_list ap) {
 	result += fprintf(stream, "%02u:%02u:%02u%s#%u%s",
 			tm.tm_hour, tm.tm_min, tm.tm_sec,
 			def_log_separator, getpid(), def_log_separator);
-	result += vfprintf(stream, fmt, ap);
+	result += vfprintf(stream, format, ap);
 	result += fprintf(stream, "\n");
 	fflush(stream);
 	return result;
@@ -51,14 +51,14 @@ int log_vfprintf(FILE * const stream, const char * const fmt, va_list ap) {
 Formats and logs a message.
 
 @param stream The destination stream.
-@param fmt The message format.
+@param format The message format.
 @param ... The parameters to format.
 @return The amount of characters written.
 **/
-int log_fprintf(FILE * const stream, const char * const fmt, ...) {
+int log_fprintf(FILE * const stream, const char * const format, ...) {
 	va_list ap;
-	va_start(ap, fmt);
-	const int result = log_vfprintf(stream, fmt, ap);
+	va_start(ap, format);
+	const int result = log_vfprintf(stream, format, ap);
 	va_end(ap);
 	return result;
 }
@@ -106,32 +106,27 @@ problem_d log_notice(const problem_d code) {
 /**
 Logs a call and returns its error code.
 
-@param fmt The function name.
+@param format The function name.
 @param ... The function parameters.
 @return The error code.
 **/
-int log_call(const char * const fmt, ...) {
+int log_call(const char * const format, ...) {
 	int result = 0;
 	if (cfg_call_stream != NULL) {
 		va_list	ap;
-		va_start(ap, fmt);
+		va_start(ap, format);
 		const size_t size = strlen(def_log_call)
 				+ strlen(def_log_separator)
-				+ strlen(fmt) + 1;
+				+ strlen(format) + 1;
 		char * const call_fmt = malloc(size);
 		if (call_fmt == NULL) {
 			probno = log_error(MALLOC_PROBLEM);
 			result = -1;
 		}
 		else {
-			if ((size_t )snprintf(call_fmt, size, "%s%s%s",
-					def_log_call, def_log_separator, fmt) != size) {
-				probno = log_error(ASSERT_PROBLEM);
-				result = -1;
-			}
-			else {
-				log_vfprintf(cfg_call_stream, call_fmt, ap);
-			}
+			snprintf(call_fmt, size, "%s%s%s",
+					def_log_call, def_log_separator, format);
+			log_vfprintf(cfg_call_stream, call_fmt, ap);
 			free(call_fmt);
 		}
 		va_end(ap);

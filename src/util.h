@@ -7,7 +7,7 @@ Provides general-purpose macros.
 #ifndef UTIL_H
 #define UTIL_H
 
-#include <stddef.h>//size_t, ptrdiff_t
+#include <stddef.h>//size_t
 #include <stdio.h>//FILE
 #include <string.h>//mem*
 #include <stdint.h>//uintptr_t
@@ -30,11 +30,6 @@ enum bool_e {
 	TRUE
 };
 typedef enum bool_e bool;
-
-/**
-An annotation to use with an <code>extern</code> variable.
-**/
-#define intern
 
 /**
 Marks the beginning of a multi-statement macro.
@@ -81,14 +76,14 @@ The print parameters of a fixed-width byte.
 @return The argument list for the bits.
 **/
 #define BITS(byte) \
-	(byte) & 0x80 ? 1 : 0,\
-	(byte) & 0x40 ? 1 : 0,\
-	(byte) & 0x20 ? 1 : 0,\
-	(byte) & 0x10 ? 1 : 0,\
-	(byte) & 0x08 ? 1 : 0,\
-	(byte) & 0x04 ? 1 : 0,\
-	(byte) & 0x02 ? 1 : 0,\
-	(byte) & 0x01 ? 1 : 0
+	(byte) & 1 << 7 ? 1 : 0,\
+	(byte) & 1 << 6 ? 1 : 0,\
+	(byte) & 1 << 5 ? 1 : 0,\
+	(byte) & 1 << 4 ? 1 : 0,\
+	(byte) & 1 << 3 ? 1 : 0,\
+	(byte) & 1 << 2 ? 1 : 0,\
+	(byte) & 1 << 1 ? 1 : 0,\
+	(byte) & 1 << 0 ? 1 : 0
 
 /**
 The print format of a fixed-width pointer.
@@ -187,7 +182,7 @@ Returns the page boundary of a pointer.
 @param pointer The pointer.
 @return A pointer to the page boundary.
 **/
-#define PAGE(pointer) ((void * )(((ptrdiff_t )(pointer)) - ((ptrdiff_t )(pointer)) % getpagesize()))
+#define PAGE(pointer) ((void * )(((uintptr_t )(pointer)) - ((uintptr_t )(pointer)) % getpagesize()))
 /**
 Returns the page size of an object.
 

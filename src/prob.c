@@ -56,11 +56,11 @@ const char * problem_message(const problem_d code) {
 		/*
 		cfg.c
 		*/
-		case CONFIGURATION_OPEN_PROBLEM: return "Opening the configuration file for writing failed.";
-		case CONFIGURATION_WRITE_PROBLEM: return "Writing the configuration file failed.";
-		case CONFIGURATION_CLOSE_PROBLEM: return "Closing the configuration file failed.";
-		case CONFIGURATION_STAT_PROBLEM: return "Finding the configuration file failed. It will be created from a template.";
-		case CONFIGURATION_PARSE_PROBLEM: return "Parsing the configuration file failed.";
+		case LIBCONFIG_OPEN_PROBLEM: return "Opening the configuration file for writing failed.";
+		case LIBCONFIG_WRITE_PROBLEM: return "Writing the configuration file failed.";
+		case LIBCONFIG_CLOSE_PROBLEM: return "Closing the configuration file failed.";
+		case LIBCONFIG_STAT_PROBLEM: return "Finding the configuration file failed. It will be created from a template.";
+		case LIBCONFIG_PARSE_PROBLEM: return "Parsing the configuration file failed.";
 		case HOME_CONFIG_PROBLEM: return "Finding the location of the home directory in the configuration file failed.";
 		case HOME_GETENV_PROBLEM: return "Finding the location of the home directory in the environment variable failed.";
 		case HOME_GETPWUID_PROBLEM: return "Finding the location of the home directory in the environment variable failed. It will be guessed.";
@@ -93,7 +93,7 @@ const char * problem_message(const problem_d code) {
 		case LIBC_STAT_PROBLEM: return "Accessing the C standard library failed.";
 		case LIBNCURSES_CONFIG_PROBLEM: return "Finding the location of the New Cursor Optimization library in the configuration file failed. It will be guessed.";
 		case LIBNCURSES_STAT_PROBLEM: return "Accessing the New Cursor Optimization library failed.";
-		case ENFORCE_CONFIG_PROBLEM: return "Finding whether configurations should be enforced in the configuration file failed. The default value will be assumed.";
+		case FORCE_SYNC_CONFIG_PROBLEM: return "Finding whether configurations should be enforced to ensure synchronization in the configuration file failed. The default value will be assumed.";
 		case ROW_CONFIG_PROBLEM: return "Finding the height of the terminal in the configuration file failed. The default value will be assumed.";
 		case ROW_AMOUNT_PROBLEM: return "Setting the height of the terminal failed. The closest estimate will be used.";
 		case COL_CONFIG_PROBLEM: return "Finding the width of the terminal in the configuration file failed. The default value will be assumed.";
@@ -103,9 +103,9 @@ const char * problem_message(const problem_d code) {
 		case SHM_CONFIG_PROBLEM: return "Finding the location of the shared memory segment in the configuration file failed. The default value will be assumed.";
 		case SHM_STAT_PROBLEM: return "Accessing the shared memory segment failed.";
 		case GENERATIONS_CONFIG_PROBLEM: return "Finding the amount of generated characters in the configuration file failed. The default value will be assumed.";
-		case SQL_CONFIG_PROBLEM: return "Finding whether the save-quit-load emulation is enabled in the configuration file failed. The default value will be assumed.";
-		case PRESERVE_CONFIG_PROBLEM: return "Finding whether save states should be preserved upon loading in the configuration file failed. The default value will be assumed.";
-		case AUTOPLAY_CONFIG_PROBLEM: return "Finding the playback mode in the configuration file failed. The default value will be assumed.";
+		case EMULATE_SQL_CONFIG_PROBLEM: return "Finding whether the save-quit-load emulation is enabled in the configuration file failed. The default value will be assumed.";
+		case KEEP_SAVES_CONFIG_PROBLEM: return "Finding whether save states should be kept upon loading them in the configuration file failed. The default value will be assumed.";
+		case PLAY_INSTANTLY_CONFIG_PROBLEM: return "Finding whether records should be played instantly in the configuration file failed. The default value will be assumed.";
 		case MONOCHROME_CONFIG_PROBLEM: return "Finding the color mode in the configuration file failed. The default value will be assumed.";
 		case ITERATOR_CONFIG_PROBLEM: return "Finding the iterator string in the configuration file failed. The default value will be assumed.";
 		case INPUT_CONFIG_PROBLEM: return "Finding the location of the input file in the configuration file failed. The default value will be assumed.";

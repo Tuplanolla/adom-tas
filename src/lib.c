@@ -19,13 +19,13 @@ Does something unnecessary.
 
 #include <curses.h>//*w*, chtype, WINDOW, COLOR
 
-#include "prob.h"//problem_d, PROPAGATE*
+#include "prob.h"//problem_d
 #include "log.h"//error, warning, notice
 #include "cfg.h"//*
 #include "asm.h"//inject_*
-#include "type.h"//mode_d
-#include "shm.h"//*_shm, shm
+#include "shm.h"//shm_*, shm, state_d
 #include "rec.h"//record
+#include "arc4.h"//arc4_*
 
 #include "util.h"
 #include "exec.h"
@@ -43,6 +43,13 @@ Does something unnecessary.
 #undef UM_ALIAS
 
 /**
+An annotation for overloaded functions.
+
+@param function The function to overload.
+**/
+#define OVERLOAD(function) function
+
+/**
 The most important variable ever defined.
 **/
 unsigned short int current_duration = 15;
@@ -51,7 +58,7 @@ long int previous_turns = 0;
 /**
 The amount of frames at the previous input.
 **/
-intern unsigned int previous_frames = 0;
+unsigned int previous_frames = 0;
 
 /**
 The active save state.
@@ -60,9 +67,11 @@ int current_save = 1;
 /**
 The four last inputs.
 **/
-intern int previous_inputs[4] = {0, 0, 0, 0};
+int previous_inputs[4] = {0, 0, 0, 0};
 
-imode_d imode;
+options_d options = {
+	.progress = MAIN
+};
 
 /**
 Some dlfcn stuff.
@@ -81,18 +90,18 @@ void dlnull(void) {
 	exit(log_error(ASSERT_PROBLEM));
 }
 
-intern printf_f um_printf = (printf_f )dlnull;
-intern unlink_f um_unlink = (unlink_f )dlnull;
-intern ioctl_f um_ioctl = (ioctl_f )dlnull;
-intern time_f um_time = (time_f )dlnull;
-intern localtime_f um_localtime = (localtime_f )dlnull;
-intern srandom_f um_srandom = (srandom_f )dlnull;
-intern random_f um_random = (random_f )dlnull;
-intern wrefresh_f um_wrefresh = (wrefresh_f )dlnull;
-intern init_pair_f um_init_pair = (init_pair_f )dlnull;
-intern waddnstr_f um_waddnstr = (waddnstr_f )dlnull;
-intern wgetch_f um_wgetch = (wgetch_f )dlnull;
-intern endwin_f um_endwin = (endwin_f )dlnull;
+printf_f um_printf = (printf_f )dlnull;
+unlink_f um_unlink = (unlink_f )dlnull;
+ioctl_f um_ioctl = (ioctl_f )dlnull;
+time_f um_time = (time_f )dlnull;
+localtime_f um_localtime = (localtime_f )dlnull;
+srandom_f um_srandom = (srandom_f )dlnull;
+random_f um_random = (random_f )dlnull;
+wrefresh_f um_wrefresh = (wrefresh_f )dlnull;
+init_pair_f um_init_pair = (init_pair_f )dlnull;
+waddnstr_f um_waddnstr = (waddnstr_f )dlnull;
+wgetch_f um_wgetch = (wgetch_f )dlnull;
+endwin_f um_endwin = (endwin_f )dlnull;
 
 /**
 Emulates the process of saving, quitting and loading.
@@ -105,9 +114,9 @@ void save_quit_load(void) {
 	 the amount of available save games and
 	 the actions taken in the menu.
 	*/
-	iarc4((unsigned long int )cfg_timestamp, exec_arc4_calls_automatic_load);
+	arc4_inject((unsigned long int )cfg_timestamp, exec_arc4_calls_automatic_load);
 	(*exec_saves)++;
-	add_seed_frame(cfg_timestamp);
+	rec_add_seed_frame(cfg_timestamp);
 	wrefresh(stdscr);
 }
 
@@ -197,74 +206,75 @@ void uninit_curses(void) {
 	probno = log_fprintf(cfg_error_stream, "Exiting %d, %d, %d and %d.", x, y, z, c);
 }
 
-void partial_uninit(const problem_d problem) {
-	detach_shm();
+int partial_uninit(const problem_d problem __attribute__ ((unused))) {
+	shm_detach();
 
 	//uninit_config();
 
-	exit(problem);
+	return 0;
 }
 
-void uninit(const problem_d problem) {
-	detach_shm();
-	uninit_shm();
+int uninit(const problem_d problem __attribute__ ((unused))) {
+	shm_detach();
+	shm_uninit();
 
 	//uninit_config();
 
 	uninit_curses();
-	exit(problem);
+
+	return 0;
 }
 
-problem_d copy_temporary(const int state, const bool save) {
+int copy_temporary(const int save, const bool direction) {
 	for (unsigned int level = 0; level < exec_temporary_levels; level++) {
 		const unsigned int offset = level * exec_temporary_parts;
 		for (unsigned int part = 0; part < exec_temporary_parts; part++) {
 			const unsigned int path = offset + part;
 			const size_t size = strlen(cfg_exec_temporary_paths[path]) + 1
-					+ uintlen(state) + 1;
-			char * const state_path = malloc(size);
-			if (state_path == NULL) {
+					+ uintlen(save) + 1;
+			char * const save_path = malloc(size);
+			if (save_path == NULL) {
 				probno = log_error(MALLOC_PROBLEM);
 				return -1;
 			}
 			else {
-				snprintf(state_path, size, "%s_%u",
+				snprintf(save_path, size, "%s_%u",
 						cfg_exec_temporary_paths[path],
-						state);
-				if (save) {
-					copy(state_path, cfg_exec_temporary_paths[path]);
+						save);
+				if (direction) {
+					copy(save_path, cfg_exec_temporary_paths[path]);
 				}
 				else {
-					copy(cfg_exec_temporary_paths[path], state_path);
+					copy(cfg_exec_temporary_paths[path], save_path);
 				}
-				free(state_path);
+				free(save_path);
 			}
 		}
 	}
 
-	return NO_PROBLEM;
+	return 0;
 }
 
 /**
 Initializes this module.
 **/
-problem_d init(void) {
+int init(void) {
 	/*
 	Initializes the configuration.
 	*/
-	PROPAGATE(init_lib_config());
+	cfg_init_lib();
 	record.timestamp = cfg_timestamp;
 
 	/*
 	Initializes the functions.
 	*/
-	PROPAGATE(init_lib());
+	init_lib();
 
 	/*
 	Enables or disables the save-quit-load emulation.
 	*/
-	if (cfg_sql) {
-		inject_save(&save_quit_load);
+	if (cfg_emulate_sql) {
+		asm_inject(&save_quit_load);
 	}
 	else {
 		//inject_save(NULL);
@@ -273,13 +283,18 @@ problem_d init(void) {
 	/*
 	Initializes the shared memory segment.
 	*/
-	PROPAGATE(init_shm());
-	PROPAGATE(attach_shm());
+	shm_init();
+	shm_attach();
 
-	return NO_PROBLEM;
+	return 0;
 }
 
-problem_d init_fork(void) {
+/**
+Forks things.
+
+@return 0 if successful and -1 otherwise.
+**/
+int init_fork(void) {
 	/*
 	Creates a process monitor to avoid accidental daemonization.
 	*/
@@ -291,25 +306,25 @@ problem_d init_fork(void) {
 	else {
 		pid = getpid();
 		if (child_pid == 0) {//child
-			PROPAGATE(attach_shm());
+			shm_attach();
 
 			/*
 			Synchronizes with the parent process.
 			*/
-			while (shm.pids[0] != pid);
+			while (shared.pids[0] != pid);
 
 			return NO_PROBLEM;
 		}
 		else {//parent
-			*shm.ppid = pid;
-			shm.pids[0] = child_pid;
+			*shared.ppid = pid;
+			shared.pids[0] = child_pid;
 
 			/*
 			Prevents defunct processes from appearing.
 			*/
 			signal(SIGCHLD, SIG_IGN);
 
-			while (*shm.mode != HAD_ENOUGH) {
+			while (*shared.state != HAD_ENOUGH) {
 				napms(NAP_RESOLUTION / frame_rate);
 			}
 			/*do {
@@ -326,13 +341,16 @@ problem_d init_fork(void) {
 		}
 	}
 
-	return NO_PROBLEM;
+	return 0;
 }
 
 /**
 Saves the game to memory.
+
+@param save The desired save state.
+@return 0 if successful and -1 otherwise.
 **/
-int save(const int state) {
+int save_state(const int save) {
 	do {
 		const pid_t child_pid = fork();
 		if (child_pid == -1) {
@@ -342,27 +360,27 @@ int save(const int state) {
 		else {
 			pid = getpid();
 			if (child_pid == 0) {//child
-				PROPAGATE(attach_shm());
+				shm_attach();
 
-				while (shm.pids[0] != pid);
+				while (shared.pids[0] != pid);
 
 				return NO_PROBLEM;
 			}
 			else {//parent
-				shm.pids[0] = child_pid;
-				shm.pids[state] = pid;
+				shared.pids[0] = child_pid;
+				shared.pids[save] = pid;
 
 				signal(SIGCHLD, SIG_IGN);
 
 				/*
 				Saves the temporary files.
 				*/
-				PROPAGATE(copy_temporary(state, TRUE));
+				copy_temporary(save, TRUE);
 
 				while (TRUE) {
-					if (shm.pids[0] == pid) break;//someone activated this slot
-					if (shm.pids[state] != pid) partial_uninit(NO_PROBLEM);//someone took this slot
-					if (*shm.mode == HAD_ENOUGH) partial_uninit(NO_PROBLEM);//everyone is shutting down
+					if (shared.pids[0] == pid) break;//someone activated this slot
+					if (shared.pids[save] != pid) partial_uninit(NO_PROBLEM);//someone took this slot
+					if (*shared.state == HAD_ENOUGH) partial_uninit(NO_PROBLEM);//everyone is shutting down
 					napms(NAP_RESOLUTION / frame_rate);
 				}
 
@@ -377,7 +395,7 @@ int save(const int state) {
 				*/
 				for (int row = 0; row < cfg_rows; row++) {
 					for (int col = 0; col < cfg_cols; col++) {
-						shm.chs[state][row][col] = mvwinch(stdscr, row, col);
+						shared.chs[save][row][col] = mvwinch(stdscr, row, col);
 					}
 				}
 
@@ -393,24 +411,27 @@ int save(const int state) {
 				wrefresh(stdscr);
 			}
 		}
-	} while (cfg_preserve);
+	} while (cfg_keep_saves);
 
 	return 0;
 }
 
 /**
 Loads the game from memory.
+
+@param save The desired save state.
+@return 0 if successful and -1 otherwise.
 **/
-int load(const int state) {
-	if (shm.pids[state] != 0) {
+int load_state(const int save) {
+	if (shared.pids[save] != 0) {
 		/*
 		Loads the temporary files.
 		*/
-		PROPAGATE(copy_temporary(state, FALSE));
+		copy_temporary(save, FALSE);
 
-		const pid_t parent_pid = shm.pids[state];
-		shm.pids[state] = (pid_t )0;
-		shm.pids[0] = parent_pid;
+		const pid_t parent_pid = shared.pids[save];
+		shared.pids[save] = (pid_t )0;
+		shared.pids[0] = parent_pid;
 
 		//TODO empty screen
 
@@ -428,11 +449,13 @@ Intercepts printing anything and initializes this process.
 @param format The string format.
 @return The amount of characters printed.
 **/
-int printf(const char * const format, ...) {
-	if (!initializing && !initialized) {
-		initializing = TRUE;
-		initialized = FALSE;
-		PROPAGATEC(init(), uninit);
+int OVERLOAD(printf)(const char * const format, ...) {
+	if (options.progress == MAIN) {
+		options.progress = PRINTF;
+		if (init() == -1) {
+			uninit(0);
+			exit(-1);
+		}
 	}
 
 	va_list	ap;
@@ -453,7 +476,7 @@ Intercepts removing the debug file if it exists.
 @param path The path of the file to remove.
 @return 0 if successful and -1 otherwise.
 **/
-int unlink(const char * const path) {
+int OVERLOAD(unlink)(const char * const path) {
 	log_call("unlink(\"%s\").", path);
 
 	if (strcmp(path, "ADOM.DBG") == 0) {
@@ -472,20 +495,20 @@ Controls the terminal.
 Intercepts <code>TIOCGWINSZ</code> to always report a fixed size.
 Resizing the terminal causes spurious calls and prints garbage on the screen.
 
-@param d An open file descriptor.
+@param fildes An open file descriptor.
 @param request A request conforming to <code>ioctl_list</code>.
 @param ... A single pointer.
 @return 0 if successful and -1 otherwise.
 **/
-int ioctl(const int d, const unsigned long request, ...) {
+int OVERLOAD(ioctl)(const int fildes, const unsigned long request, ...) {
 	va_list	argp;
 	va_start(argp, request);
 	void * arg = va_arg(argp, void *);
 
 	log_call("ioctl(" PTRF ", " PTRF ", " PTRF ").",
-			PTRS(d), PTRS(request), PTRS(arg));
+			PTRS(fildes), PTRS(request), PTRS(arg));
 
-	const int result = um_ioctl(d, request, arg);
+	const int result = um_ioctl(fildes, request, arg);
 	if (request == TIOCGWINSZ) {
 		struct winsize * size = (struct winsize * )arg;
 		size->ws_row = (unsigned short int )cfg_rows;
@@ -503,7 +526,7 @@ Replaces the system time with a fixed time.
 @param t The fixed time to return.
 @return The fixed time.
 **/
-time_t time(time_t * const t) {
+time_t OVERLOAD(time)(time_t * const t) {
 	log_call("time(" PTRF ").", PTRS(t));
 
 	if (t != NULL) {
@@ -520,7 +543,7 @@ Replaces <code>localtime</code> with <code>gmtime</code> to disregard timezones.
 @param timep The <code>time_t</code> to convert.
 @return The <code>struct tm</code>.
 **/
-struct tm * localtime(const time_t * const timep) {
+struct tm * OVERLOAD(localtime)(const time_t * const timep) {
 	log_call("localtime(" PTRF ").", PTRS(timep));
 
 	return gmtime(timep);//reduces entropy
@@ -531,7 +554,7 @@ Seeds the pseudorandom number generator.
 
 @param seed The seed.
 **/
-void srandom(const unsigned int seed) {
+void OVERLOAD(srandom)(const unsigned int seed) {
 	log_call("srandom(%u).", seed);
 
 	um_srandom(seed);
@@ -542,7 +565,7 @@ Generates the next pseudorandom number.
 
 @return The number.
 **/
-long int random(void) {
+long int OVERLOAD(random)(void) {
 	log_call("random().");
 
 	return um_random();
@@ -558,7 +581,7 @@ Draws the custom interface.
 @param win The window to redraw.
 @return 0 if successful and -1 otherwise.
 **/
-int wrefresh(WINDOW * const win) {
+int OVERLOAD(wrefresh)(WINDOW * const win) {
 	if (skipwr) return 0;
 	log_call("wrefresh(" PTRF ").", PTRS(win));
 
@@ -579,7 +602,7 @@ int wrefresh(WINDOW * const win) {
 	getyx(win, y, x);
 	wattrset(win, A_NORMAL);
 	const int result = um_wrefresh(win);
-	draw_gui(win);
+	gui_draw(win);
 	wmove(win, y, x);
 	wattr_set(win, attrs, pair, NULL);
 
@@ -594,7 +617,7 @@ Initializes a new color pair.
 @param b The background color.
 @return 0 if successful and -1 otherwise.
 **/
-int init_pair(const short int pair, const short int f, const short int b) {
+int OVERLOAD(init_pair)(const short int pair, const short int f, const short int b) {
 	log_call("init_pair(%d, %d, %d).", pair, f, b);
 
 	pairs++;
@@ -611,14 +634,17 @@ Draws the custom interface.
 @param n The length of the string.
 @return 0 if successful and -1 otherwise.
 **/
-int waddnstr(WINDOW * const win, const char * const str, const int n) {
+int OVERLOAD(waddnstr)(WINDOW * const win, const char * const str, const int n) {
 	log_call("waddnstr(" PTRF ", %s, %d).", PTRS(win), str, n);
 
-	if (initializing && !initialized) {
-		initializing = FALSE;
-		initialized = TRUE;
-		PROPAGATEC(init_fork(), uninit);
-		PROPAGATEC(init_gui(), uninit);
+	if (options.progress == PRINTF) {
+		options.progress = WADDNSTR;
+		if (init_fork() == -1) {
+			return -1;
+		}
+		if (gui_init() == -1) {
+			return -1;
+		}
 	}
 
 	return um_waddnstr(win, str, n);
@@ -630,13 +656,13 @@ Reads a key code from a window.
 @param win The window to read from.
 @return The key code.
 **/
-int wgetch(WINDOW * const win) {
+int OVERLOAD(wgetch)(WINDOW * const win) {
 	log_call("wgetch(" PTRF ").", PTRS(win));
 
-	if (playing) {
-		playing = next_key(win) != KEY_EOF;
+	if (options.record_active) {
+		options.record_active = next_key(win) != KEY_EOF;
 	}
-	if (rolling) {
+	if (options.roll_active) {
 		//roll
 	}
 
@@ -647,10 +673,10 @@ int wgetch(WINDOW * const win) {
 		negative_turns++;
 	}
 	else if (*exec_turns > previous_turns) {
-		in_game = TRUE;
+		options.key_active = TRUE;
 	}
 	else {
-		in_game = FALSE;
+		options.key_active = FALSE;
 	}
 	previous_turns = *exec_turns;
 	turns = *exec_turns + negative_turns;
@@ -658,69 +684,69 @@ int wgetch(WINDOW * const win) {
 	const int key = um_wgetch(win);
 	if (key == cfg_play_key) {
 		if (record.frames == 0) {
-			playing = TRUE;
+			options.record_active = TRUE;
 			put_fread(cfg_input_path);
 			record.current = record.first;
 		}
 
-		else condensed = !condensed;
+		else options.gui_condensed = !options.gui_condensed;
 	}
 	else if (key == cfg_save_key) {
 		put_fwrite(cfg_output_paths[current_save]);
-		save(current_save);
+		save_state(current_save);
 	}
 	else if (key == cfg_load_key) {
-		load(current_save);//redundant
+		load_state(current_save);//redundant
 	}
-	else if (key == cfg_state_key) {
+	else if (key == cfg_next_save_key) {
 		INC(current_save, 1, cfg_saves);
 	}
-	else if (key == cfg_unstate_key) {
+	else if (key == cfg_prev_save_key) {
 		DEC(current_save, 1, cfg_saves);
 	}
-	else if (key == cfg_duration_key) {
+	else if (key == cfg_longer_duration_key) {
 		if (current_duration < UCHAR_MAX) {
-			current_duration = (unsigned char )((current_duration + 1) * 2 - 1);
+			current_duration *= 2;
 		}
 	}
-	else if (key == cfg_unduration_key) {
+	else if (key == cfg_shorter_duration_key) {
 		if (current_duration > 0) {
-			current_duration = (unsigned char )((current_duration + 1) / 2 - 1);
+			current_duration /= 2;
 		}
 	}
-	else if (key == cfg_time_key) {
+	else if (key == cfg_more_time_key) {
 		if (cfg_timestamp - record.timestamp < INT_MAX) {//prevents rewinding time
 			cfg_timestamp++;
 		}
 	}
-	else if (key == cfg_untime_key) {
+	else if (key == cfg_less_time_key) {
 		if (cfg_timestamp - record.timestamp > 0) {//prevents rewinding time
 			cfg_timestamp--;
 		}
 	}
 	else if (key == cfg_menu_key) {
-		inactive = !inactive;
+		options.gui_active = !options.gui_active;
 	}
 	else if (key == cfg_condense_key) {
-		condensed = !condensed;
+		options.gui_condensed = !options.gui_condensed;
 	}
 	else if (key == cfg_hide_key) {
-		hidden = !hidden;
+		options.gui_hidden = !options.gui_hidden;
 	}
 	else if (key == cfg_play_key) {
-		paused = !paused;
+		options.record_paused = !options.record_paused;
 	}
 	else if (key == cfg_stop_key) {
-		playing = FALSE;
+		options.record_active = FALSE;
 		record.current = NULL;
 	}
 	else if (key == cfg_quit_key) {
-		quitting = TRUE;
-		*shm.mode = HAD_ENOUGH;
-		shm.pids[current_save] = 0;
+		options.progress = EXIT;
+		*shared.state = HAD_ENOUGH;
+		shared.pids[current_save] = 0;
 		partial_uninit(NO_PROBLEM);
 	}
-	else if (!inactive) {
+	else if (!options.gui_active) {
 		if (record.frames > 0 || key == ' ') {
 			const size_t inputs = sizeof previous_inputs / sizeof *previous_inputs - 1;
 			for (size_t input = 0; input < inputs; input++) {//shifts the array left
@@ -728,7 +754,7 @@ int wgetch(WINDOW * const win) {
 			}
 			previous_inputs[inputs] = key;
 
-			add_key_frame(current_duration, key);
+			rec_add_key_frame(current_duration, key);
 		}
 
 		return key;
@@ -744,12 +770,12 @@ Intercepts exiting prematurely.
 
 @return <code>OK</code> if successful and <code>ERR</code> otherwise.
 **/
-int endwin(void) {
+int OVERLOAD(endwin)(void) {
 	log_call("endwin().");
 
 	noecho();
 	wclear(stdscr);
-	while (!quitting) {
+	while (!options.progress == EXIT) {
 		wgetch(stdscr);
 	}
 	partial_uninit(NO_PROBLEM);

@@ -17,9 +17,9 @@ TODO check output_paths management
 
 #include <libconfig.h>//config_*, CONFIG_*
 
-#include "util.h"//intern, hash, stdstr, SUBNULL
-#include "prob.h"//problem_d, *_PROBLEM
-#include "log.h"//log_error, warning, notice
+#include "util.h"//hash, stdstr, SUBNULL
+#include "prob.h"//probno, *_PROBLEM
+#include "log.h"//log_*
 #include "def.h"//def_*
 #include "exec.h"//exec_*
 #include "rec.h"//record
@@ -85,7 +85,7 @@ char * cfg_libncurses_path;
 /**
 Whether default configurations are enforced.
 **/
-bool cfg_enforce;
+bool cfg_force_sync;
 /**
 The amount of save states.
 **/
@@ -113,15 +113,15 @@ unsigned int cfg_generations;
 /**
 Whether save-quit-load emulation is enabled.
 **/
-bool cfg_sql;
+bool cfg_emulate_sql;
 /**
 Whether save states are preserved upon loading them.
 **/
-bool cfg_preserve;
+bool cfg_keep_saves;
 /**
 Whether the input file is played back automatically.
 **/
-bool cfg_autoplay;
+bool cfg_play_instantly;
 /**
 Whether the graphical user interface is colorful.
 **/
@@ -165,27 +165,27 @@ int cfg_load_key;
 /**
 The key used to change the active state by incrementing.
 **/
-int cfg_state_key;
+int cfg_next_save_key;
 /**
 The key used to change the active state by decrementing.
 **/
-int cfg_unstate_key;
+int cfg_prev_save_key;
 /**
 The key used to change the frame duration by incrementing.
 **/
-int cfg_duration_key;
+int cfg_longer_duration_key;
 /**
 The key used to change the frame duration by decrementing.
 **/
-int cfg_unduration_key;
+int cfg_shorter_duration_key;
 /**
 The key used to change the system time by incrementing.
 **/
-int cfg_time_key;
+int cfg_more_time_key;
 /**
 The key used to change the system time by decrementing.
 **/
-int cfg_untime_key;
+int cfg_less_time_key;
 /**
 The key used to open or close the save state menu.
 **/
@@ -193,7 +193,7 @@ int cfg_menu_key;
 /**
 The key used to open or close the information screen.
 **/
-int info_key;
+int cfg_info_key;
 /**
 The key used to condense or expand the graphical user interface.
 **/
@@ -225,7 +225,7 @@ Uninitializes the configuration variables.
 
 @return The error code.
 **/
-int uninit_config(void) {
+int cfg_uninit(void) {
 	int result = 0;
 	free(cfg_home_path);
 	free(cfg_exec_path);
@@ -317,12 +317,31 @@ Initializes the common configuration variables.
 **/
 static int begin_init_config(void) {
 	/*
-	Sets the streams to their default values.
+	Sets the starting values that are used during initialization.
 	*/
+	cfg_home_path = NULL;
+	cfg_exec_path = NULL;
+	cfg_exec_data_path = NULL;
+	cfg_exec_temporary_path = NULL;
+	cfg_exec_temporary_paths = NULL;
+	cfg_exec_config_path = NULL;
+	cfg_exec_process_path = NULL;
+	cfg_exec_keybind_path = NULL;
+	cfg_exec_version_path = NULL;
+	cfg_exec_error_path = NULL;
+	cfg_exec_count_path = NULL;
+	cfg_lib_path = NULL;
+	cfg_libc_path = NULL;
+	cfg_libncurses_path = NULL;
+	cfg_shm_path = NULL;
+	cfg_iterator = NULL;
+	cfg_input_path = NULL;
+	cfg_output_paths = NULL;
 	cfg_error_stream = stdstr(def_error_stream);
 	cfg_warning_stream = stdstr(def_warning_stream);
 	cfg_notice_stream = stdstr(def_notice_stream);
 	cfg_call_stream = stdstr(def_call_stream);
+
 
 	/*
 	Prepares the configuration file.
@@ -338,24 +357,24 @@ static int begin_init_config(void) {
 	if (stat(def_config_path, &config_stat) == -1) {
 		FILE * stream = fopen(def_config_path, "w");
 		if (stream == NULL) {
-			probno = log_error(CONFIGURATION_OPEN_PROBLEM);
+			probno = log_error(LIBCONFIG_OPEN_PROBLEM);
 			return -1;
 		}
 		else {
 			const size_t size = strlen(def_config) + 1;
 			if (fwrite(def_config, size, 1, stream) != 1) {
-				probno = log_error(CONFIGURATION_WRITE_PROBLEM);
+				probno = log_error(LIBCONFIG_WRITE_PROBLEM);
 			}
 			if (fclose(stream) == EOF) {
-				probno = log_error(CONFIGURATION_CLOSE_PROBLEM);
+				probno = log_error(LIBCONFIG_CLOSE_PROBLEM);
 			}
 		}
-		probno = log_notice(CONFIGURATION_STAT_PROBLEM);
+		probno = log_notice(LIBCONFIG_STAT_PROBLEM);
 		return -1;
 	}
 	config_init(&config);
 	if (config_read_file(&config, def_config_path) == 0) {
-		probno = log_error(CONFIGURATION_PARSE_PROBLEM);
+		probno = log_error(LIBCONFIG_PARSE_PROBLEM);
 		return -1;
 	}
 
@@ -370,10 +389,10 @@ static int begin_init_config(void) {
 	const char * new_home_path;
 	struct passwd * pw;
 	if (config_lookup_string(&config, "home", &new_home_path) == CONFIG_FALSE) {
-		//log_warning(HOME_CONFIG_PROBLEM);
+		//probno = log_warning(HOME_CONFIG_PROBLEM);
 		new_home_path = getenv("HOME");
 		if (new_home_path == NULL) {
-			probno = log_warning(HOME_GETENV_PROBLEM);
+			//probno = log_warning(HOME_GETENV_PROBLEM);
 			pw = getpwuid(getuid());
 			if (pw == NULL) {
 				new_home_path = NULL;
@@ -414,7 +433,7 @@ static int begin_init_config(void) {
 	const char * new_exec_data_path;
 	if (config_lookup_string(&config, "data", &new_exec_data_path) == CONFIG_FALSE) {
 		new_exec_data_path = NULL;
-		//log_warning(EXEC_DATA_CONFIG_PROBLEM);
+		//probno = log_warning(EXEC_DATA_CONFIG_PROBLEM);
 		if (cfg_home_path == NULL) {
 			cfg_exec_data_path = NULL;
 		}
@@ -530,14 +549,15 @@ static int end_init_config(void) {
 	/*
 	Closes the configuration file.
 
-	The memory allocated by the <code>config_lookup_*</code> calls is automatically deallocated.
+	The memory allocated by the <code>config_lookup_*</code> calls is
+	 automatically deallocated.
 	*/
 	config_destroy(&config);
 
 	return 0;
 }
 
-int init_main_config(void) {
+int cfg_init_main(void) {
 	if (begin_init_config() == -1) {
 		return -1;
 	}
@@ -550,22 +570,22 @@ int init_main_config(void) {
 	 the existence of the file is then checked and
 	 the environment variable is finally set.
 	*/
-	const char * new_loader_path;
-	if (config_lookup_string(&config, "loader", &new_loader_path) == CONFIG_FALSE) {
-		//log_warning(LD_PRELOAD_CONFIG_PROBLEM);
-		new_loader_path = getenv("LD_PRELOAD");
+	const char * new_lib_path;
+	if (config_lookup_string(&config, "lib", &new_lib_path) == CONFIG_FALSE) {
+		//probno = log_warning(LD_PRELOAD_CONFIG_PROBLEM);
+		new_lib_path = getenv("LD_PRELOAD");
 		if (cfg_lib_path == NULL) {
-			new_loader_path = def_lib_path;
+			new_lib_path = def_lib_path;
 			probno = log_warning(LD_PRELOAD_GETENV_PROBLEM);
 		}
 	}
-	if (new_loader_path == NULL) {
+	if (new_lib_path == NULL) {
 		cfg_lib_path = NULL;
 	}
 	else {
-		cfg_lib_path = astrrep(new_loader_path, "~", cfg_home_path);
-		struct stat loader_stat;
-		if (stat(cfg_lib_path, &loader_stat) == -1) {
+		cfg_lib_path = astrrep(new_lib_path, "~", cfg_home_path);
+		struct stat lib_stat;
+		if (stat(cfg_lib_path, &lib_stat) == -1) {
 			free(cfg_lib_path);
 			cfg_lib_path = NULL;
 			probno = log_error(LD_PRELOAD_STAT_PROBLEM);
@@ -586,7 +606,7 @@ int init_main_config(void) {
 	const char * new_exec_path;
 	if (config_lookup_string(&config, "executable", &new_exec_path) == CONFIG_FALSE) {
 		new_exec_path = def_exec_path;
-		//log_warning(EXEC_CONFIG_PROBLEM);
+		//probno = log_warning(EXEC_CONFIG_PROBLEM);
 	}
 	if (new_exec_path == NULL) {
 		cfg_exec_path = NULL;
@@ -696,7 +716,7 @@ int init_main_config(void) {
 					exec_process_file);
 			struct stat exec_process_stat;
 			if (stat(cfg_exec_process_path, &exec_process_stat) == -1) {
-				//log_notice(EXEC_PROCESS_STAT_PROBLEM);
+				//probno = log_notice(EXEC_PROCESS_STAT_PROBLEM);
 			}
 		}
 	}
@@ -780,7 +800,7 @@ int init_main_config(void) {
 					exec_error_file);
 			struct stat exec_error_stat;
 			if (stat(cfg_exec_error_path, &exec_error_stat) == -1) {
-				//log_notice(EXEC_ERROR_STAT_PROBLEM);
+				//probno = log_notice(EXEC_ERROR_STAT_PROBLEM);
 			}
 		}
 	}
@@ -820,7 +840,7 @@ int init_main_config(void) {
 	return 0;
 }
 
-int init_lib_config(void) {
+int cfg_init_lib(void) {
 	if (begin_init_config() == -1) {
 		return -1;
 	}
@@ -863,12 +883,12 @@ int init_lib_config(void) {
 	/**
 	Sets the save state perseverance.
 	**/
-	int new_enforce;
-	if (config_lookup_bool(&config, "enforce", &new_enforce) == CONFIG_FALSE) {
-		new_enforce = def_enforce;
-		//log_warning(PRESERVE_CONFIG_PROBLEM);
+	int new_force_sync;
+	if (config_lookup_bool(&config, "force_sync", &new_force_sync) == CONFIG_FALSE) {
+		new_force_sync = def_force_sync;
+		//probno = log_warning(FORCE_SYNC_CONFIG_PROBLEM);
 	}
-	cfg_enforce = new_enforce == CONFIG_TRUE;
+	cfg_force_sync = new_force_sync == CONFIG_TRUE;
 
 	/*
 	Finds the amount of save states.
@@ -877,16 +897,16 @@ int init_lib_config(void) {
 	 the default amount is then assumed and
 	 the bounds are finally checked.
 	*/
-	int new_states;
-	if (config_lookup_int(&config, "states", &new_states) == CONFIG_FALSE) {
-		new_states = def_states;
-		//log_warning(STATE_CONFIG_PROBLEM);
+	int new_saves;
+	if (config_lookup_int(&config, "saves", &new_saves) == CONFIG_FALSE) {
+		new_saves = def_saves;
+		//probno = log_warning(STATE_CONFIG_PROBLEM);
 	}
-	if (new_states < 1) {
-		new_states = 1;
+	if (new_saves < 1) {
+		new_saves = 1;
 		probno = log_warning(STATE_AMOUNT_PROBLEM);
 	}
-	cfg_saves = new_states + 1;//reserves space for the active state
+	cfg_saves = new_saves + 1;//reserves space for the active state
 
 	/*
 	Finds the height of the terminal.
@@ -898,7 +918,7 @@ int init_lib_config(void) {
 	int new_rows;
 	if (config_lookup_int(&config, "rows", &new_rows) == CONFIG_FALSE) {
 		new_rows = def_rows;
-		//log_warning(ROW_CONFIG_PROBLEM);
+		//probno = log_warning(ROW_CONFIG_PROBLEM);
 	}
 	if (new_rows < exec_rows_min || new_rows > exec_rows_max) {
 		new_rows = MIN(MAX(exec_rows_min, new_rows), exec_rows_max);
@@ -916,7 +936,7 @@ int init_lib_config(void) {
 	int new_cols;
 	if (config_lookup_int(&config, "cols", &new_cols) == CONFIG_FALSE) {
 		new_cols = def_cols;
-		//log_warning(COL_CONFIG_PROBLEM);
+		//probno = log_warning(COL_CONFIG_PROBLEM);
 	}
 	if (new_cols < exec_cols_min || new_cols > exec_cols_max) {
 		new_cols = MIN(MAX(exec_cols_min, new_cols), exec_cols_max);
@@ -933,7 +953,7 @@ int init_lib_config(void) {
 	const char * new_shm_path;
 	if (config_lookup_string(&config, "shm", &new_shm_path) == CONFIG_FALSE) {
 		new_shm_path = def_config_path;//def_shm_path;
-		//log_warning(SHM_CONFIG_PROBLEM);
+		//probno = log_warning(SHM_CONFIG_PROBLEM);
 	}
 	cfg_shm_path = astrrep(new_shm_path, "~", cfg_home_path);
 	struct stat shm_stat;
@@ -950,7 +970,7 @@ int init_lib_config(void) {
 	int new_timestamp;
 	if (config_lookup_int(&config, "timestamp", &new_timestamp) == CONFIG_FALSE) {
 		new_timestamp = def_timestamp;
-		//log_warning(TIMESTAMP_CONFIG_PROBLEM);
+		//probno = log_warning(TIMESTAMP_CONFIG_PROBLEM);
 	}
 	cfg_timestamp = (time_t )new_timestamp;
 
@@ -960,39 +980,39 @@ int init_lib_config(void) {
 	int new_generations;
 	if (config_lookup_int(&config, "generations", &new_generations) == CONFIG_FALSE) {
 		new_generations = def_generations;
-		//log_warning(GENERATIONS_CONFIG_PROBLEM);
+		//probno = log_warning(GENERATIONS_CONFIG_PROBLEM);
 	}
 	cfg_generations = (unsigned int )new_generations;
 
 	/**
 	Sets the save-quit-load emulation.
 	**/
-	int new_sql;
-	if (config_lookup_bool(&config, "sql", &new_sql) == CONFIG_FALSE) {
-		new_sql = def_sql;
-		//log_warning(SQL_CONFIG_PROBLEM);
+	int new_emulate_sql;
+	if (config_lookup_bool(&config, "emulate_sql", &new_emulate_sql) == CONFIG_FALSE) {
+		new_emulate_sql = def_emulate_sql;
+		//probno = log_warning(EMULATE_SQL_CONFIG_PROBLEM);
 	}
-	cfg_sql = new_sql == CONFIG_TRUE;
+	cfg_emulate_sql = new_emulate_sql == CONFIG_TRUE;
 
 	/**
 	Sets the save state perseverance.
 	**/
-	int new_preserve_states;
-	if (config_lookup_bool(&config, "preserve", &new_preserve_states) == CONFIG_FALSE) {
-		new_preserve_states = def_preserve;
-		//log_warning(PRESERVE_CONFIG_PROBLEM);
+	int new_keep_saves;
+	if (config_lookup_bool(&config, "keep_saves", &new_keep_saves) == CONFIG_FALSE) {
+		new_keep_saves = def_keep_saves;
+		//probno = log_warning(KEEP_SAVES_CONFIG_PROBLEM);
 	}
-	cfg_preserve = new_preserve_states == CONFIG_TRUE;
+	cfg_keep_saves = new_keep_saves == CONFIG_TRUE;
 
 	/**
 	Sets the playback mode.
 	**/
-	int new_autoplay;
-	if (config_lookup_bool(&config, "autoplay", &new_autoplay) == CONFIG_FALSE) {
-		new_autoplay = def_autoplay;
-		//log_warning(AUTOPLAY_CONFIG_PROBLEM);
+	int new_play_instantly;
+	if (config_lookup_bool(&config, "play_instantly", &new_play_instantly) == CONFIG_FALSE) {
+		new_play_instantly = def_play_instantly;
+		//probno = log_warning(PLAY_INSTANTLY_CONFIG_PROBLEM);
 	}
-	cfg_autoplay = new_autoplay == CONFIG_TRUE;
+	cfg_play_instantly = new_play_instantly == CONFIG_TRUE;
 
 	/**
 	Sets the color mode.
@@ -1000,7 +1020,7 @@ int init_lib_config(void) {
 	int new_monochrome;
 	if (config_lookup_bool(&config, "monochrome", &new_monochrome) == CONFIG_FALSE) {
 		new_monochrome = def_monochrome;
-		//log_warning(MONOCHROME_CONFIG_PROBLEM);
+		//probno = log_warning(MONOCHROME_CONFIG_PROBLEM);
 	}
 	cfg_monochrome = new_monochrome == CONFIG_TRUE;
 
@@ -1013,7 +1033,7 @@ int init_lib_config(void) {
 	const char * new_iterator;
 	if (config_lookup_string(&config, "iterator", &new_iterator) == CONFIG_FALSE) {
 		new_iterator = def_iterator;
-		//log_warning(ITERATOR_CONFIG_PROBLEM);
+		//probno = log_warning(ITERATOR_CONFIG_PROBLEM);
 	}
 	cfg_iterator = malloc(strlen(new_iterator) + 1);
 	strcpy(cfg_iterator, new_iterator);
@@ -1103,7 +1123,7 @@ int init_lib_config(void) {
 	struct stat error_stat;
 	if (new_error_stream == NULL) {
 		if (stat(error_path, &error_stat) == 0) {
-			//log_notice(ERROR_STAT_PROBLEM);
+			//probno = log_notice(ERROR_STAT_PROBLEM);
 		}
 		new_error_stream = fopen(error_path, "w");
 		if (new_error_stream == NULL) {
@@ -1123,7 +1143,7 @@ int init_lib_config(void) {
 	struct stat warning_stat;
 	if (new_warning_stream == NULL) {
 		if (stat(warning_path, &warning_stat) == 0) {
-			//log_notice(WARNING_STAT_PROBLEM);
+			//probno = log_notice(WARNING_STAT_PROBLEM);
 		}
 		if (warning_stat.st_dev == error_stat.st_dev
 				&& warning_stat.st_ino == error_stat.st_ino) {
@@ -1149,7 +1169,7 @@ int init_lib_config(void) {
 	struct stat notice_stat;
 	if (new_notice_stream == NULL) {
 		if (stat(notice_path, &notice_stat) == 0) {
-			//log_notice(NOTE_STAT_PROBLEM);
+			//probno = log_notice(NOTE_STAT_PROBLEM);
 		}
 		if (notice_stat.st_dev == error_stat.st_dev
 				&& notice_stat.st_ino == error_stat.st_ino) {
@@ -1179,7 +1199,7 @@ int init_lib_config(void) {
 	struct stat call_stat;
 	if (new_call_stream == NULL) {
 		if (stat(call_path, &call_stat) == 0) {
-			//log_notice(CALL_STAT_PROBLEM);
+			//probno = log_notice(CALL_STAT_PROBLEM);
 		}
 		if (call_stat.st_dev == error_stat.st_dev
 				&& call_stat.st_ino == error_stat.st_ino) {
@@ -1214,113 +1234,139 @@ int init_lib_config(void) {
 		cfg_call_stream = new_call_stream;
 	}
 
-	/**
+	/*
 	Sets the keys.
-	**/
+	*/
 	int new_save_key;
 	if (config_lookup_int(&config, "save_key", &new_save_key) == CONFIG_FALSE) {
 		new_save_key = def_save_key;
-		//log_warning(KEY_CONFIG_PROBLEM);
+		//probno = log_warning(KEY_CONFIG_PROBLEM);
 	}
 	cfg_save_key = new_save_key;
 
 	int new_load_key;
 	if (config_lookup_int(&config, "load_key", &new_load_key) == CONFIG_FALSE) {
 		new_load_key = def_load_key;
-		//log_warning(KEY_CONFIG_PROBLEM);
+		//probno = log_warning(KEY_CONFIG_PROBLEM);
 	}
 	cfg_load_key = new_load_key;
 
-	int new_state_key;
-	if (config_lookup_int(&config, "state_key", &new_state_key) == CONFIG_FALSE) {
-		new_state_key = def_state_key;
-		//log_warning(KEY_CONFIG_PROBLEM);
+	int new_next_state_key;
+	if (config_lookup_int(&config, "next_state_key", &new_next_state_key) == CONFIG_FALSE) {
+		new_next_state_key = def_next_save_key;
+		//probno = log_warning(KEY_CONFIG_PROBLEM);
 	}
-	cfg_state_key = new_state_key;
+	cfg_next_save_key = new_next_state_key;
 
-	int new_unstate_key;
-	if (config_lookup_int(&config, "unstate_key", &new_unstate_key) == CONFIG_FALSE) {
-		new_unstate_key = def_unstate_key;
-		//log_warning(KEY_CONFIG_PROBLEM);
+	int new_prev_state_key;
+	if (config_lookup_int(&config, "prev_state_key", &new_prev_state_key) == CONFIG_FALSE) {
+		new_prev_state_key = def_prev_save_key;
+		//probno = log_warning(KEY_CONFIG_PROBLEM);
 	}
-	cfg_unstate_key = new_unstate_key;
+	cfg_prev_save_key = new_prev_state_key;
 
-	int new_duration_key;
-	if (config_lookup_int(&config, "duration_key", &new_duration_key) == CONFIG_FALSE) {
-		new_duration_key = def_duration_key;
-		//log_warning(KEY_CONFIG_PROBLEM);
+	int new_longer_duration_key;
+	if (config_lookup_int(&config, "longer_duration_key", &new_longer_duration_key) == CONFIG_FALSE) {
+		new_longer_duration_key = def_longer_duration_key;
+		//probno = log_warning(KEY_CONFIG_PROBLEM);
 	}
-	cfg_duration_key = new_duration_key;
+	cfg_longer_duration_key = new_longer_duration_key;
 
-	int new_unduration_key;
-	if (config_lookup_int(&config, "unduration_key", &new_unduration_key) == CONFIG_FALSE) {
-		new_unduration_key = def_unduration_key;
-		//log_warning(KEY_CONFIG_PROBLEM);
+	int new_shorter_duration_key;
+	if (config_lookup_int(&config, "shorter_duration_key", &new_shorter_duration_key) == CONFIG_FALSE) {
+		new_shorter_duration_key = def_shorter_duration_key;
+		//probno = log_warning(KEY_CONFIG_PROBLEM);
 	}
-	cfg_unduration_key = new_unduration_key;
+	cfg_shorter_duration_key = new_shorter_duration_key;
 
-	int new_time_key;
-	if (config_lookup_int(&config, "time_key", &new_time_key) == CONFIG_FALSE) {
-		new_time_key = def_time_key;
-		//log_warning(KEY_CONFIG_PROBLEM);
+	int new_more_time_key;
+	if (config_lookup_int(&config, "time_key", &new_more_time_key) == CONFIG_FALSE) {
+		new_more_time_key = def_more_time_key;
+		//probno = log_warning(KEY_CONFIG_PROBLEM);
 	}
-	cfg_time_key = new_time_key;
+	cfg_more_time_key = new_more_time_key;
 
-	int new_untime_key;
-	if (config_lookup_int(&config, "untime_key", &new_untime_key) == CONFIG_FALSE) {
-		new_untime_key = def_untime_key;
-		//log_warning(KEY_CONFIG_PROBLEM);
+	int new_less_time_key;
+	if (config_lookup_int(&config, "untime_key", &new_less_time_key) == CONFIG_FALSE) {
+		new_less_time_key = def_less_time_key;
+		//probno = log_warning(KEY_CONFIG_PROBLEM);
 	}
-	cfg_untime_key = new_untime_key;
+	cfg_less_time_key = new_less_time_key;
 
 	int new_menu_key;
 	if (config_lookup_int(&config, "menu_key", &new_menu_key) == CONFIG_FALSE) {
 		new_menu_key = def_menu_key;
-		//log_warning(KEY_CONFIG_PROBLEM);
+		//probno = log_warning(KEY_CONFIG_PROBLEM);
 	}
 	cfg_menu_key = new_menu_key;
 
 	int new_info_key;
 	if (config_lookup_int(&config, "info_key", &new_info_key) == CONFIG_FALSE) {
 		new_info_key = def_info_key;
-		//log_warning(KEY_CONFIG_PROBLEM);
+		//probno = log_warning(KEY_CONFIG_PROBLEM);
 	}
-	info_key = new_info_key;
+	cfg_info_key = new_info_key;
 
 	int new_condense_key;
 	if (config_lookup_int(&config, "condense_key", &new_condense_key) == CONFIG_FALSE) {
 		new_condense_key = def_condense_key;
-		//log_warning(KEY_CONFIG_PROBLEM);
+		//probno = log_warning(KEY_CONFIG_PROBLEM);
 	}
 	cfg_condense_key = new_condense_key;
 
 	int new_hide_key;
 	if (config_lookup_int(&config, "hide_key", &new_hide_key) == CONFIG_FALSE) {
 		new_hide_key = def_hide_key;
-		//log_warning(KEY_CONFIG_PROBLEM);
+		//probno = log_warning(KEY_CONFIG_PROBLEM);
 	}
 	cfg_hide_key = new_hide_key;
 
 	int new_play_key;
 	if (config_lookup_int(&config, "play_key", &new_play_key) == CONFIG_FALSE) {
 		new_play_key = def_play_key;
-		//log_warning(KEY_CONFIG_PROBLEM);
+		//probno = log_warning(KEY_CONFIG_PROBLEM);
 	}
 	cfg_play_key = new_play_key;
 
 	int new_stop_key;
 	if (config_lookup_int(&config, "stop_key", &new_stop_key) == CONFIG_FALSE) {
 		new_stop_key = def_stop_key;
-		//log_warning(KEY_CONFIG_PROBLEM);
+		//probno = log_warning(KEY_CONFIG_PROBLEM);
 	}
 	cfg_stop_key = new_stop_key;
 
 	int new_quit_key;
 	if (config_lookup_int(&config, "quit_key", &new_quit_key) == CONFIG_FALSE) {
 		new_quit_key = def_quit_key;
-		//log_warning(KEY_CONFIG_PROBLEM);
+		//probno = log_warning(KEY_CONFIG_PROBLEM);
 	}
 	cfg_quit_key = new_quit_key;
+
+	/*
+	Sets the record information.
+	*/
+	const char * new_author;
+	if (config_lookup_string(&config, "author", &new_author) == CONFIG_FALSE) {
+		new_author = "";
+		probno = log_notice(AUTHOR_CONFIG_PROBLEM);
+	}
+	strncpy(record.author, new_author, sizeof record.author);
+	record.author[sizeof record.author - 1] = '\0';
+
+	const char * new_comments;
+	if (config_lookup_string(&config, "comments", &new_comments) == CONFIG_FALSE) {
+		new_comments = "";
+		probno = log_notice(COMMENTS_CONFIG_PROBLEM);
+	}
+	strncpy(record.comments, new_comments, sizeof record.comments);
+	record.comments[sizeof record.comments - 1] = '\0';
+
+	int new_category;
+	if (config_lookup_int(&config, "category", &new_category) == CONFIG_FALSE) {
+		new_category = 0;
+		probno = log_notice(CATEGORY_CONFIG_PROBLEM);
+	}
+	record.category = new_category;
 
 	if (end_init_config() == -1) {
 		return -1;

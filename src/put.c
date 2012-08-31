@@ -50,7 +50,7 @@ size_t put_fwrite(const char * const path) {
 	PACK(position, record.turns);
 
 	size_t result = 0;
-	if (fwrite(header, sizeof header, 1, stream) != 1) {
+	if (fwrite(&header[0], sizeof header, 1, stream) != 1) {
 		probno = log_error(OUTPUT_WRITE_PROBLEM);
 		goto hell;
 	}
@@ -108,7 +108,7 @@ size_t put_fread(const char * const path) {
 	*/
 	unsigned char header[1024];
 	size_t result = 0;
-	if (fread(header, sizeof header, 1, stream) != 1) {
+	if (fread(&header[0], sizeof header, 1, stream) != 1) {
 		probno = log_error(INPUT_READ_PROBLEM);
 	}
 
@@ -149,7 +149,7 @@ size_t put_fread(const char * const path) {
 				break;
 			}
 		}
-		else if (add_frame(frame.duration, frame.value) == NULL) {
+		else if (rec_add_frame(frame.duration, frame.value) == NULL) {
 			probno = log_error(INPUT_FRAME_PROBLEM);
 			goto hell;
 		}

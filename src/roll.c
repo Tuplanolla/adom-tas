@@ -1,6 +1,8 @@
 /**
 Rolls characters.
 
+TODO turn into a state machine
+
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include <stddef.h>//NULL

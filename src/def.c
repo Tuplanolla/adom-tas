@@ -5,42 +5,42 @@ Sets the default values of various variables.
 **/
 #include <stddef.h>//size_t
 
-#include <curses.h>//KEY_*
+#include <curses.h>//KEY_*, COLOR_*
 
-#include "util.h"//intern, bool, FALSE, TRUE
+#include "util.h"//bool, FALSE, TRUE
 
 #include "def.h"
 
 /**
 The indicator used when a list extends left.
 **/
-intern const char * const def_gui_left_more = "<-";
+const char * const def_gui_left_more = "<-";
 /**
 The indicator used when a list extends right.
 **/
-intern const char * const def_gui_right_more = "->";
+const char * const def_gui_right_more = "->";
 /**
 The indicator used on the left side of a used field.
 **/
-intern const char * const def_gui_left_used = "[";
+const char * const def_gui_left_used = "[";
 /**
 The indicator used on the right side of a used field.
 **/
-intern const char * const def_gui_right_used = "]";
+const char * const def_gui_right_used = "]";
 /**
 The indicator used on the left side of an unused field.
 **/
-intern const char * const def_gui_left_unused = "";
+const char * const def_gui_left_unused = "";
 /**
 The indicator used on the right side of an unused field.
 **/
-intern const char * const def_gui_right_unused = "";
+const char * const def_gui_right_unused = "";
 /**
 The colors used.
 
-Ordered by hue (wavelength).
+Ordered by hue (wavelength), starting from the lowest.
 **/
-intern const int def_interface_colors[6] = {
+const int def_gui_colors[6] = {
 	COLOR_RED,
 	COLOR_YELLOW,
 	COLOR_GREEN,
@@ -52,234 +52,237 @@ intern const int def_interface_colors[6] = {
 /**
 The separator between error message fields.
 **/
-intern const char * const def_log_separator = " - ";
+const char * const def_log_separator = " - ";
 /**
 The error string.
 **/
-intern const char * const def_log_error = "Error";
+const char * const def_log_error = "Error";
 /**
 The warning string.
 **/
-intern const char * const def_log_warning = "Warning";
+const char * const def_log_warning = "Warning";
 /**
 The notice string.
 **/
-intern const char * const def_log_notice = "Note";
+const char * const def_log_notice = "Note";
 /**
 The library call string.
 **/
-intern const char * const def_log_call = "Call";
+const char * const def_log_call = "Call";
 
 /**
 The location of the executable.
 **/
-intern const char * const def_exec_path = "adom/adom";
+const char * const def_exec_path = "adom/adom";
 /**
 The location of this library.
 **/
-intern const char * const def_lib_path = "bin/adom-tas.so";
+const char * const def_lib_path = "bin/adom-tas.so";
 /**
 The location of the C standard library.
 **/
-intern const char * const def_libc_path = "/lib/libc.so.6";
+const char * const def_libc_path = "/lib/libc.so.6";
 /**
 The location of the New Cursor Optimization library.
 **/
-intern const char * const def_libncurses_path = "/usr/lib/libncurses.so.5";
+const char * const def_libncurses_path = "/usr/lib/libncurses.so.5";
 /**
 Whether default configurations are enforced.
 
 Custom configurations may cause desynchronization during played back.
 **/
-intern const int def_enforce = TRUE;
+const int def_force_sync = TRUE;
 /**
 The amount of save states.
 **/
-intern const int def_states = 9;
+const int def_saves = 9;
 /**
 The height of the terminal.
 **/
-intern const int def_rows = 25;
+const int def_rows = 25;
 /**
 The width of the terminal.
 **/
-intern const int def_cols = 77;
+const int def_cols = 77;
 /**
 The location of the shared memory segment.
 
 For System V it's relative to the current working directory and
  for POSIX it's relative to /dev/shm.
 **/
-intern const char * const def_shm_path = "adom-tas.shm";
+const char * const def_shm_path = "adom-tas.shm";
 /**
 The initial system time.
 **/
-intern const int def_timestamp = 0;
+const int def_timestamp = 0;
 /**
 The amount of generated characters.
 **/
-intern const int def_generations = 100;
+const int def_generations = 100;
 /**
 Whether save-quit-load emulation is enabled.
 **/
-intern const int def_sql = TRUE;
+const int def_emulate_sql = TRUE;
 /**
 Whether save states are preserved upon loading them.
 **/
-intern const int def_preserve = TRUE;
+const int def_keep_saves = TRUE;
 /**
 Whether the input file is played back automatically.
 **/
-intern const int def_autoplay = FALSE;
+const int def_play_instantly = FALSE;
 /**
 Whether the graphical user interface is colorful.
 **/
-intern const int def_monochrome = TRUE;
+const int def_monochrome = FALSE;
 /**
 The string to replace with a number.
 **/
-intern const char * const def_iterator = "#";
+const char * const def_iterator = "#";
 /**
 The location of the input file.
 **/
-intern const char * const def_input_path = "input.tas";
+const char * const def_input_path = "input.tas";
 /**
 The location of the output file.
 **/
-intern const char * const def_output_path = "output.tas";
+const char * const def_output_path = "output.tas";
 /**
 The name of the error stream.
 **/
-intern const char * const def_error_stream = "stderr";
+const char * const def_error_stream = "stderr";
 /**
 The name of the warning stream.
 **/
-intern const char * const def_warning_stream = "stderr";
+const char * const def_warning_stream = "stderr";
 /**
 The name of the notice stream.
 **/
-intern const char * const def_notice_stream = "stderr";
+const char * const def_notice_stream = "stderr";
 /**
 The name of the call stream.
 **/
-intern const char * const def_call_stream = "/dev/null";
+const char * const def_call_stream = "/dev/null";
 /**
 The key used to save the active state.
 **/
-intern const int def_save_key = KEY_F(2);
+const int def_save_key = KEY_F(2);
 /**
 The key used to load the active state.
 **/
-intern const int def_load_key = KEY_F(3);
+const int def_load_key = KEY_F(3);
 /**
 The key used to change the active state by incrementing.
 **/
-intern const int def_state_key = KEY_F(8);
+const int def_next_save_key = KEY_F(8);
 /**
 The key used to change the active state by decrementing.
 **/
-intern const int def_unstate_key = MOD_SHIFT + KEY_F(8);
+const int def_prev_save_key = MOD_SHIFT + KEY_F(8);
 /**
 The key used to change the frame duration by incrementing.
 **/
-intern const int def_duration_key = KEY_F(5);
+const int def_longer_duration_key = KEY_F(5);
 /**
 The key used to change the frame duration by decrementing.
 **/
-intern const int def_unduration_key = MOD_SHIFT + KEY_F(5);
+const int def_shorter_duration_key = MOD_SHIFT + KEY_F(5);
 /**
 The key used to change the system time by incrementing.
 **/
-intern const int def_time_key = KEY_F(6);
+const int def_more_time_key = KEY_F(6);
 /**
 The key used to change the system time by decrementing.
 **/
-intern const int def_untime_key = MOD_SHIFT + KEY_F(6);
+const int def_less_time_key = MOD_SHIFT + KEY_F(6);
 /**
 The key used to open or close the save state menu.
 **/
-intern const int def_menu_key = KEY_F(9);
+const int def_menu_key = KEY_F(9);
 /**
 The key used to open or close the information screen.
 **/
-intern const int def_info_key = MOD_SHIFT + KEY_F(9);
+const int def_info_key = MOD_SHIFT + KEY_F(9);
 /**
 The key used to condense or expand the graphical user interface.
 **/
-intern const int def_condense_key = KEY_F(10);
+const int def_condense_key = KEY_F(10);
 /**
 The key used to hide or show the graphical user interface.
 **/
-intern const int def_hide_key = MOD_SHIFT + KEY_F(10);
+const int def_hide_key = MOD_SHIFT + KEY_F(10);
 /**
 The key used to play back a record.
 **/
-intern const int def_play_key = KEY_F(11);
+const int def_play_key = KEY_F(11);
 /**
 The key used to stop a record to create a branch.
 **/
-intern const int def_stop_key = MOD_SHIFT + KEY_F(11);
+const int def_stop_key = MOD_SHIFT + KEY_F(11);
 /**
 The key used to terminate all processes.
 **/
-intern const int def_quit_key = MOD_SHIFT + KEY_F(12);
+const int def_quit_key = MOD_SHIFT + KEY_F(12);
 
 /**
 The location of the configuration file.
 **/
-intern const char * const def_config_path = "adom-tas.cfg";
+const char * const def_config_path = "adom-tas.cfg";
 /**
 The template configuration.
 **/
-intern const char * const def_config = \
+const char * const def_config = \
 		"#required\n"
-		"executable     = \"adom/adom\"\n"
-		"data           = \"~/.adom.data\"\n"
-		"loader         = \"bin/adom-tas.so\"\n"
-		"libc           = \"/lib/libc.so.6\"\n"
-		"libncurses     = \"/usr/lib/libncurses.so.5\"\n"
+		"executable           = \"adom/adom\"\n"
+		"data                 = \"~/.adom.data\"\n"
+		"lib                  = \"bin/adom-tas.so\"\n"
+		"libc                 = \"/lib/libc.so.6\"\n"
+		"libncurses           = \"/usr/lib/libncurses.so.5\"\n"
 		"\n"
 		"#optional\n"
-		"#home           = \"/home/user\"\n"
-		"#enforce        = true\n"
-		"#states         = 4\n"
-		"#rows           = 25\n"
-		"#cols           = 77\n"
-		"#shm            = \"adom-tas.shm\"\n"
-		"#generations    = 100\n"
-		"#timestamp      = 189284349\n"
-		"#sql            = true\n"
-		"#preserve       = true\n"
-		"#autoplay       = false\n"
-		"#monochrome     = false\n"
-		"#iterator       = \"#\"\n"
-		"#input          = \"input.tas\"\n"
-		"#output         = \"output.#.tas\"\n"
-		"#error          = \"adom-tas.log\"\n"
-		"#warning        = \"adom-tas.log\"\n"
-		"#notice           = \"adom-tas.log\"\n"
-		"#call           = \"/dev/null\"\n"
-		"#save_key       = 266#F2\n"
-		"#load_key       = 267#F3\n"
-		"#state_key      = 272#F8\n"
-		"#unstate_key    = 284#Shift F8\n"
-		"#duration_key   = 270#F5\n"
-		"#unduration_key = 282#Shift F5\n"
-		"#time_key       = 269#F6\n"
-		"#untime_key     = 281#Shift F6\n"
-		"#menu_key       = 273#F9\n"
-		"#info_key       = 285#Shift F9\n"
-		"#condense_key   = 274#F10\n"
-		"#hide_key       = 286#Shift F10\n"
-		"#play_key       = 275#F11\n"
-		"#stop_key       = 287#Shift F11\n"
-		"#quit_key       = 288#Shift F12\n"
+		"#home                 = \"/home/user\"\n"
+		"#force_sync           = true\n"
+		"#saves                = 4\n"
+		"#rows                 = 25\n"
+		"#cols                 = 77\n"
+		"#shm                  = \"adom-tas.shm\"\n"
+		"#generations          = 100\n"
+		"#timestamp            = 189284349#BCABDACADBAA\n"
+		"#author               = \"Anonymous\"\n"
+		"#comments             = \"A gnomish wizard was used.\"\n"
+		"#category             = 0\n"
+		"#emulate_sql          = true\n"
+		"#keep_saves           = true\n"
+		"#play_instantly       = false\n"
+		"#monochrome           = false\n"
+		"#iterator             = \"#\"\n"
+		"#input                = \"input.tas\"\n"
+		"#output               = \"output.#.tas\"\n"
+		"#error_log            = \"adom-tas.log\"\n"
+		"#warning_log          = \"adom-tas.log\"\n"
+		"#notice_log           = \"adom-tas.log\"\n"
+		"#call_log             = \"/dev/null\"\n"
+		"#save_key             = 266#F2\n"
+		"#load_key             = 267#F3\n"
+		"#next_save_key        = 272#F8\n"
+		"#prev_save_key        = 284#Shift F8\n"
+		"#longer_duration_key  = 270#F5\n"
+		"#shorter_duration_key = 282#Shift F5\n"
+		"#more_time_key        = 269#F6\n"
+		"#less_time_key        = 281#Shift F6\n"
+		"#menu_key             = 273#F9\n"
+		"#info_key             = 285#Shift F9\n"
+		"#condense_key         = 274#F10\n"
+		"#hide_key             = 286#Shift F10\n"
+		"#play_key             = 275#F11\n"
+		"#stop_key             = 287#Shift F11\n"
+		"#quit_key             = 288#Shift F12\n"
 	;
 
 /**
 The default configuration of the executable.
 **/
-intern const char * const def_exec_config = \
+const char * const def_exec_config = \
 		"Allow_Default_Names    = false\n"
 		"Auto_Lock_Doors        = false\n"
 		"Auto_Lock_Nearest      = true\n"
@@ -313,7 +316,7 @@ intern const char * const def_exec_config = \
 /**
 The default keybindings of the executable.
 **/
-intern const char * const def_exec_keybind = \
+const char * const def_exec_keybind = \
 		"#Activate trap\n"
 		"ACT:\\Ct\n\n"
 		"#Apply skill\n"

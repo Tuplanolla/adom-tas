@@ -10,28 +10,29 @@ TODO refactor
 #include <curses.h>
 
 #include "util.h"
-#include "exec.h"
-#include "shm.h"
 #include "prob.h"//problem_d, *_PROBLEM
-#include "rec.h"
-#include "def.h"
+#include "log.h"//log_*
+#include "def.h"//def_*
+#include "cfg.h"//cfg_*
+#include "exec.h"//exec_*
+#include "shm.h"//shm
+#include "rec.h"//record
+#include "arc4.h"
 #include "lib.h"
-#include "log.h"
-#include "cfg.h"
 
 #include "gui.h"
 
 /**
 The amount of colors.
 **/
-const size_t colors = sizeof def_interface_colors / sizeof *def_interface_colors;
+static const size_t colors = sizeof def_gui_colors / sizeof *def_gui_colors;
 
-chtype attr;
-chtype eattr;
-chtype ch;
-chtype lrs;
-chtype tbs;
-chtype tblr;
+static chtype attr;
+static chtype eattr;
+static chtype ch;
+static chtype lrs;
+static chtype tbs;
+static chtype tblr;
 
 /**
 The status bar window.
@@ -61,7 +62,7 @@ WINDOW * overlay_win = NULL;
 /**
 Uninitializes the interface.
 **/
-problem_d uninit_gui(void) {
+int gui_uninit(void) {
 	if (delwin(status_win)) {
 		log_error(DELWIN_PROBLEM);
 	}
@@ -81,19 +82,19 @@ problem_d uninit_gui(void) {
 		log_error(DELWIN_PROBLEM);
 	}
 
-	return NO_PROBLEM;
+	return 0;
 }
 
 /**
 Initializes the interface.
 **/
-problem_d init_gui(void) {
+int gui_init(void) {
 	/*
 	Initializes the custom color pairs.
 	*/
 	for (size_t color = 0; color < colors; color++) {
 		if (cfg_monochrome) {
-			if (um_init_pair(pairs + color, COLOR_BLACK, def_interface_colors[color]) == ERR) {
+			if (um_init_pair(pairs + color, COLOR_BLACK, def_gui_colors[color]) == ERR) {
 				return log_error(INIT_PAIR_PROBLEM);
 			}
 		}
@@ -152,7 +153,7 @@ problem_d init_gui(void) {
 	tbs = eattr | '-';
 	tblr = eattr | '+';
 
-	return NO_PROBLEM;
+	return 0;
 }
 
 /**
@@ -160,7 +161,7 @@ Draws the status bar in the bottom of a window from right to left.
 
 @return The error code.
 **/
-problem_d draw_status(WINDOW * const win) {
+static int gui_draw_status(WINDOW * const win) {
 	wclear(status_win);
 	const size_t size = cfg_cols + 1;
 	char * const str = malloc(size);
@@ -192,8 +193,8 @@ problem_d draw_status(WINDOW * const win) {
 		}
 	}
 	draw_status_ADDSTR("I: %s", input_string);
-	draw_status_ADDSTR("F: %u/%u", record.frames - previous_frames, record.frames);
-	draw_status_ADDSTR("T: 0/%u", turns);
+	draw_status_ADDSTR("F: %lu/%lu", record.frames - previous_frames, record.frames);
+	draw_status_ADDSTR("T: 0/%ld", turns);
 	if (current_duration < frame_rate) {
 		draw_status_ADDSTR("D: 1/%u", frame_rate / current_duration);
 	}
@@ -207,7 +208,7 @@ problem_d draw_status(WINDOW * const win) {
 
 	wrefresh(status_win);
 
-	return NO_PROBLEM;
+	return 0;
 }
 
 /**
@@ -215,7 +216,7 @@ Draws the save state menu in the middle of a window.
 
 @return The error code.
 **/
-problem_d draw_menu(void) {
+static int gui_draw_menu(void) {
 	/*
 	Draws the menu window.
 	*/
@@ -250,7 +251,7 @@ problem_d draw_menu(void) {
 		const char * interface_left = "";
 		const char * interface_right = "";
 		if (state > 0 && state < cfg_saves) {
-			if (shm.pids[state] == 0) {
+			if (shared.pids[state] == 0) {
 				interface_left = def_gui_left_unused;
 				interface_right = def_gui_right_unused;
 			}
@@ -336,7 +337,7 @@ problem_d draw_menu(void) {
 	getmaxyx(menu_chs_win, y, x);
 	for (int row = 0; row < cfg_rows; row++) {
 		for (int col = 0; col < cfg_cols; col++) {
-			mvwaddch(menu_chs_win, row / 2, col / 2, shm.chs[current_save][row][col]);
+			mvwaddch(menu_chs_win, row / 2, col / 2, shared.chs[current_save][row][col]);
 		}
 	}
 
@@ -347,7 +348,7 @@ problem_d draw_menu(void) {
 	wrefresh(menu_chs_win);
 	wrefresh(menu_states_win);
 
-	return NO_PROBLEM;
+	return 0;
 }
 
 /**
@@ -355,7 +356,7 @@ Draws the save state menu in the middle of a window.
 
 @return The error code.
 **/
-problem_d draw_info(void) {
+static int gui_draw_info(void) {
 	/*
 	Draws the info window.
 	*/
@@ -381,7 +382,7 @@ Draws the overlay.
 @param win The window.
 @return The error code.
 **/
-problem_d draw_overlay(WINDOW * const win) {
+/*static*/ int gui_draw_overlay(WINDOW * const win) {
 	for (int row = 0; row < cfg_rows - 5; row++) {
 		for (int col = 0; col < cfg_cols; col++) {
 			const chtype ch = mvwinch(win, row + 2, col);
@@ -452,24 +453,22 @@ problem_d draw_overlay(WINDOW * const win) {
 	}
 	wrefresh(overlay_win);
 
-	return NO_PROBLEM;
+	return 0;
 }
 
-problem_d draw_gui(WINDOW * const win) {
-	if (!hidden) {
-		if (in_game) {
-			draw_overlay(win);
+int gui_draw(WINDOW * const win) {
+	if (options.gui_active) {
+		if (options.gui_overlay_active) {
+			gui_draw_overlay(win);
 		}
-		PROPAGATE(draw_status(win));
-		if (inactive) {
-			if (menuinfo) {
-				PROPAGATE(draw_menu());
-			}
-			else {
-				PROPAGATE(draw_info());
-			}
+		gui_draw_status(win);
+		if (options.gui_menu_active) {
+			gui_draw_menu();
+		}
+		else if (options.gui_info_active) {
+			gui_draw_info();
 		}
 	}
 
-	return NO_PROBLEM;
+	return 0;
 }
