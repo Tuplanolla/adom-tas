@@ -3,6 +3,7 @@ Draws the graphical user interface.
 
 TODO refactor
 
+@file gui.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include <stdlib.h>
@@ -94,20 +95,20 @@ int gui_init(void) {
 	*/
 	for (size_t color = 0; color < colors; color++) {
 		if (cfg_monochrome) {
-			if (um_init_pair(pairs + color, COLOR_BLACK, def_gui_colors[color]) == ERR) {
+			if (orig_init_pair(pairs + color, COLOR_BLACK, def_gui_colors[color]) == ERR) {
 				return log_error(INIT_PAIR_PROBLEM);
 			}
 		}
 		else {
-			if (um_init_pair(pairs + color, COLOR_WHITE, COLOR_BLACK) == ERR) {
+			if (orig_init_pair(pairs + color, COLOR_WHITE, COLOR_BLACK) == ERR) {
 				return log_error(INIT_PAIR_PROBLEM);
 			}
 		}
 	}
-	if (um_init_pair(pairs + colors, COLOR_BLACK, COLOR_WHITE) == ERR) {
+	if (orig_init_pair(pairs + colors, COLOR_BLACK, COLOR_WHITE) == ERR) {
 		return log_error(INIT_PAIR_PROBLEM);
 	}
-	if (um_init_pair(pairs + colors + 1, COLOR_WHITE, COLOR_WHITE) == ERR) {
+	if (orig_init_pair(pairs + colors + 1, COLOR_WHITE, COLOR_WHITE) == ERR) {
 		return log_error(INIT_PAIR_PROBLEM);
 	}
 
@@ -193,7 +194,7 @@ static int gui_draw_status(WINDOW * const win) {
 		}
 	}
 	draw_status_ADDSTR("I: %s", input_string);
-	draw_status_ADDSTR("F: %lu/%lu", record.frames - previous_frames, record.frames);
+	draw_status_ADDSTR("F: %lu/%lu", record.frames - previous_record_frames, record.frames);
 	draw_status_ADDSTR("T: 0/%ld", turns);
 	if (current_duration < frame_rate) {
 		draw_status_ADDSTR("D: 1/%u", frame_rate / current_duration);

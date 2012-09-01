@@ -1,6 +1,7 @@
 /**
 Provides general-purpose functions.
 
+@file util.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include <stdlib.h>//*alloc, free, size_t, NULL
@@ -28,7 +29,6 @@ size_t intlen(int x) {
 	}
 	return len;
 }
-
 /**
 Returns the string length of an unsigned integer.
 
@@ -168,6 +168,17 @@ int copy(const char * const dest, const char * const src) {
 		result = -1;
 	}
 	return result;
+}
+
+/**
+Copies a file if the destination is older than the source.
+
+@param dest The destination.
+@param src The source.
+@return 0 if successful and -1 otherwise.
+**/
+int smart_copy(const char * const dest, const char * const src) {
+	return copy(dest, src);//TODO implement
 }
 
 /**

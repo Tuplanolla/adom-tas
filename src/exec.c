@@ -7,6 +7,7 @@ Provides information about
 
 TODO sort
 
+@file exec.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include <stddef.h>//size_t
@@ -587,19 +588,3 @@ long int * const exec_turns = (void * )0x082b16e0;
 A pointer to the save count.
 **/
 long int * const exec_saves = (void * )0x082b6140;
-
-/*
-Returns the key code of a key number.
-
-The code is generated automatically:
-<pre>
-gcc src/meta.c -O3 -o obj/meta
-mkdir -p src/meta
-obj/meta key_code > src/meta/key_code.c
-rm -f obj/meta
-</pre>
-
-@param code The key number.
-@return The key code.
-*/
-#include "meta/key_code.c"

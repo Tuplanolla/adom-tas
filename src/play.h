@@ -1,5 +1,5 @@
 /**
-@see play.c
+@file play.h
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef PLAY_H

@@ -7,6 +7,7 @@ Some redundant conditions are used to
 
 TODO check output_paths management
 
+@file cfg.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include <stdlib.h>//*alloc, free, *env, size_t, NULL
@@ -1372,5 +1373,5 @@ int cfg_init_lib(void) {
 		return -1;
 	}
 
-	return NO_PROBLEM;
+	return 0;
 }

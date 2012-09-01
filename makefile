@@ -25,6 +25,7 @@ MAIN_DEP = $(OBJ)/main.o $(OBJ)/cfg.o $(OBJ)/def.o $(OBJ)/exec.o $(OBJ)/log.o $(
 LIB_DEP = $(OBJ)/asm.o $(OBJ)/exec.o $(OBJ)/gui.o $(OBJ)/put.o $(OBJ)/shm.o $(OBJ)/cfg.o $(OBJ)/lib.o $(OBJ)/meta.o $(OBJ)/rec.o $(OBJ)/def.o $(OBJ)/log.o $(OBJ)/prob.o $(OBJ)/util.o $(OBJ)/proj.o $(OBJ)/arc4.o# $(OBJ)/play.o# $(OBJ)/roll.o
 
 all: $(LIB) $(MAIN) sh
+	echo -e "\n\n--- The project is still unfinished; running the executable is discouraged. ---\n\n"
 
 run: $(LIB) $(MAIN)
 	$(MAIN)

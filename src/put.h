@@ -1,5 +1,5 @@
 /**
-@see put.c
+@file put.h
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef PUT_H

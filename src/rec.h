@@ -1,5 +1,5 @@
 /**
-@see rec.c
+@file rec.h
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef REC_H

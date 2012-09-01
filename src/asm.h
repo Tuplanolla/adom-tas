@@ -1,5 +1,5 @@
 /**
-@see asm.c
+@file asm.h
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef ASM_H

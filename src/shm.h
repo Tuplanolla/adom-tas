@@ -1,5 +1,5 @@
 /**
-@see shm.c
+@file shm.h
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef SHM_H
@@ -16,7 +16,8 @@ enum state_e {
 	GETTING_STARTED,
 	ALMOST_READY,
 	RUNNING,
-	HAD_ENOUGH
+	HAD_ENOUGH,
+	LAST_ONE_STANDING
 };
 typedef enum state_e state_d;
 
@@ -75,13 +76,13 @@ Pointers are not shared:
 @var pids A pointer to the process identifiers of the child processes.
 @var chs A pointer to the screens of the child processes.
 **/
-struct shm_s {
+struct shared_s {
 	state_d * state;
 	pid_t * ppid;
 	pid_t * pids;
 	chtype *** chs;
 };
-typedef struct shm_s shared_d;
+typedef struct shared_s shared_d;
 
 extern shared_d shared;
 

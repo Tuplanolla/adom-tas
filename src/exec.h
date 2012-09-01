@@ -1,5 +1,5 @@
 /**
-@see exec.c
+@file exec.h
 @author Sampsa "Tuplanolla" Kiiskinen
 
 TODO sort
@@ -105,7 +105,5 @@ extern long int turns;
 
 extern long int * const exec_turns;
 extern long int * const exec_saves;
-
-const char * key_code(int key);
 
 #endif

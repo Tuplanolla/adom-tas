@@ -1,7 +1,5 @@
 /**
-Provides general-purpose macros.
-
-@see util.c
+@file util.h
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef UTIL_H
@@ -269,6 +267,7 @@ size_t uintlen(unsigned int x);
 int hash(const unsigned char * array, size_t size);
 char * astrrep(const char * haystack, const char * needle, const char * replacement) __attribute__ ((malloc));
 int copy(const char * dest, const char * src);
+int smart_copy(const char * dest, const char * src);
 FILE * stdstr(const char * str);
 
 #endif

@@ -1,5 +1,5 @@
 /**
-@see def.c
+@file def.h
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef DEF_H

@@ -1,5 +1,5 @@
 /**
-@see lib.c
+@file lib.h
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef LIB_H
@@ -12,10 +12,9 @@
 
 #include "gnu.h"//__*__
 #include "util.h"//bool
-#include "prob.h"//problem_d
 
 /**
-Uh.
+Lists the progress stages.
 **/
 enum progress_e {
 	MAIN,
@@ -26,7 +25,7 @@ enum progress_e {
 typedef enum progress_e progress_d;
 
 /**
-Uhh.
+Contains various options.
 **/
 struct options_s {
 	bool key_active;
@@ -57,43 +56,43 @@ typedef int (* waddnstr_f)(WINDOW * win, const char * str, int n);
 typedef int (* wgetch_f)(WINDOW * win);
 typedef int (* endwin_f)(void);
 
-extern printf_f um_printf;
-extern unlink_f um_unlink;
-extern ioctl_f um_ioctl;
-extern time_f um_time;
-extern localtime_f um_localtime;
-extern srandom_f um_srandom;
-extern random_f um_random;
-extern wrefresh_f um_wrefresh;
-extern init_pair_f um_init_pair;
-extern waddnstr_f um_waddnstr;
-extern wgetch_f um_wgetch;
-extern endwin_f um_endwin;
+extern printf_f orig_printf;
+extern unlink_f orig_unlink;
+extern ioctl_f orig_ioctl;
+extern time_f orig_time;
+extern localtime_f orig_localtime;
+extern srandom_f orig_srandom;
+extern random_f orig_random;
+extern wrefresh_f orig_wrefresh;
+extern init_pair_f orig_init_pair;
+extern waddnstr_f orig_waddnstr;
+extern wgetch_f orig_wgetch;
+extern endwin_f orig_endwin;
 
 extern options_d options;
 
-extern unsigned int previous_frames;
+extern unsigned int previous_record_frames;
 extern int current_save;
 extern unsigned short int current_duration;
 extern int previous_inputs[4];
 
 /**
-Ensures overloaded functions aren't used outside this module.
+Ensures overloaded functions aren't used outside this compilation unit.
 **/
 #ifndef UM_ALIAS
 
-//#define printf um_printf//TODO fix conflict with GNU stuff
-#define unlink um_unlink
-#define ioctl um_ioctl
-#define time um_time
-#define localtime um_localtime
-#define srandom um_srandom
-#define random um_random
-#define wrefresh um_wrefresh
-#define init_pair um_init_pair
-#define waddnstr um_waddnstr
-#define wgetch um_wgetch
-#define endwin um_endwin
+//#define printf orig_printf//TODO fix conflict with GNU stuff
+#define unlink orig_unlink
+#define ioctl orig_ioctl
+#define time orig_time
+#define localtime orig_localtime
+#define srandom orig_srandom
+#define random orig_random
+#define wrefresh orig_wrefresh
+#define init_pair orig_init_pair
+#define waddnstr orig_waddnstr
+#define wgetch orig_wgetch
+#define endwin orig_endwin
 
 #endif
 

@@ -3,6 +3,7 @@ Emulates
  the random number generator
   of the executable.
 
+@file arc4.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include <stdlib.h>//*random, size_t

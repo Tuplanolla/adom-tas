@@ -1,6 +1,7 @@
 /**
 Contains project information.
 
+@file proj.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include "proj.h"

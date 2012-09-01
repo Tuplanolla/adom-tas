@@ -1,6 +1,7 @@
 /**
 Launches the executable.
 
+@file main.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include <stdlib.h>//*env, NULL

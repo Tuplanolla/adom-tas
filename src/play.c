@@ -3,6 +3,7 @@ Plays records.
 
 TODO rewrite
 
+@file play.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include <stddef.h>//NULL
@@ -29,12 +30,12 @@ int next_key(WINDOW * const win) {
 	else {//key frame
 		const int delay = record.current->duration * TIMER_RATE / frame_rate;
 		wtimeout(win, delay);
-		const int some_key = um_wgetch(win);
+		const int some_key = orig_wgetch(win);
 		if (some_key == cfg_play_key) {
 			wtimeout(win, 0);
 			int some_other_key;
 			do {
-				some_other_key = um_wgetch(win);
+				some_other_key = orig_wgetch(win);
 			} while (some_other_key != cfg_play_key);
 		}
 		else if (some_key == cfg_stop_key) {

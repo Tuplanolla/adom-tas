@@ -1,6 +1,7 @@
 /**
 Generates code automatically.
 
+@file meta.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include <stdlib.h>//EXIT_*

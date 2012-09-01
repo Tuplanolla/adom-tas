@@ -3,6 +3,7 @@ Rolls characters.
 
 TODO turn into a state machine
 
+@file roll.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include <stddef.h>//NULL
@@ -12,7 +13,7 @@ TODO turn into a state machine
 /**
 The type identifier used in catalog file headers.
 **/
-intern const char catalog_type[4] = "TAC";
+const char catalog_type[4] = "TAC";
 
 int rollstage = 0;
 bool rollasked[51];

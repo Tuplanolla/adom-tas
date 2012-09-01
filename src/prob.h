@@ -1,5 +1,5 @@
 /**
-@see prob.c
+@file prob.h
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef PROB_H
@@ -129,6 +129,7 @@ enum problem_e {
 	LD_PRELOAD_UNSETENV_PROBLEM,
 	LIBC_DLCLOSE_PROBLEM,
 	LIBNCURSES_DLCLOSE_PROBLEM,
+	UNINIT_PROBLEM,
 
 	/*
 	shm.c

@@ -3,6 +3,7 @@ Manages records.
 
 Records are built around linked lists.
 
+@file rec.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include <stdlib.h>//*alloc, free, NULL

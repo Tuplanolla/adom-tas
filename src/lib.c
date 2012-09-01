@@ -1,6 +1,7 @@
 /**
 Does something unnecessary.
 
+@file lib.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include <stdarg.h>//va_*, exit
@@ -58,7 +59,7 @@ long int previous_turns = 0;
 /**
 The amount of frames at the previous input.
 **/
-unsigned int previous_frames = 0;
+unsigned int previous_record_frames = 0;
 
 /**
 The active save state.
@@ -87,21 +88,23 @@ Throws an assertion error if a function is called before it's loaded.
 May be unreliable.
 **/
 void dlnull(void) {
-	exit(log_error(ASSERT_PROBLEM));
+	probno = log_error(ASSERT_PROBLEM);
+	//uninit(TRUE);
+	exit(probno);
 }
 
-printf_f um_printf = (printf_f )dlnull;
-unlink_f um_unlink = (unlink_f )dlnull;
-ioctl_f um_ioctl = (ioctl_f )dlnull;
-time_f um_time = (time_f )dlnull;
-localtime_f um_localtime = (localtime_f )dlnull;
-srandom_f um_srandom = (srandom_f )dlnull;
-random_f um_random = (random_f )dlnull;
-wrefresh_f um_wrefresh = (wrefresh_f )dlnull;
-init_pair_f um_init_pair = (init_pair_f )dlnull;
-waddnstr_f um_waddnstr = (waddnstr_f )dlnull;
-wgetch_f um_wgetch = (wgetch_f )dlnull;
-endwin_f um_endwin = (endwin_f )dlnull;
+printf_f orig_printf = (printf_f )dlnull;
+unlink_f orig_unlink = (unlink_f )dlnull;
+ioctl_f orig_ioctl = (ioctl_f )dlnull;
+time_f orig_time = (time_f )dlnull;
+localtime_f orig_localtime = (localtime_f )dlnull;
+srandom_f orig_srandom = (srandom_f )dlnull;
+random_f orig_random = (random_f )dlnull;
+wrefresh_f orig_wrefresh = (wrefresh_f )dlnull;
+init_pair_f orig_init_pair = (init_pair_f )dlnull;
+waddnstr_f orig_waddnstr = (waddnstr_f )dlnull;
+wgetch_f orig_wgetch = (wgetch_f )dlnull;
+endwin_f orig_endwin = (endwin_f )dlnull;
 
 /**
 Emulates the process of saving, quitting and loading.
@@ -121,51 +124,62 @@ void save_quit_load(void) {
 }
 
 /**
-Closes the dynamically linked libraries.
+Uninitializes the original functions.
 
 @return 0 if successful and -1 otherwise.
 **/
-int uninit_lib(void) {
+int lib_uninit(void) {
+	int result = 0;
+
+	/*
+	Closes the dynamically linked libraries.
+	*/
 	if (dlclose(libc_handle) != 0) {
 		probno = log_error(LIBC_DLCLOSE_PROBLEM);
-	}
-	if (dlclose(libncurses_handle) != 0) {
-		probno = log_error(LIBNCURSES_DLCLOSE_PROBLEM);
+		result = -1;
 	}
 
-	return 0;
+	if (dlclose(libncurses_handle) != 0) {
+		probno = log_error(LIBNCURSES_DLCLOSE_PROBLEM);
+		result = -1;
+	}
+
+	return result;
 }
 
 /**
-Opens the dynamically linked libraries.
+Initializes the original functions.
 
 @return 0 if successful and -1 otherwise.
 **/
-int init_lib(void) {
+int lib_init(void) {
 	/*
 	<code>RTLD_LAZY</code> is faster than <code>RTLD_NOW</code>.
 	*/
 	const int mode = RTLD_LAZY;
 
+	/*
+	Opens the dynamically linked libraries.
+	*/
 	libc_handle = dlopen(cfg_libc_path, mode);
 	if (libc_handle == NULL) {
 		probno = log_error(LIBC_DLOPEN_PROBLEM);
 		return -1;
 	}
-	um_printf = (printf_f )dlsym(libc_handle, "printf");
-	um_unlink = (unlink_f )dlsym(libc_handle, "unlink");
-	um_ioctl = (ioctl_f )dlsym(libc_handle, "ioctl");
-	um_time = (time_f )dlsym(libc_handle, "time");
-	um_localtime = (localtime_f )dlsym(libc_handle, "localtime");
-	um_srandom = (srandom_f )dlsym(libc_handle, "srandom");
-	um_random = (random_f )dlsym(libc_handle, "random");
-	if (um_printf == NULL
-			|| um_unlink == NULL
-			|| um_time == NULL
-			|| um_localtime == NULL
-			|| um_srandom == NULL
-			|| um_random == NULL
-			|| um_ioctl == NULL) {
+	orig_printf = (printf_f )dlsym(libc_handle, "printf");
+	orig_unlink = (unlink_f )dlsym(libc_handle, "unlink");
+	orig_ioctl = (ioctl_f )dlsym(libc_handle, "ioctl");
+	orig_time = (time_f )dlsym(libc_handle, "time");
+	orig_localtime = (localtime_f )dlsym(libc_handle, "localtime");
+	orig_srandom = (srandom_f )dlsym(libc_handle, "srandom");
+	orig_random = (random_f )dlsym(libc_handle, "random");
+	if (orig_printf == NULL
+			|| orig_unlink == NULL
+			|| orig_time == NULL
+			|| orig_localtime == NULL
+			|| orig_srandom == NULL
+			|| orig_random == NULL
+			|| orig_ioctl == NULL) {
 		probno = log_error(LIBC_DLSYM_PROBLEM);
 		return -1;
 	}
@@ -175,21 +189,21 @@ int init_lib(void) {
 		probno = log_error(LIBNCURSES_DLOPEN_PROBLEM);
 		return -1;
 	}
-	um_wrefresh = (wrefresh_f )dlsym(libncurses_handle, "wrefresh");
-	um_init_pair = (init_pair_f )dlsym(libncurses_handle, "init_pair");
-	um_waddnstr = (waddnstr_f )dlsym(libncurses_handle, "waddnstr");
-	um_wgetch = (wgetch_f )dlsym(libncurses_handle, "wgetch");
-	um_endwin = (endwin_f )dlsym(libncurses_handle, "endwin");
-	if (um_init_pair == NULL
-			|| um_wrefresh == NULL
-			|| um_wgetch == NULL
-			|| um_endwin == NULL) {
+	orig_wrefresh = (wrefresh_f )dlsym(libncurses_handle, "wrefresh");
+	orig_init_pair = (init_pair_f )dlsym(libncurses_handle, "init_pair");
+	orig_waddnstr = (waddnstr_f )dlsym(libncurses_handle, "waddnstr");
+	orig_wgetch = (wgetch_f )dlsym(libncurses_handle, "wgetch");
+	orig_endwin = (endwin_f )dlsym(libncurses_handle, "endwin");
+	if (orig_init_pair == NULL
+			|| orig_wrefresh == NULL
+			|| orig_wgetch == NULL
+			|| orig_endwin == NULL) {
 		probno = log_error(LIBNCURSES_DLSYM_PROBLEM);
 		return -1;
 	}
 
 	/*
-	Prevents reloading libraries for child processes.
+	Prevents reloading the libraries for child processes.
 	*/
 	if (unsetenv("LD_PRELOAD") == -1) {
 		probno = log_warning(LD_PRELOAD_UNSETENV_PROBLEM);
@@ -198,67 +212,48 @@ int init_lib(void) {
 	return 0;
 }
 
-void uninit_curses(void) {
-	const int x = curs_set(1);
-	const int y = nocbreak();
-	const int z = echo();
-	const int c = um_endwin();
-	probno = log_fprintf(cfg_error_stream, "Exiting %d, %d, %d and %d.", x, y, z, c);
-}
+/**
+Uninitializes this library.
 
-int partial_uninit(const problem_d problem __attribute__ ((unused))) {
-	shm_detach();
-
-	//uninit_config();
-
-	return 0;
-}
-
-int uninit(const problem_d problem __attribute__ ((unused))) {
-	shm_detach();
-	shm_uninit();
-
-	//uninit_config();
-
-	uninit_curses();
-
-	return 0;
-}
-
-int copy_temporary(const int save, const bool direction) {
-	for (unsigned int level = 0; level < exec_temporary_levels; level++) {
-		const unsigned int offset = level * exec_temporary_parts;
-		for (unsigned int part = 0; part < exec_temporary_parts; part++) {
-			const unsigned int path = offset + part;
-			const size_t size = strlen(cfg_exec_temporary_paths[path]) + 1
-					+ uintlen(save) + 1;
-			char * const save_path = malloc(size);
-			if (save_path == NULL) {
-				probno = log_error(MALLOC_PROBLEM);
-				return -1;
-			}
-			else {
-				snprintf(save_path, size, "%s_%u",
-						cfg_exec_temporary_paths[path],
-						save);
-				if (direction) {
-					copy(save_path, cfg_exec_temporary_paths[path]);
-				}
-				else {
-					copy(cfg_exec_temporary_paths[path], save_path);
-				}
-				free(save_path);
-			}
+@return 0 if successful and -1 otherwise.
+**/
+int uninit(const bool clean) {
+	int result = 0;
+	if (curs_set(1) == ERR
+			|| orig_wrefresh(stdscr) == ERR//TODO remove
+			|| nocbreak() == ERR
+			|| echo() == ERR
+			|| orig_endwin() == ERR)
+	{
+		probno = log_error(UNINIT_PROBLEM);
+		result = -1;
+	}
+	if (shm_detach() == -1) {
+		result = -1;
+	}
+	if (clean) {
+		if (shm_uninit() == -1) {
+			result = -1;
 		}
 	}
+	if (lib_uninit() == -1) {
+		result = -1;
+	}
+	if (cfg_uninit() == -1) {
+		result = -1;
+	}
 
-	return 0;
+	return result;
 }
 
 /**
-Initializes this module.
+Initializes this library.
+
+@return 0 if successful and -1 otherwise.
 **/
 int init(void) {
+	int result = 0;
+
 	/*
 	Initializes the configuration.
 	*/
@@ -268,7 +263,7 @@ int init(void) {
 	/*
 	Initializes the functions.
 	*/
-	init_lib();
+	lib_init();
 
 	/*
 	Enables or disables the save-quit-load emulation.
@@ -286,7 +281,7 @@ int init(void) {
 	shm_init();
 	shm_attach();
 
-	return 0;
+	return result;
 }
 
 /**
@@ -344,6 +339,39 @@ int init_fork(void) {
 	return 0;
 }
 
+/*
+Undocumented.
+*/
+int copy_temporary(const int save, const bool direction) {
+	for (unsigned int level = 0; level < exec_temporary_levels; level++) {
+		const unsigned int offset = level * exec_temporary_parts;
+		for (unsigned int part = 0; part < exec_temporary_parts; part++) {
+			const unsigned int path = offset + part;
+			const size_t size = strlen(cfg_exec_temporary_paths[path]) + 1
+					+ uintlen(save) + 1;
+			char * const save_path = malloc(size);
+			if (save_path == NULL) {
+				probno = log_error(MALLOC_PROBLEM);
+				return -1;
+			}
+			else {
+				snprintf(save_path, size, "%s_%u",
+						cfg_exec_temporary_paths[path],
+						save);
+				if (direction) {
+					copy(save_path, cfg_exec_temporary_paths[path]);
+				}
+				else {
+					copy(cfg_exec_temporary_paths[path], save_path);
+				}
+				free(save_path);
+			}
+		}
+	}
+
+	return 0;
+}
+
 /**
 Saves the game to memory.
 
@@ -379,8 +407,8 @@ int save_state(const int save) {
 
 				while (TRUE) {
 					if (shared.pids[0] == pid) break;//someone activated this slot
-					if (shared.pids[save] != pid) partial_uninit(NO_PROBLEM);//someone took this slot
-					if (*shared.state == HAD_ENOUGH) partial_uninit(NO_PROBLEM);//everyone is shutting down
+					if (shared.pids[save] != pid) uninit(FALSE);//someone took this slot
+					if (*shared.state == HAD_ENOUGH) uninit(FALSE);//everyone is shutting down
 					napms(NAP_RESOLUTION / frame_rate);
 				}
 
@@ -435,7 +463,7 @@ int load_state(const int save) {
 
 		//TODO empty screen
 
-		partial_uninit(NO_PROBLEM);
+		uninit(FALSE);
 	}
 
 	return 0;
@@ -461,7 +489,7 @@ int OVERLOAD(printf)(const char * const format, ...) {
 	va_list	ap;
 	va_start(ap, format);
 
-	log_call("printf(...).");
+	log_call("printf(%s).", format);//TODO parse
 
 	const int result = vsnprintf(NULL, 0, format, ap);
 	va_end(ap);
@@ -486,7 +514,7 @@ int OVERLOAD(unlink)(const char * const path) {
 			return 0;
 		}
 	}
-	return um_unlink(path);
+	return orig_unlink(path);
 }
 
 /**
@@ -508,7 +536,7 @@ int OVERLOAD(ioctl)(const int fildes, const unsigned long request, ...) {
 	log_call("ioctl(" PTRF ", " PTRF ", " PTRF ").",
 			PTRS(fildes), PTRS(request), PTRS(arg));
 
-	const int result = um_ioctl(fildes, request, arg);
+	const int result = orig_ioctl(fildes, request, arg);
 	if (request == TIOCGWINSZ) {
 		struct winsize * size = (struct winsize * )arg;
 		size->ws_row = (unsigned short int )cfg_rows;
@@ -557,7 +585,7 @@ Seeds the pseudorandom number generator.
 void OVERLOAD(srandom)(const unsigned int seed) {
 	log_call("srandom(%u).", seed);
 
-	um_srandom(seed);
+	orig_srandom(seed);
 }
 
 /**
@@ -568,10 +596,8 @@ Generates the next pseudorandom number.
 long int OVERLOAD(random)(void) {
 	log_call("random().");
 
-	return um_random();
+	return orig_random();
 }
-
-bool skipwr = FALSE;
 
 /**
 Redraws the window.
@@ -579,10 +605,13 @@ Redraws the window.
 Draws the custom interface.
 
 @param win The window to redraw.
-@return 0 if successful and -1 otherwise.
+@return OK if successful and ERR otherwise.
 **/
 int OVERLOAD(wrefresh)(WINDOW * const win) {
-	if (skipwr) return 0;
+	if (options.roll_active) {
+		return OK;
+	}
+
 	log_call("wrefresh(" PTRF ").", PTRS(win));
 
 	/*
@@ -601,7 +630,7 @@ int OVERLOAD(wrefresh)(WINDOW * const win) {
 	wattr_get(win, attrs_ptr, pair_ptr, NULL);
 	getyx(win, y, x);
 	wattrset(win, A_NORMAL);
-	const int result = um_wrefresh(win);
+	const int result = orig_wrefresh(win);
 	gui_draw(win);
 	wmove(win, y, x);
 	wattr_set(win, attrs, pair, NULL);
@@ -615,13 +644,13 @@ Initializes a new color pair.
 @param pair The index of the pair.
 @param f The foreground color.
 @param b The background color.
-@return 0 if successful and -1 otherwise.
+@return OK if successful and ERR otherwise.
 **/
 int OVERLOAD(init_pair)(const short int pair, const short int f, const short int b) {
 	log_call("init_pair(%d, %d, %d).", pair, f, b);
 
 	pairs++;
-	return um_init_pair(pair, f, b);
+	return orig_init_pair(pair, f, b);
 }
 
 /**
@@ -632,7 +661,7 @@ Draws the custom interface.
 @param win The window to print to.
 @param str The string to print.
 @param n The length of the string.
-@return 0 if successful and -1 otherwise.
+@return OK if successful and ERR otherwise.
 **/
 int OVERLOAD(waddnstr)(WINDOW * const win, const char * const str, const int n) {
 	log_call("waddnstr(" PTRF ", %s, %d).", PTRS(win), str, n);
@@ -640,14 +669,14 @@ int OVERLOAD(waddnstr)(WINDOW * const win, const char * const str, const int n) 
 	if (options.progress == PRINTF) {
 		options.progress = WADDNSTR;
 		if (init_fork() == -1) {
-			return -1;
+			return ERR;
 		}
 		if (gui_init() == -1) {
-			return -1;
+			return ERR;
 		}
 	}
 
-	return um_waddnstr(win, str, n);
+	return orig_waddnstr(win, str, n);
 }
 
 /**
@@ -681,7 +710,7 @@ int OVERLOAD(wgetch)(WINDOW * const win) {
 	previous_turns = *exec_turns;
 	turns = *exec_turns + negative_turns;
 
-	const int key = um_wgetch(win);
+	const int key = orig_wgetch(win);
 	if (key == cfg_play_key) {
 		if (record.frames == 0) {
 			options.record_active = TRUE;
@@ -744,7 +773,7 @@ int OVERLOAD(wgetch)(WINDOW * const win) {
 		options.progress = EXIT;
 		*shared.state = HAD_ENOUGH;
 		shared.pids[current_save] = 0;
-		partial_uninit(NO_PROBLEM);
+		uninit(FALSE);
 	}
 	else if (!options.gui_active) {
 		if (record.frames > 0 || key == ' ') {
@@ -768,7 +797,7 @@ Ends drawing to the screen.
 
 Intercepts exiting prematurely.
 
-@return <code>OK</code> if successful and <code>ERR</code> otherwise.
+@return OK if successful and ERR otherwise.
 **/
 int OVERLOAD(endwin)(void) {
 	log_call("endwin().");
@@ -778,6 +807,6 @@ int OVERLOAD(endwin)(void) {
 	while (!options.progress == EXIT) {
 		wgetch(stdscr);
 	}
-	partial_uninit(NO_PROBLEM);
+	uninit(FALSE);
 	return OK;
 }

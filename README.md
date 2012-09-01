@@ -7,16 +7,12 @@ It makes recording deterministic runs as input sequences possible and thus
 Its possibilities are not restricted to speedruns although it's the main focus.
 The name is not very descriptive since it's built around an acronym.
 
-## Meta
-
-This readme is incomplete.
-
 ## Schedule
 
 This project is in active development and
  the first version was finished by 2012-07-01,
  the first working binaries were built 2012-07-02 and
- the rest should be done by 2012-09-01.
+ the rest should be done by 2012-09-01 (or 2012-09-02 to be consistent).
 
 ## Motivation
 
@@ -255,8 +251,9 @@ By default
 * `F6` shifts the system time forwards (by one second),
 * `Shift F6` shifts it backwards (but not to a negative value),
 * `F9` opens or closes the save state menu,
+* `Shift F9` opens or closes the information screen,
 * `F10` condenses or expands the user interface,
-* `Shift F10` hides and shows it,
+* `Shift F10` hides or shows it,
 * `F11` plays or pauses a record (but only starting on the first frame),
 * `Shift F11` stops a record (and enables appending to it),
 * `Shift F12` quits and

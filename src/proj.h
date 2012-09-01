@@ -1,5 +1,5 @@
 /**
-@see proj.c
+@file proj.h
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef PROJ_H

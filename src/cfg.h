@@ -1,5 +1,5 @@
 /**
-@see cfg.c
+@file cfg.h
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef CFG_H

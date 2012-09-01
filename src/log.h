@@ -1,5 +1,5 @@
 /**
-@see log.c
+@file log.h
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef LOG_H

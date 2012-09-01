@@ -1,5 +1,5 @@
 /**
-@see gui.c
+@file gui.h
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef GUI_H

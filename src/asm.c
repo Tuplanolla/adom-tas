@@ -1,6 +1,7 @@
 /**
 Injects assembly instructions.
 
+@file asm.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include <stddef.h>//size_t, ptrdiff_t
@@ -20,7 +21,7 @@ The call is left out if the function is <code>NULL</code>.
 The original instructions:
 <pre>
 0x08090727:  00 00 00
-0x0809072a:  83 c4 f8        add   $0xfffffff8, %esp <sub $0x7>
+0x0809072a:  83 c4 f8        add   $0xfffffff8, %esp &lt;sub $0x7&gt;
 0x0809072d:  6a 00           push  $0x0
 0x0809072f:  68 c4 e4 15 08  push  $0x0815e4c4
 0x08090734:  e8 c7 b0 fb ff  call  0x0804b800
@@ -29,13 +30,13 @@ The original instructions:
 The injected instructions:
 <pre>
 0x08090727:  00 00 00
-0x0809072a:  e8 ?? ?? ?? ??  call  0x???????? <function>
+0x0809072a:  e8 ?? ?? ?? ??  call  0x???????? &lt;function&gt;
 0x0809072f:  e9 f3 00 00 00  jmp   0x08090827
 0x08090734:  e8 c7 b0 fb ff  call  0x0804b800
 </pre>
 
 @param function The custom function.
-@return The error code.
+@return 0 if successful and -1 otherwise.
 **/
 int asm_inject(void (* const function)(void)) {
 	const unsigned char original[10] = {

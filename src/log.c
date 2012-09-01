@@ -1,6 +1,7 @@
 /**
 Logs messages.
 
+@file log.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include <stdarg.h>//va_*

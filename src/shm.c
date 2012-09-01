@@ -6,6 +6,7 @@ Creates,
  removes
   the shared memory segment.
 
+@file shm.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include <stdlib.h>//*alloc, free, ptrdiff_t, NULL

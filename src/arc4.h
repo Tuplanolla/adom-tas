@@ -1,5 +1,5 @@
 /**
-@see arc4.c
+@file arc4.h
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef ARC4_H

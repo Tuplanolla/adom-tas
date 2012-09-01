@@ -1,5 +1,5 @@
 /**
-@see roll.c
+@file roll.h
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #ifndef ROLL_H

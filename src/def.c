@@ -1,6 +1,7 @@
 /**
 Sets the default values of various variables.
 
+@file def.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include <stddef.h>//size_t

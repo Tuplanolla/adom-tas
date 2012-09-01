@@ -6,6 +6,7 @@ Errors are major problems,
  notices are not problems.
 The categories are loosely based on RFC 5424.
 
+@file prob.c
 @author Sampsa "Tuplanolla" Kiiskinen
 **/
 #include "prob.h"//problem_d, *_PROBLEM
