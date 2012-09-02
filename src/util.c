@@ -61,6 +61,91 @@ int hash(const unsigned char * const array, const size_t size) {
 }
 
 /**
+Replaces special characters in a string with escape codes.
+
+Allocates enough memory for the return value.
+
+@param str The string to escape.
+@return The resulting string if successful and <code>NULL</code> otherwise.
+**/
+char * astresc(const char * const str) {
+	if (str == NULL) {
+		return NULL;
+	}
+	const size_t size = 4 * strlen(str) + 1;
+	char * const result = malloc(size);
+	if (result == NULL) {
+		return NULL;
+	}
+	const char * str_position = str;
+	char * result_position = result;
+	while (*str_position != '\0') {
+		const unsigned char byte = (unsigned char )*str_position;
+		switch (*str_position) {
+			case '\a':
+				*result_position++ = '\\';
+				*result_position++ = 'a';
+				break;
+			case '\b':
+				*result_position++ = '\\';
+				*result_position++ = 'b';
+				break;
+			case '\t':
+				*result_position++ = '\\';
+				*result_position++ = 't';
+				break;
+			case '\n':
+				*result_position++ = '\\';
+				*result_position++ = 'n';
+				break;
+			case '\v':
+				*result_position++ = '\\';
+				*result_position++ = 'v';
+				break;
+			case '\f':
+				*result_position++ = '\\';
+				*result_position++ = 'f';
+				break;
+			case '\r':
+				*result_position++ = '\\';
+				*result_position++ = 'r';
+				break;
+			case '"':
+				*result_position++ = '\\';
+				*result_position++ = '"';
+				break;
+			/*case '\'':
+				*result_position++ = '\\';
+				*result_position++ = '\'';
+				break;
+			case '?':
+				*result_position++ = '\\';
+				*result_position++ = '?';
+				break;*/
+			case '\\':
+				*result_position++ = '\\';
+				*result_position++ = '\\';
+				break;
+			default:
+				if (isprint(byte)) {
+					*result_position++ = *str_position;
+				}
+				else {
+					const char hex[16] = "0123456789abcdef";
+					*result_position++ = '\\';
+					*result_position++ = 'x';
+					*result_position++ = hex[byte >> 0 & 0xf];
+					*result_position++ = hex[byte >> 4 & 0xf];
+				}
+				break;
+		}
+		str_position++;
+	}
+	*result_position = '\0';
+	return result;
+}
+
+/**
 Replaces the first occurrence of a string in a string with another string.
 
 Allocates enough memory for the return value.
@@ -93,7 +178,7 @@ char * astrrep(const char * const haystack, const char * const needle, const cha
 		needle_position = strstr(haystack, needle);
 	}
 	if (needle_position == NULL) {
-		char * result = malloc(haystack_size);
+		char * const result = malloc(haystack_size);
 		if (result == NULL) {
 			return NULL;
 		}
@@ -103,7 +188,7 @@ char * astrrep(const char * const haystack, const char * const needle, const cha
 	const size_t needle_length = strlen(needle);
 	const size_t replacement_length = strlen(replacement);
 	const size_t result_size = haystack_size - needle_length + replacement_length;
-	char * result = malloc(result_size);
+	char * const result = malloc(result_size);
 	if (result == NULL) {
 		return NULL;
 	}

@@ -130,6 +130,9 @@ const char * problem_message(const problem_d code) {
 		case CALL_OPEN_PROBLEM: return "Opening the call log for writing failed.";
 		case CALL_CLOSE_PROBLEM: return "Closing the call log file failed.";
 		case LOG_CHANGE_PROBLEM: return "The log streams changed. Further messages will be redirected.";
+		case AUTHOR_CONFIG_PROBLEM: return "Finding the author's name in the configuration file failed.";
+		case COMMENTS_CONFIG_PROBLEM: return "Finding the author's comments in the configuration file failed.";
+		case CATEGORY_CONFIG_PROBLEM: return "Finding the target category in the configuration file failed.";
 
 		/*
 		shm.c
@@ -164,6 +167,7 @@ const char * problem_message(const problem_d code) {
 		case LD_PRELOAD_UNSETENV_PROBLEM: return "Unsetting the library to preload in the environment variable failed.";
 		case LIBC_DLCLOSE_PROBLEM: return "Closing the C standard library failed.";
 		case LIBNCURSES_DLCLOSE_PROBLEM: return "Closing the New Cursor Optimization library failed.";
+		case UNINIT_PROBLEM: return "Uninitializing failed.";
 
 		/*
 		fork.c

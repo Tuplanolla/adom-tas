@@ -15,4 +15,4 @@ const char * const project_name = "adom-tas";
 /**
 The release version of this project.
 **/
-const char * const project_version = "1.0.0";
+const char * const project_version = "0.1.0";

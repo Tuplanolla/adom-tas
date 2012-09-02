@@ -20,24 +20,18 @@ Does something unnecessary.
 
 #include <curses.h>//*w*, chtype, WINDOW, COLOR
 
+#include "util.h"
 #include "prob.h"//problem_d
 #include "log.h"//error, warning, notice
 #include "cfg.h"//*
 #include "asm.h"//inject_*
 #include "shm.h"//shm_*, shm, state_d
+#include "exec.h"
 #include "rec.h"//record
 #include "arc4.h"//arc4_*
-
-#include "util.h"
-#include "exec.h"
-#include "shm.h"
-#include "prob.h"
-#include "rec.h"
 #include "put.h"
-#include "log.h"
-#include "cfg.h"
-#include "play.h"
 #include "gui.h"
+//#include "play.h"
 
 #define UM_ALIAS
 #include "lib.h"
@@ -89,7 +83,7 @@ May be unreliable.
 **/
 void dlnull(void) {
 	probno = log_error(ASSERT_PROBLEM);
-	//uninit(TRUE);
+	//uninit(FALSE);
 	exit(probno);
 }
 
@@ -213,32 +207,49 @@ int lib_init(void) {
 }
 
 /**
-Uninitializes this library.
+Uninitializes this process.
 
+@param last Whether shared resources should also be uninitialized.
 @return 0 if successful and -1 otherwise.
 **/
-int uninit(const bool clean) {
+int uninit(const bool last) {
 	int result = 0;
-	if (curs_set(1) == ERR
-			|| orig_wrefresh(stdscr) == ERR//TODO remove
-			|| nocbreak() == ERR
-			|| echo() == ERR
-			|| orig_endwin() == ERR)
-	{
-		probno = log_error(UNINIT_PROBLEM);
-		result = -1;
-	}
+
+	/*
+	Unitializes the shared memory segment.
+	*/
 	if (shm_detach() == -1) {
 		result = -1;
 	}
-	if (clean) {
+	if (last) {
 		if (shm_uninit() == -1) {
 			result = -1;
 		}
+
+		/*
+		Unitializes the display.
+		*/
+		if (curs_set(1) == ERR
+				|| orig_wrefresh(stdscr) == ERR//TODO remove
+				|| nocbreak() == ERR
+				|| echo() == ERR
+				|| orig_endwin() == ERR)
+		{
+			probno = log_error(UNINIT_PROBLEM);
+			result = -1;
+		}
 	}
+
+	/*
+	Unitializes the functions.
+	*/
 	if (lib_uninit() == -1) {
 		result = -1;
 	}
+
+	/*
+	Unitializes the configuration.
+	*/
 	if (cfg_uninit() == -1) {
 		result = -1;
 	}
@@ -247,41 +258,69 @@ int uninit(const bool clean) {
 }
 
 /**
-Initializes this library.
+Initializes this process.
 
+@param first Whether shared resources should also be initialized.
 @return 0 if successful and -1 otherwise.
 **/
-int init(void) {
-	int result = 0;
-
+int init(const bool first) {
 	/*
 	Initializes the configuration.
 	*/
-	cfg_init_lib();
-	record.timestamp = cfg_timestamp;
+	if (cfg_init_lib() == -1) {
+		return -1;
+	}
 
 	/*
 	Initializes the functions.
 	*/
-	lib_init();
+	if (lib_init() == -1) {
+		return -1;
+	}
 
 	/*
-	Enables or disables the save-quit-load emulation.
+	Initializes the save-quit-load emulation.
 	*/
 	if (cfg_emulate_sql) {
-		asm_inject(&save_quit_load);
+		if (asm_inject(&save_quit_load) == -1) {
+			return -1;
+		}
 	}
 	else {
-		//inject_save(NULL);
+		if (asm_inject(NULL) == -1) {
+			return -1;
+		}
 	}
 
 	/*
 	Initializes the shared memory segment.
 	*/
-	shm_init();
-	shm_attach();
+	if (first) {
+		if (shm_init() == -1) {
+			return -1;
+		}
+	}
+	if (shm_attach() == -1) {
+		return -1;
+	}
 
-	return result;
+	/*
+	Sets variables that should be automatic.
+	*/
+	record.timestamp = cfg_timestamp;
+	options.key_active = TRUE;
+	options.progress_active = TRUE;
+	options.record_active = FALSE;
+	options.record_paused = FALSE;
+	options.gui_active = FALSE;
+	options.gui_condensed = FALSE;
+	options.gui_hidden = FALSE;
+	options.gui_info_active = FALSE;
+	options.gui_menu_active = FALSE;
+	options.gui_overlay_active = FALSE;
+	options.roll_active = FALSE;
+
+	return 0;
 }
 
 /**
@@ -464,9 +503,42 @@ int load_state(const int save) {
 		//TODO empty screen
 
 		uninit(FALSE);
+		exit(NO_PROBLEM);
 	}
 
 	return 0;
+}
+
+int next_key(WINDOW * const win) {
+	if (record.current == NULL) {
+		wtimeout(win, 0);
+		return KEY_EOF;
+	}
+	int key;
+	if (record.current->duration == 0) {//seed frame
+		cfg_timestamp += record.current->value;
+		arc4_inject((unsigned long int )cfg_timestamp, exec_arc4_calls_automatic_load);
+		(*exec_saves)++;
+		key = KEY_NULL;
+	}
+	else {//key frame
+		const int delay = record.current->duration * NAP_RESOLUTION / frame_rate;
+		wtimeout(win, delay);
+		const int some_key = orig_wgetch(win);
+		if (some_key == cfg_play_key) {
+			wtimeout(win, 0);
+			int some_other_key;
+			do {
+				some_other_key = orig_wgetch(win);
+			} while (some_other_key != cfg_play_key);
+		}
+		else if (some_key == cfg_stop_key) {
+			record.current = NULL;
+		}
+		key = record.current->value;
+	}
+	record.current = record.current->next;
+	return key;
 }
 
 /**
@@ -480,16 +552,23 @@ Intercepts printing anything and initializes this process.
 int OVERLOAD(printf)(const char * const format, ...) {
 	if (options.progress == MAIN) {
 		options.progress = PRINTF;
-		if (init() == -1) {
-			uninit(0);
-			exit(-1);
+		if (init(TRUE) == -1) {
+			uninit(FALSE);
+			exit(probno);
 		}
 	}
 
 	va_list	ap;
 	va_start(ap, format);
 
-	log_call("printf(%s).", format);//TODO parse
+	char * const buf = astresc(format);
+	if (buf == NULL) {
+		probno = log_error(MALLOC_PROBLEM);
+		uninit(FALSE);
+		exit(probno);
+	}
+	log_call("printf(\"%s\", ...).", buf);
+	free(buf);
 
 	const int result = vsnprintf(NULL, 0, format, ap);
 	va_end(ap);
@@ -505,7 +584,14 @@ Intercepts removing the debug file if it exists.
 @return 0 if successful and -1 otherwise.
 **/
 int OVERLOAD(unlink)(const char * const path) {
-	log_call("unlink(\"%s\").", path);
+	char * const buf = astresc(path);
+	if (buf == NULL) {
+		probno = log_error(MALLOC_PROBLEM);
+		uninit(FALSE);
+		exit(probno);
+	}
+	log_call("unlink(\"%s\").", buf);
+	free(buf);
 
 	if (strcmp(path, "ADOM.DBG") == 0) {
 		struct stat buf;
@@ -664,17 +750,26 @@ Draws the custom interface.
 @return OK if successful and ERR otherwise.
 **/
 int OVERLOAD(waddnstr)(WINDOW * const win, const char * const str, const int n) {
-	log_call("waddnstr(" PTRF ", %s, %d).", PTRS(win), str, n);
-
 	if (options.progress == PRINTF) {
 		options.progress = WADDNSTR;
 		if (init_fork() == -1) {
-			return ERR;
+			uninit(FALSE);
+			exit(probno);
 		}
 		if (gui_init() == -1) {
-			return ERR;
+			uninit(FALSE);
+			exit(probno);
 		}
 	}
+
+	char * const buf = astresc(str);
+	if (buf == NULL) {
+		probno = log_error(MALLOC_PROBLEM);
+		uninit(FALSE);
+		exit(probno);
+	}
+	log_call("waddnstr(" PTRF ", \"%s\", %d).", PTRS(win), buf, n);
+	free(buf);
 
 	return orig_waddnstr(win, str, n);
 }
@@ -689,15 +784,21 @@ int OVERLOAD(wgetch)(WINDOW * const win) {
 	log_call("wgetch(" PTRF ").", PTRS(win));
 
 	if (options.record_active) {
-		options.record_active = next_key(win) != KEY_EOF;
+		int key = next_key(win);
+		if (key != KEY_EOF) {
+			return key;
+		}
+		else {
+			options.record_active = FALSE;
+		}
 	}
 	if (options.roll_active) {
-		//roll
+		//TODO roll
 	}
 
-	/**
+	/*
 	Keeps track of the actual turn count.
-	**/
+	*/
 	if (*exec_turns < previous_turns) {
 		negative_turns++;
 	}
@@ -717,8 +818,6 @@ int OVERLOAD(wgetch)(WINDOW * const win) {
 			put_fread(cfg_input_path);
 			record.current = record.first;
 		}
-
-		else options.gui_condensed = !options.gui_condensed;
 	}
 	else if (key == cfg_save_key) {
 		put_fwrite(cfg_output_paths[current_save]);
@@ -754,13 +853,24 @@ int OVERLOAD(wgetch)(WINDOW * const win) {
 		}
 	}
 	else if (key == cfg_menu_key) {
+		options.key_active = !options.key_active;
 		options.gui_active = !options.gui_active;
+		options.gui_menu_active = !options.gui_menu_active;
+		wrefresh(win);
+	}
+	else if (key == cfg_info_key) {
+		options.key_active = !options.key_active;
+		options.gui_active = !options.gui_active;
+		options.gui_info_active = !options.gui_info_active;
+		wrefresh(win);
 	}
 	else if (key == cfg_condense_key) {
 		options.gui_condensed = !options.gui_condensed;
+		wrefresh(win);
 	}
 	else if (key == cfg_hide_key) {
 		options.gui_hidden = !options.gui_hidden;
+		wrefresh(win);
 	}
 	else if (key == cfg_play_key) {
 		options.record_paused = !options.record_paused;
@@ -808,5 +918,6 @@ int OVERLOAD(endwin)(void) {
 		wgetch(stdscr);
 	}
 	uninit(FALSE);
+	exit(NO_PROBLEM);
 	return OK;
 }

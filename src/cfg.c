@@ -255,7 +255,7 @@ int cfg_uninit(void) {
 	free(cfg_iterator);
 	free(cfg_input_path);
 	if (cfg_output_paths != NULL) {
-		for (int state = 0; state < cfg_saves; state++) {
+		for (int state = 1; state < cfg_saves; state++) {
 			free(cfg_output_paths[state]);
 		}
 		free(cfg_output_paths);
@@ -1367,7 +1367,7 @@ int cfg_init_lib(void) {
 		new_category = 0;
 		probno = log_notice(CATEGORY_CONFIG_PROBLEM);
 	}
-	record.category = new_category;
+	record.category = new_category;//TODO outsource
 
 	if (end_init_config() == -1) {
 		return -1;

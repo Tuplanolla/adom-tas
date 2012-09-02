@@ -86,9 +86,9 @@ struct record_s {
 	char executable[256];
 	char comments[256];
 	unsigned long int category;
-	unsigned long int frames;
-	unsigned long int time;
-	unsigned long int turns;
+	unsigned long long int frames;
+	unsigned long long int time;
+	unsigned long long int turns;
 	time_t timestamp;
 };
 typedef struct record_s record_d;

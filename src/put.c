@@ -64,9 +64,9 @@ size_t put_fwrite(const char * const path) {
 	unsigned char chunk[sizeof frame->duration + sizeof frame->value];
 	while (frame != NULL) {
 		position = &chunk[0];
-		PACK(chunk, frame->duration);
+		PACK(position, frame->duration);
 		position += (ptrdiff_t )sizeof frame->duration;
-		PACK(chunk, frame->value);
+		PACK(position, frame->value);
 		position += (ptrdiff_t )sizeof frame->value;
 		if (fwrite(&chunk[0], sizeof chunk, 1, stream) != 1) {
 			probno = log_error(OUTPUT_WRITE_PROBLEM);
@@ -94,6 +94,7 @@ Loads a record.
 @param path The record location.
 @return The number of objects read.
 **/
+#include "cfg.h"
 size_t put_fread(const char * const path) {
 	/*
 	Opens the file.
@@ -150,12 +151,19 @@ size_t put_fread(const char * const path) {
 				break;
 			}
 		}
-		else if (rec_add_frame(frame.duration, frame.value) == NULL) {
-			probno = log_error(INPUT_FRAME_PROBLEM);
-			goto hell;
-		}
 		else {
-			result++;
+			unsigned char * position = &chunk[0];
+			UNPACK(frame.duration, position);
+			position += (ptrdiff_t )sizeof frame.duration;
+			UNPACK(frame.value, position);
+			position += (ptrdiff_t )sizeof frame.value;
+			if (rec_add_frame(frame.duration, frame.value) == NULL) {
+				probno = log_error(INPUT_FRAME_PROBLEM);
+				goto hell;
+			}
+			else {
+				result++;
+			}
 		}
 	} while (TRUE);
 

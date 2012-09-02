@@ -13,6 +13,9 @@ TODO rewrite
 #include "util.h"//intern, KEY_EOF, TIMER_RATE
 #include "cfg.h"//*_key
 #include "rec.h"//record
+#include "exec.h"//
+#include "arc4.h"//
+#include "lib.h"//
 
 #include "play.h"
 
@@ -25,17 +28,18 @@ int next_key(WINDOW * const win) {
 	if (record.current->duration == 0) {//seed frame
 		cfg_timestamp += record.current->value;
 		arc4_inject((unsigned long int )cfg_timestamp, exec_arc4_calls_automatic_load);
-		key = KEY_NAK;
+		(*exec_saves)++;
+		key = KEY_NULL;
 	}
 	else {//key frame
-		const int delay = record.current->duration * TIMER_RATE / frame_rate;
+		const int delay = record.current->duration * NAP_RESOLUTION / frame_rate;
 		wtimeout(win, delay);
-		const int some_key = orig_wgetch(win);
+		const int some_key = wgetch(win);
 		if (some_key == cfg_play_key) {
 			wtimeout(win, 0);
 			int some_other_key;
 			do {
-				some_other_key = orig_wgetch(win);
+				some_other_key = wgetch(win);
 			} while (some_other_key != cfg_play_key);
 		}
 		else if (some_key == cfg_stop_key) {

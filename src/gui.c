@@ -19,6 +19,7 @@ TODO refactor
 #include "shm.h"//shm
 #include "rec.h"//record
 #include "arc4.h"
+#include "key.h"
 #include "lib.h"
 
 #include "gui.h"
@@ -95,12 +96,12 @@ int gui_init(void) {
 	*/
 	for (size_t color = 0; color < colors; color++) {
 		if (cfg_monochrome) {
-			if (orig_init_pair(pairs + color, COLOR_BLACK, def_gui_colors[color]) == ERR) {
+			if (orig_init_pair(pairs + color, COLOR_WHITE, COLOR_BLACK) == ERR) {
 				return log_error(INIT_PAIR_PROBLEM);
 			}
 		}
 		else {
-			if (orig_init_pair(pairs + color, COLOR_WHITE, COLOR_BLACK) == ERR) {
+			if (orig_init_pair(pairs + color, COLOR_BLACK, def_gui_colors[color]) == ERR) {
 				return log_error(INIT_PAIR_PROBLEM);
 			}
 		}
@@ -194,7 +195,7 @@ static int gui_draw_status(WINDOW * const win) {
 		}
 	}
 	draw_status_ADDSTR("I: %s", input_string);
-	draw_status_ADDSTR("F: %lu/%lu", record.frames - previous_record_frames, record.frames);
+	draw_status_ADDSTR("F: %llu/%llu", record.frames - previous_record_frames, record.frames);
 	draw_status_ADDSTR("T: 0/%ld", turns);
 	if (current_duration < frame_rate) {
 		draw_status_ADDSTR("D: 1/%u", frame_rate / current_duration);
@@ -367,7 +368,7 @@ static int gui_draw_info(void) {
 
 	int y, x;
 	getmaxyx(info_win, y, x);
-	mvwaddstr(info_win, y / 2, x / 2, "Yes!");
+	mvwaddstr(info_win, y / 2, x / 2, "Yes!");//TODO info
 
 	/*
 	Refreshes the info window.
@@ -458,17 +459,17 @@ Draws the overlay.
 }
 
 int gui_draw(WINDOW * const win) {
-	if (options.gui_active) {
+	if (!options.gui_hidden) {
 		if (options.gui_overlay_active) {
 			gui_draw_overlay(win);
 		}
 		gui_draw_status(win);
-		if (options.gui_menu_active) {
-			gui_draw_menu();
-		}
-		else if (options.gui_info_active) {
-			gui_draw_info();
-		}
+	}
+	if (options.gui_menu_active) {
+		gui_draw_menu();
+	}
+	else if (options.gui_info_active) {
+		gui_draw_info();
 	}
 
 	return 0;

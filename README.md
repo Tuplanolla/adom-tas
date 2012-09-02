@@ -9,10 +9,10 @@ The name is not very descriptive since it's built around an acronym.
 
 ## Schedule
 
-This project is in active development and
+This project is in passive development and
  the first version was finished by 2012-07-01,
  the first working binaries were built 2012-07-02 and
- the rest should be done by 2012-09-01 (or 2012-09-02 to be consistent).
+ the pre-relase version was built 2012-09-02.
 
 ## Motivation
 
@@ -374,9 +374,9 @@ Records are saved to `*.tas` files in a custom format. The files contain
 * a 256-byte `char [256]` executable name (for example `61 64 6f 6d 00 ...` for ADoM),
 * a 256-byte `char [256]` comments,
 * a 4-byte `unsigned int` category (where `00 00 00 00` is uncategorized),
-* a 4-byte `unsigned int` amount of frames,
-* a 4-byte `unsigned int` time elapsed,
-* a 4-byte `unsigned int` turns spent,
+* a 8-byte `unsigned int` amount of frames,
+* a 8-byte `unsigned int` time elapsed,
+* a 8-byte `unsigned int` turns spent,
 * padding to 1024-byte alignment and
 * executable-specific `frame_d` chunks.
 

@@ -227,8 +227,7 @@ Unpacks a variable for use.
 		size_t UNPACK_byte = sizeof src;\
 		while (UNPACK_byte > 0) {\
 			UNPACK_byte--;\
-			dest |= (unsigned char )src[UNPACK_byte];\
-			dest <<= CHAR_BIT;\
+			dest |= (unsigned char )src[UNPACK_byte] << (UNPACK_byte * CHAR_BIT);\
 		}\
 	END
 
@@ -265,6 +264,7 @@ The timer resolution of the New Cursor Optimization library.
 size_t intlen(int x);
 size_t uintlen(unsigned int x);
 int hash(const unsigned char * array, size_t size);
+char * astresc(const char * const str) __attribute__ ((malloc));
 char * astrrep(const char * haystack, const char * needle, const char * replacement) __attribute__ ((malloc));
 int copy(const char * dest, const char * src);
 int smart_copy(const char * dest, const char * src);
