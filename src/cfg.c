@@ -233,10 +233,10 @@ int cfg_uninit(void) {
 	free(cfg_exec_data_path);
 	free(cfg_exec_temporary_path);
 	if (cfg_exec_temporary_paths != NULL) {
-		for (unsigned int level = 0; level < exec_temporary_levels; level++) {
-			const unsigned int offset = level * exec_temporary_parts;
-			for (unsigned int part = 0; part < exec_temporary_parts; part++) {
-				const unsigned int path = offset + part;
+		for (int level = 0; level < exec_temporary_levels; level++) {
+			const int offset = level * exec_temporary_parts;
+			for (int part = 0; part < exec_temporary_parts; part++) {
+				const int path = offset + part;
 				free(cfg_exec_temporary_paths[path]);
 			}
 		}
@@ -508,18 +508,18 @@ static int begin_init_config(void) {
 		cfg_exec_temporary_paths = NULL;
 	}
 	else {
-		cfg_exec_temporary_paths = malloc(exec_temporary_levels * exec_temporary_parts * sizeof *cfg_exec_temporary_paths);
+		cfg_exec_temporary_paths = malloc((size_t )(exec_temporary_levels * exec_temporary_parts) * sizeof *cfg_exec_temporary_paths);
 		if (cfg_exec_temporary_paths == NULL) {
 			probno = log_error(MALLOC_PROBLEM);
 			return -1;
 		}
 		else {
-			const int level_width = uintlen(exec_temporary_levels);
-			const int part_width = uintlen(exec_temporary_parts);
-			for (unsigned int level = 0; level < exec_temporary_levels; level++) {
-				const unsigned int offset = level * exec_temporary_parts;
-				for (unsigned int part = 0; part < exec_temporary_parts; part++) {
-					const unsigned int path = offset + part;
+			const int level_width = intlen(exec_temporary_levels);
+			const int part_width = intlen(exec_temporary_parts);
+			for (int level = 0; level < exec_temporary_levels; level++) {
+				const int offset = level * exec_temporary_parts;
+				for (int part = 0; part < exec_temporary_parts; part++) {
+					const int path = offset + part;
 					const size_t size = strlen(cfg_exec_temporary_path) + 1
 							+ strlen(exec_temporary_file)
 							+ 4 + 1;
@@ -529,9 +529,8 @@ static int begin_init_config(void) {
 						return -1;
 					}
 					else {
-						snprintf(cfg_exec_temporary_paths[path], size, "%s/%s%0*u_%0*u",
-								cfg_exec_temporary_path,
-								exec_temporary_file, level_width, level, part_width, part);
+						snprintf(cfg_exec_temporary_paths[path], size, "%s/%s%0*d_%0*d",
+								cfg_exec_temporary_path, exec_temporary_file, level_width, level, part_width, part);
 					}
 				}
 			}

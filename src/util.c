@@ -7,6 +7,7 @@ Provides general-purpose functions.
 #include <stdlib.h>//*alloc, free, size_t, NULL
 #include <stdio.h>//*open, *close, *read, *write, *print*, std*, FILE
 #include <string.h>//str*
+#include <ctype.h>//is*
 #include <unistd.h>//*page*
 
 #include "util.h"
@@ -137,7 +138,6 @@ char * astresc(const char * const str) {
 					*result_position++ = hex[byte >> 0 & 0xf];
 					*result_position++ = hex[byte >> 4 & 0xf];
 				}
-				break;
 		}
 		str_position++;
 	}

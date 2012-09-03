@@ -19,7 +19,7 @@ TODO rewrite
 
 #include "play.h"
 
-int next_key(WINDOW * const win) {
+int play_key(WINDOW * const win) {
 	if (record.current == NULL) {
 		wtimeout(win, 0);
 		return KEY_EOF;

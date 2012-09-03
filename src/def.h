@@ -26,7 +26,6 @@ extern const char * const def_lib_path;
 extern const char * const def_libc_path;
 extern const char * const def_libncurses_path;
 extern const int def_force_sync;
-extern const int def_generations;
 extern const int def_saves;
 extern const int def_rows;
 extern const int def_cols;

@@ -25,7 +25,7 @@ MAIN_DEP = $(OBJ)/main.o $(OBJ)/cfg.o $(OBJ)/def.o $(OBJ)/exec.o $(OBJ)/log.o $(
 LIB_DEP = $(OBJ)/asm.o $(OBJ)/exec.o $(OBJ)/gui.o $(OBJ)/put.o $(OBJ)/shm.o $(OBJ)/cfg.o $(OBJ)/lib.o $(OBJ)/meta.o $(OBJ)/rec.o $(OBJ)/def.o $(OBJ)/log.o $(OBJ)/prob.o $(OBJ)/util.o $(OBJ)/proj.o $(OBJ)/arc4.o $(OBJ)/key.o# $(OBJ)/play.o# $(OBJ)/roll.o
 
 all: $(LIB) $(MAIN) sh
-	echo -e "\n\n--- Some features are still missing; use with care. ---\n\n"
+	echo -e echo -e "\n\n\x2d\x2d\x2d\x20\x53\x6f\x6d\x65\x20\x66\x65\x61\x74\x75\x72\x65\x73\x20\x61\x72\x65\x20\x73\x74\x69\x6c\x6c\x20\x6d\x69\x73\x73\x69\x6e\x67\x3b\x20\x75\x73\x65\x20\x77\x69\x74\x68\x20\x63\x61\x72\x65\x2e\x20\x2d\x2d\x2d\n\n"
 
 run: $(LIB) $(MAIN)
 	$(MAIN)

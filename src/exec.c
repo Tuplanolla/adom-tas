@@ -69,11 +69,11 @@ const char * const exec_temporary_file = "adom_tdl";
 /**
 The amount of temporary file groups.
 **/
-const unsigned int exec_temporary_levels = 51;
+const int exec_temporary_levels = 51;
 /**
 The amount of temporary files in groups.
 **/
-const unsigned int exec_temporary_parts = 4;
+const int exec_temporary_parts = 4;
 /**
 The name of the configuration file.
 **/

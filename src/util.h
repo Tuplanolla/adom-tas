@@ -180,7 +180,7 @@ Returns the page boundary of a pointer.
 @param pointer The pointer.
 @return A pointer to the page boundary.
 **/
-#define PAGE(pointer) ((void * )(((uintptr_t )(pointer)) - ((uintptr_t )(pointer)) % getpagesize()))
+#define PAGE(pointer) ((void * )(((intptr_t )(pointer)) - ((intptr_t )(pointer)) % getpagesize()))
 /**
 Returns the page size of an object.
 

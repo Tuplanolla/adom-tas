@@ -7,6 +7,6 @@
 
 #include <curses.h>//WINDOW
 
-int next_key(WINDOW * win);
+int play_key(WINDOW * win);
 
 #endif

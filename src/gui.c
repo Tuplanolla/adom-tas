@@ -177,7 +177,7 @@ static int gui_draw_status(WINDOW * const win) {
 			wattrset(status_win, COLOR_PAIR(pairs + pair));\
 			pair = (pair + 1) % colors;\
 			mvwaddstr(status_win, 0, left_pos, str);\
-			left_pos += strlen(str) + 1;\
+			left_pos += strlen(str) + !options.gui_condensed;\
 			if (cfg_monochrome) {\
 				left_pos++;\
 			}\
@@ -208,7 +208,7 @@ static int gui_draw_status(WINDOW * const win) {
 	draw_status_ADDSTR("S: %d/%d", current_save, cfg_saves - 1);
 	free(str);
 
-	wrefresh(status_win);
+	orig_wrefresh(status_win);
 
 	return 0;
 }
@@ -346,9 +346,9 @@ static int gui_draw_menu(void) {
 	/*
 	Refreshes the menu window.
 	*/
-	wrefresh(menu_win);
-	wrefresh(menu_chs_win);
-	wrefresh(menu_states_win);
+	orig_wrefresh(menu_win);
+	orig_wrefresh(menu_chs_win);
+	orig_wrefresh(menu_states_win);
 
 	return 0;
 }
@@ -373,7 +373,7 @@ static int gui_draw_info(void) {
 	/*
 	Refreshes the info window.
 	*/
-	wrefresh(info_win);
+	orig_wrefresh(info_win);
 
 	return NO_PROBLEM;
 }
@@ -453,22 +453,22 @@ Draws the overlay.
 			}
 		}
 	}
-	wrefresh(overlay_win);
+	orig_wrefresh(overlay_win);
 
 	return 0;
 }
 
 int gui_draw(WINDOW * const win) {
 	if (!options.gui_hidden) {
-		if (options.gui_overlay_active) {
+		if (options.gui_overlay) {
 			gui_draw_overlay(win);
 		}
 		gui_draw_status(win);
 	}
-	if (options.gui_menu_active) {
+	if (options.gui_menu) {
 		gui_draw_menu();
 	}
-	else if (options.gui_info_active) {
+	else if (options.gui_info) {
 		gui_draw_info();
 	}
 

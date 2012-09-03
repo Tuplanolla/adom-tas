@@ -14,7 +14,7 @@
 #include "util.h"//bool
 
 /**
-Lists the progress stages.
+Lists the functions that are progressed.
 **/
 enum progress_e {
 	MAIN,
@@ -28,18 +28,17 @@ typedef enum progress_e progress_d;
 Contains various options.
 **/
 struct options_s {
-	bool key_active;
-	bool progress_active;
 	progress_d progress;
-	bool record_active;
-	bool record_paused;
-	bool gui_active;
-	bool gui_menu_active;
-	bool gui_info_active;
-	bool gui_overlay_active;
+	bool k_on;//used to skip no-time refreshes
+	bool play_on;
+	bool play_paused;
+	bool gui_menu;
+	bool gui_info;
+	bool gui_overlay;
 	bool gui_condensed;
 	bool gui_hidden;
-	bool roll_active;
+	bool roll_on;
+	bool roll_cataloged;
 };
 typedef struct options_s options_d;
 
@@ -75,25 +74,5 @@ extern unsigned int previous_record_frames;
 extern int current_save;
 extern unsigned short int current_duration;
 extern int previous_inputs[4];
-
-/**
-Ensures overloaded functions aren't used outside this compilation unit.
-**/
-#ifndef UM_ALIAS
-
-//#define printf orig_printf//TODO fix conflict with GNU stuff
-#define unlink orig_unlink
-#define ioctl orig_ioctl
-#define time orig_time
-#define localtime orig_localtime
-#define srandom orig_srandom
-#define random orig_random
-#define wrefresh orig_wrefresh
-#define init_pair orig_init_pair
-#define waddnstr orig_waddnstr
-#define wgetch orig_wgetch
-#define endwin orig_endwin
-
-#endif
 
 #endif

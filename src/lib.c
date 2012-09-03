@@ -33,9 +33,7 @@ Does something unnecessary.
 #include "gui.h"
 //#include "play.h"
 
-#define UM_ALIAS
 #include "lib.h"
-#undef UM_ALIAS
 
 /**
 An annotation for overloaded functions.
@@ -47,7 +45,7 @@ An annotation for overloaded functions.
 /**
 The most important variable ever defined.
 **/
-unsigned short int current_duration = 15;
+unsigned short int current_duration = 16;
 long int negative_turns = 0;
 long int previous_turns = 0;
 /**
@@ -77,30 +75,6 @@ void * libncurses_handle;
 pid_t pid = 0;
 
 /**
-Throws an assertion error if a function is called before it's loaded.
-
-May be unreliable.
-**/
-void dlnull(void) {
-	probno = log_error(ASSERT_PROBLEM);
-	//uninit(FALSE);
-	exit(probno);
-}
-
-printf_f orig_printf = (printf_f )dlnull;
-unlink_f orig_unlink = (unlink_f )dlnull;
-ioctl_f orig_ioctl = (ioctl_f )dlnull;
-time_f orig_time = (time_f )dlnull;
-localtime_f orig_localtime = (localtime_f )dlnull;
-srandom_f orig_srandom = (srandom_f )dlnull;
-random_f orig_random = (random_f )dlnull;
-wrefresh_f orig_wrefresh = (wrefresh_f )dlnull;
-init_pair_f orig_init_pair = (init_pair_f )dlnull;
-waddnstr_f orig_waddnstr = (waddnstr_f )dlnull;
-wgetch_f orig_wgetch = (wgetch_f )dlnull;
-endwin_f orig_endwin = (endwin_f )dlnull;
-
-/**
 Emulates the process of saving, quitting and loading.
 **/
 void save_quit_load(void) {
@@ -117,94 +91,11 @@ void save_quit_load(void) {
 	wrefresh(stdscr);
 }
 
-/**
-Uninitializes the original functions.
-
-@return 0 if successful and -1 otherwise.
-**/
-int lib_uninit(void) {
-	int result = 0;
-
-	/*
-	Closes the dynamically linked libraries.
-	*/
-	if (dlclose(libc_handle) != 0) {
-		probno = log_error(LIBC_DLCLOSE_PROBLEM);
-		result = -1;
-	}
-
-	if (dlclose(libncurses_handle) != 0) {
-		probno = log_error(LIBNCURSES_DLCLOSE_PROBLEM);
-		result = -1;
-	}
-
-	return result;
-}
-
-/**
-Initializes the original functions.
-
-@return 0 if successful and -1 otherwise.
-**/
-int lib_init(void) {
-	/*
-	<code>RTLD_LAZY</code> is faster than <code>RTLD_NOW</code>.
-	*/
-	const int mode = RTLD_LAZY;
-
-	/*
-	Opens the dynamically linked libraries.
-	*/
-	libc_handle = dlopen(cfg_libc_path, mode);
-	if (libc_handle == NULL) {
-		probno = log_error(LIBC_DLOPEN_PROBLEM);
-		return -1;
-	}
-	orig_printf = (printf_f )dlsym(libc_handle, "printf");
-	orig_unlink = (unlink_f )dlsym(libc_handle, "unlink");
-	orig_ioctl = (ioctl_f )dlsym(libc_handle, "ioctl");
-	orig_time = (time_f )dlsym(libc_handle, "time");
-	orig_localtime = (localtime_f )dlsym(libc_handle, "localtime");
-	orig_srandom = (srandom_f )dlsym(libc_handle, "srandom");
-	orig_random = (random_f )dlsym(libc_handle, "random");
-	if (orig_printf == NULL
-			|| orig_unlink == NULL
-			|| orig_time == NULL
-			|| orig_localtime == NULL
-			|| orig_srandom == NULL
-			|| orig_random == NULL
-			|| orig_ioctl == NULL) {
-		probno = log_error(LIBC_DLSYM_PROBLEM);
-		return -1;
-	}
-
-	libncurses_handle = dlopen(cfg_libncurses_path, mode);
-	if (libncurses_handle == NULL) {
-		probno = log_error(LIBNCURSES_DLOPEN_PROBLEM);
-		return -1;
-	}
-	orig_wrefresh = (wrefresh_f )dlsym(libncurses_handle, "wrefresh");
-	orig_init_pair = (init_pair_f )dlsym(libncurses_handle, "init_pair");
-	orig_waddnstr = (waddnstr_f )dlsym(libncurses_handle, "waddnstr");
-	orig_wgetch = (wgetch_f )dlsym(libncurses_handle, "wgetch");
-	orig_endwin = (endwin_f )dlsym(libncurses_handle, "endwin");
-	if (orig_init_pair == NULL
-			|| orig_wrefresh == NULL
-			|| orig_wgetch == NULL
-			|| orig_endwin == NULL) {
-		probno = log_error(LIBNCURSES_DLSYM_PROBLEM);
-		return -1;
-	}
-
-	/*
-	Prevents reloading the libraries for child processes.
-	*/
-	if (unsetenv("LD_PRELOAD") == -1) {
-		probno = log_warning(LD_PRELOAD_UNSETENV_PROBLEM);
-	}
-
-	return 0;
-}
+/*
+Prototypes for the people.
+*/
+int lib_uninit(void);
+int lib_init(void);
 
 /**
 Uninitializes this process.
@@ -308,17 +199,128 @@ int init(const bool first) {
 	Sets variables that should be automatic.
 	*/
 	record.timestamp = cfg_timestamp;
-	options.key_active = TRUE;
-	options.progress_active = TRUE;
-	options.record_active = FALSE;
-	options.record_paused = FALSE;
-	options.gui_active = FALSE;
+	options.play_on = cfg_play_instantly;
+	options.play_paused = FALSE;
+	options.gui_menu = FALSE;
+	options.gui_info = FALSE;
+	options.gui_overlay = FALSE;
 	options.gui_condensed = FALSE;
 	options.gui_hidden = FALSE;
-	options.gui_info_active = FALSE;
-	options.gui_menu_active = FALSE;
-	options.gui_overlay_active = FALSE;
-	options.roll_active = FALSE;
+	options.roll_on = FALSE;
+	options.roll_cataloged = FALSE;
+
+	return 0;
+}
+
+/**
+Throws an assertion error if a function is called before it's loaded.
+
+May be unreliable.
+**/
+void dlnull(void) {
+	probno = log_error(ASSERT_PROBLEM);
+	uninit(FALSE);
+	exit(probno);
+}
+
+printf_f orig_printf = (printf_f )dlnull;
+unlink_f orig_unlink = (unlink_f )dlnull;
+ioctl_f orig_ioctl = (ioctl_f )dlnull;
+time_f orig_time = (time_f )dlnull;
+localtime_f orig_localtime = (localtime_f )dlnull;
+srandom_f orig_srandom = (srandom_f )dlnull;
+random_f orig_random = (random_f )dlnull;
+wrefresh_f orig_wrefresh = (wrefresh_f )dlnull;
+init_pair_f orig_init_pair = (init_pair_f )dlnull;
+waddnstr_f orig_waddnstr = (waddnstr_f )dlnull;
+wgetch_f orig_wgetch = (wgetch_f )dlnull;
+endwin_f orig_endwin = (endwin_f )dlnull;
+
+/**
+Uninitializes the original functions.
+
+@return 0 if successful and -1 otherwise.
+**/
+int lib_uninit(void) {
+	int result = 0;
+
+	/*
+	Closes the dynamically linked libraries.
+	*/
+	if (dlclose(libc_handle) != 0) {
+		probno = log_error(LIBC_DLCLOSE_PROBLEM);
+		result = -1;
+	}
+
+	if (dlclose(libncurses_handle) != 0) {
+		probno = log_error(LIBNCURSES_DLCLOSE_PROBLEM);
+		result = -1;
+	}
+
+	return result;
+}
+
+/**
+Initializes the original functions.
+
+@return 0 if successful and -1 otherwise.
+**/
+int lib_init(void) {
+	/*
+	<code>RTLD_LAZY</code> is faster than <code>RTLD_NOW</code>.
+	*/
+	const int mode = RTLD_LAZY;
+
+	/*
+	Opens the dynamically linked libraries.
+	*/
+	libc_handle = dlopen(cfg_libc_path, mode);
+	if (libc_handle == NULL) {
+		probno = log_error(LIBC_DLOPEN_PROBLEM);
+		return -1;
+	}
+	orig_printf = (printf_f )dlsym(libc_handle, "printf");
+	orig_unlink = (unlink_f )dlsym(libc_handle, "unlink");
+	orig_ioctl = (ioctl_f )dlsym(libc_handle, "ioctl");
+	orig_time = (time_f )dlsym(libc_handle, "time");
+	orig_localtime = (localtime_f )dlsym(libc_handle, "localtime");
+	orig_srandom = (srandom_f )dlsym(libc_handle, "srandom");
+	orig_random = (random_f )dlsym(libc_handle, "random");
+	if (orig_printf == NULL
+			|| orig_unlink == NULL
+			|| orig_time == NULL
+			|| orig_localtime == NULL
+			|| orig_srandom == NULL
+			|| orig_random == NULL
+			|| orig_ioctl == NULL) {
+		probno = log_error(LIBC_DLSYM_PROBLEM);
+		return -1;
+	}
+
+	libncurses_handle = dlopen(cfg_libncurses_path, mode);
+	if (libncurses_handle == NULL) {
+		probno = log_error(LIBNCURSES_DLOPEN_PROBLEM);
+		return -1;
+	}
+	orig_wrefresh = (wrefresh_f )dlsym(libncurses_handle, "wrefresh");
+	orig_init_pair = (init_pair_f )dlsym(libncurses_handle, "init_pair");
+	orig_waddnstr = (waddnstr_f )dlsym(libncurses_handle, "waddnstr");
+	orig_wgetch = (wgetch_f )dlsym(libncurses_handle, "wgetch");
+	orig_endwin = (endwin_f )dlsym(libncurses_handle, "endwin");
+	if (orig_init_pair == NULL
+			|| orig_wrefresh == NULL
+			|| orig_wgetch == NULL
+			|| orig_endwin == NULL) {
+		probno = log_error(LIBNCURSES_DLSYM_PROBLEM);
+		return -1;
+	}
+
+	/*
+	Prevents reloading the libraries for child processes.
+	*/
+	if (unsetenv("LD_PRELOAD") == -1) {
+		probno = log_warning(LD_PRELOAD_UNSETENV_PROBLEM);
+	}
 
 	return 0;
 }
@@ -361,17 +363,18 @@ int init_fork(void) {
 			while (*shared.state != HAD_ENOUGH) {
 				napms(NAP_RESOLUTION / frame_rate);
 			}
-			/*do {
+			do {
 				bool done_quitting = TRUE;
-				for (int state = 0; state < states; state++) {
-					if (shm.pids[state] != 0) {
+				for (int save = 0; save < cfg_saves; save++) {
+					if (shared.pids[save] != 0) {
 						done_quitting = FALSE;
 					}
 				}
 				if (done_quitting) break;
-				napms(TIMER_RATE / frame_rate);
-			} while (TRUE);*/
-			uninit(NO_PROBLEM);
+				napms(NAP_RESOLUTION / frame_rate);
+			} while (TRUE);
+			uninit(TRUE);
+			exit(NO_PROBLEM);
 		}
 	}
 
@@ -382,32 +385,28 @@ int init_fork(void) {
 Undocumented.
 */
 int copy_temporary(const int save, const bool direction) {
-	for (unsigned int level = 0; level < exec_temporary_levels; level++) {
-		const unsigned int offset = level * exec_temporary_parts;
-		for (unsigned int part = 0; part < exec_temporary_parts; part++) {
-			const unsigned int path = offset + part;
+	for (int level = 0; level < exec_temporary_levels; level++) {
+		const int offset = level * exec_temporary_parts;
+		for (int part = 0; part < exec_temporary_parts; part++) {
+			const int path = offset + part;
 			const size_t size = strlen(cfg_exec_temporary_paths[path]) + 1
-					+ uintlen(save) + 1;
+					+ intlen(save) + 1;
 			char * const save_path = malloc(size);
 			if (save_path == NULL) {
 				probno = log_error(MALLOC_PROBLEM);
 				return -1;
 			}
-			else {
-				snprintf(save_path, size, "%s_%u",
-						cfg_exec_temporary_paths[path],
-						save);
-				if (direction) {
-					copy(save_path, cfg_exec_temporary_paths[path]);
-				}
-				else {
-					copy(cfg_exec_temporary_paths[path], save_path);
-				}
-				free(save_path);
+			snprintf(save_path, size, "%s_%d",
+					cfg_exec_temporary_paths[path], save);
+			if (direction) {
+				copy(save_path, cfg_exec_temporary_paths[path]);
 			}
+			else {
+				copy(cfg_exec_temporary_paths[path], save_path);
+			}
+			free(save_path);
 		}
 	}
-
 	return 0;
 }
 
@@ -445,9 +444,19 @@ int save_state(const int save) {
 				copy_temporary(save, TRUE);
 
 				while (TRUE) {
-					if (shared.pids[0] == pid) break;//someone activated this slot
-					if (shared.pids[save] != pid) uninit(FALSE);//someone took this slot
-					if (*shared.state == HAD_ENOUGH) uninit(FALSE);//everyone is shutting down
+					if (shared.pids[0] == pid) {
+						break;//someone activated this slot
+					}
+					if (shared.pids[save] != pid) {
+						uninit(FALSE);//someone took this slot
+						exit(NO_PROBLEM);
+					}
+					if (*shared.state == HAD_ENOUGH) {
+						options.progress = EXIT;
+						shared.pids[save] = 0;//(pid_t )
+						uninit(FALSE);//everyone is shutting down
+						exit(NO_PROBLEM);
+					}
 					napms(NAP_RESOLUTION / frame_rate);
 				}
 
@@ -509,7 +518,7 @@ int load_state(const int save) {
 	return 0;
 }
 
-int next_key(WINDOW * const win) {
+int play_key(WINDOW * const win) {
 	if (record.current == NULL) {
 		wtimeout(win, 0);
 		return KEY_EOF;
@@ -593,9 +602,9 @@ int OVERLOAD(unlink)(const char * const path) {
 	log_call("unlink(\"%s\").", buf);
 	free(buf);
 
-	if (strcmp(path, "ADOM.DBG") == 0) {
-		struct stat buf;
-		if (stat(path, &buf) == 0) {
+	if (strstr(path, "ADOM.DBG") != NULL) {
+		struct stat unlink_stat;
+		if (stat(path, &unlink_stat) == 0) {
 			sleep(1);
 			return 0;
 		}
@@ -694,7 +703,7 @@ Draws the custom interface.
 @return OK if successful and ERR otherwise.
 **/
 int OVERLOAD(wrefresh)(WINDOW * const win) {
-	if (options.roll_active) {
+	if (options.roll_on) {
 		return OK;
 	}
 
@@ -718,6 +727,7 @@ int OVERLOAD(wrefresh)(WINDOW * const win) {
 	wattrset(win, A_NORMAL);
 	const int result = orig_wrefresh(win);
 	gui_draw(win);
+	orig_wrefresh(win);
 	wmove(win, y, x);
 	wattr_set(win, attrs, pair, NULL);
 
@@ -752,11 +762,11 @@ Draws the custom interface.
 int OVERLOAD(waddnstr)(WINDOW * const win, const char * const str, const int n) {
 	if (options.progress == PRINTF) {
 		options.progress = WADDNSTR;
-		if (init_fork() == -1) {
+		if (gui_init() == -1) {
 			uninit(FALSE);
 			exit(probno);
 		}
-		if (gui_init() == -1) {
+		if (init_fork() == -1) {
 			uninit(FALSE);
 			exit(probno);
 		}
@@ -783,17 +793,23 @@ Reads a key code from a window.
 int OVERLOAD(wgetch)(WINDOW * const win) {
 	log_call("wgetch(" PTRF ").", PTRS(win));
 
-	if (options.record_active) {
-		int key = next_key(win);
-		if (key != KEY_EOF) {
-			return key;
+	if (options.play_on) {
+		int key = play_key(win);
+		if (key == KEY_EOF) {
+			options.play_on = FALSE;
 		}
 		else {
-			options.record_active = FALSE;
+			return key;
 		}
 	}
-	if (options.roll_active) {
-		//TODO roll
+	if (options.roll_on) {
+		int key = play_key(win);
+		if (key == KEY_EOF) {
+			options.roll_on = FALSE;
+		}
+		else {
+			return key;
+		}
 	}
 
 	/*
@@ -803,28 +819,28 @@ int OVERLOAD(wgetch)(WINDOW * const win) {
 		negative_turns++;
 	}
 	else if (*exec_turns > previous_turns) {
-		options.key_active = TRUE;
+		options.k_on = TRUE;
 	}
 	else {
-		options.key_active = FALSE;
+		options.k_on = FALSE;
 	}
 	previous_turns = *exec_turns;
 	turns = *exec_turns + negative_turns;
 
+	/*
+	Waits for a key.
+	*/
 	const int key = orig_wgetch(win);
-	if (key == cfg_play_key) {
-		if (record.frames == 0) {
-			options.record_active = TRUE;
-			put_fread(cfg_input_path);
-			record.current = record.first;
-		}
-	}
-	else if (key == cfg_save_key) {
+
+	/*
+	Handles a key.
+	*/
+	if (key == cfg_save_key) {
 		put_fwrite(cfg_output_paths[current_save]);
 		save_state(current_save);
 	}
 	else if (key == cfg_load_key) {
-		load_state(current_save);//redundant
+		load_state(current_save);
 	}
 	else if (key == cfg_next_save_key) {
 		INC(current_save, 1, cfg_saves);
@@ -833,60 +849,65 @@ int OVERLOAD(wgetch)(WINDOW * const win) {
 		DEC(current_save, 1, cfg_saves);
 	}
 	else if (key == cfg_longer_duration_key) {
-		if (current_duration < UCHAR_MAX) {
+		if (current_duration < frame_rate * frame_rate) {
 			current_duration *= 2;
 		}
 	}
 	else if (key == cfg_shorter_duration_key) {
-		if (current_duration > 0) {
+		if (current_duration > frame_rate / frame_rate) {
 			current_duration /= 2;
 		}
 	}
 	else if (key == cfg_more_time_key) {
-		if (cfg_timestamp - record.timestamp < INT_MAX) {//prevents rewinding time
+		if (cfg_timestamp - record.timestamp < LONG_MAX) {
 			cfg_timestamp++;
 		}
 	}
 	else if (key == cfg_less_time_key) {
-		if (cfg_timestamp - record.timestamp > 0) {//prevents rewinding time
+		if (cfg_timestamp - record.timestamp > 0) {
 			cfg_timestamp--;
 		}
 	}
 	else if (key == cfg_menu_key) {
-		options.key_active = !options.key_active;
-		options.gui_active = !options.gui_active;
-		options.gui_menu_active = !options.gui_menu_active;
-		wrefresh(win);
+		options.gui_menu = !options.gui_menu;
+		options.gui_info = FALSE;
 	}
 	else if (key == cfg_info_key) {
-		options.key_active = !options.key_active;
-		options.gui_active = !options.gui_active;
-		options.gui_info_active = !options.gui_info_active;
-		wrefresh(win);
+		options.gui_menu = FALSE;
+		options.gui_info = !options.gui_info;
 	}
 	else if (key == cfg_condense_key) {
 		options.gui_condensed = !options.gui_condensed;
-		wrefresh(win);
 	}
 	else if (key == cfg_hide_key) {
 		options.gui_hidden = !options.gui_hidden;
-		wrefresh(win);
 	}
 	else if (key == cfg_play_key) {
-		options.record_paused = !options.record_paused;
+		if (options.play_on) {
+			options.play_on = !options.play_on;
+		}
+		else if (record.frames == 0) {
+			options.play_on = TRUE;
+			put_fread(cfg_input_path);
+			record.current = record.first;
+		}
 	}
 	else if (key == cfg_stop_key) {
-		options.record_active = FALSE;
+		options.play_on = FALSE;
 		record.current = NULL;
 	}
 	else if (key == cfg_quit_key) {
 		options.progress = EXIT;
 		*shared.state = HAD_ENOUGH;
-		shared.pids[current_save] = 0;
+		shared.pids[0] = 0;
 		uninit(FALSE);
+		exit(NO_PROBLEM);
 	}
-	else if (!options.gui_active) {
-		if (record.frames > 0 || key == ' ') {
+	else {
+		if (record.frames == 0 && key != ' ') {
+			return KEY_NULL;
+		}
+		else {
 			const size_t inputs = sizeof previous_inputs / sizeof *previous_inputs - 1;
 			for (size_t input = 0; input < inputs; input++) {//shifts the array left
 				previous_inputs[input] = previous_inputs[input + 1];
@@ -895,11 +916,10 @@ int OVERLOAD(wgetch)(WINDOW * const win) {
 
 			rec_add_key_frame(current_duration, key);
 		}
-
-		return key;
 	}
 	wrefresh(win);
-	return 0;
+
+	return key;
 }
 
 /**
@@ -912,9 +932,18 @@ Intercepts exiting prematurely.
 int OVERLOAD(endwin)(void) {
 	log_call("endwin().");
 
+	curs_set(0);
+	cbreak();
 	noecho();
 	wclear(stdscr);
-	while (!options.progress == EXIT) {
+	short int y, x;
+	getmaxyx(stdscr, y, x);
+	const char * howto = "This process has reached its end.";
+	const char * more_howto = "Load another process or press the exit key to continue.";
+	mvwaddstr(stdscr, y / 2 - 1, (x - strlen(howto)) / 2, howto);
+	mvwaddstr(stdscr, y / 2, (x - strlen(more_howto)) / 2, more_howto);
+	wrefresh(stdscr);
+	while (options.progress != EXIT) {
 		wgetch(stdscr);
 	}
 	uninit(FALSE);
